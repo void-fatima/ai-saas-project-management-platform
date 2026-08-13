@@ -1,0 +1,17 @@
+node_modules/
+.pnpm-store/
+.tools/
+.turbo/
+dist/
+coverage/
+*.tsbuildinfo
+
+.env
+.env.*
+!.env.example
+
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.log
