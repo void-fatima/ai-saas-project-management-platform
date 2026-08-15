@@ -19,6 +19,7 @@ Production routing will eventually use Nginx or an equivalent managed edge. Depl
 - `apps/web`: React/Vite application shell and API health indicator.
 - `apps/api`: NestJS bootstrap, validated environment, constrained CORS, and `GET /health`.
 - PostgreSQL development service with persistent storage and a healthcheck.
+- Prisma ORM with the PostgreSQL driver adapter, Nest lifecycle management, and a baseline migration.
 - pnpm workspaces, Turborepo, strict TypeScript, ESLint, Prettier, Vitest, and CI.
 
 No domain schema, domain module, authentication, tenant logic, Redis, worker, WebSocket, or AI integration exists in Phase 1.
@@ -34,4 +35,4 @@ No domain schema, domain module, authentication, tenant logic, Redis, worker, We
 
 ## Deferred Decisions
 
-Prisma, Tailwind, the component system, Redis, BullMQ, Socket.IO, object storage, observability vendors, and deployment targets will be selected when their implementing phase begins. Deferring installation avoids unused dependencies without removing them from the roadmap.
+Tailwind, the component system, Redis, BullMQ, Socket.IO, object storage, observability vendors, and deployment targets will be selected when their implementing phase begins. Prisma ORM is the selected PostgreSQL persistence layer; domain models remain deferred to their implementing phases. Deferring the remaining selections avoids unused dependencies without removing them from the roadmap.

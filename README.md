@@ -15,6 +15,8 @@ A production-minded full-stack foundation for a collaborative project management
 - constrained development CORS configuration
 - safe `GET /health` response
 - PostgreSQL Docker Compose service with persistent volume and healthcheck
+- Prisma ORM persistence layer with the PostgreSQL driver adapter
+- startup database connectivity verification and a baseline migration
 - ESLint, Prettier, type checking, Vitest smoke tests, and production builds
 - GitHub Actions quality workflow
 
@@ -102,7 +104,27 @@ pnpm --filter @platform/api dev
 pnpm --filter @platform/web dev
 ```
 
-The current API validates `NODE_ENV`, `API_PORT`, `WEB_ORIGIN`, and `DATABASE_URL` during startup. PostgreSQL connectivity is not part of the public Phase 1 health response, and no domain tables or migrations exist yet.
+The current API validates `NODE_ENV`, `API_PORT`, `WEB_ORIGIN`, and `DATABASE_URL` and verifies PostgreSQL connectivity during startup. Database connectivity is intentionally not exposed in the public health response. The baseline migration enables `pgcrypto`; domain tables remain deferred to their implementing phases.
+
+## Database Workflow
+
+Generate the Prisma Client after changing the schema:
+
+```bash
+pnpm --filter @platform/api prisma:generate
+```
+
+Apply committed migrations without resetting data:
+
+```bash
+pnpm --filter @platform/api prisma:migrate:deploy
+```
+
+Create a development migration only while implementing an approved schema change:
+
+```bash
+pnpm --filter @platform/api prisma:migrate:dev -- --name <migration-name>
+```
 
 ## Quality Commands
 
@@ -112,8 +134,11 @@ pnpm format:check
 pnpm lint
 pnpm typecheck
 pnpm test
+pnpm --filter @platform/api test:integration
 pnpm build
 ```
+
+The integration test requires the local PostgreSQL service and an `.env` with a valid `DATABASE_URL`.
 
 CI runs installation with a frozen lockfile followed by format, lint, typecheck, test, and build checks. Deployment is intentionally outside the current phase.
 
