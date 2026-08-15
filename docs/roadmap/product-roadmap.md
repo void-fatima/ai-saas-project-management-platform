@@ -17,10 +17,10 @@ Security, tenant isolation, accessibility, testing, and observability are contin
 ### 1. Foundation — Current Phase
 
 - **Objective:** establish a reproducible full-stack TypeScript monorepo.
-- **Major deliverables:** React/Vite web shell; NestJS API and `/health`; validated environment; PostgreSQL Compose service; strict TypeScript; lint, format, tests, build, documentation, and CI.
+- **Major deliverables:** React/Vite web shell; NestJS API and `/health`; validated environment; PostgreSQL Compose service; Prisma persistence foundation and baseline migration; strict TypeScript; lint, format, tests, build, documentation, and CI.
 - **Dependencies:** none.
 - **Main risks:** unused abstractions, cross-platform scripts, configuration drift, or overstating implemented functionality.
-- **Definition of Done:** clean install; format, lint, typecheck, tests, and builds pass; Compose is valid; current versus planned scope is accurate.
+- **Definition of Done:** clean install; format, lint, typecheck, tests, and builds pass; Compose is valid; the baseline migration applies and PostgreSQL connectivity is integration-tested; current versus planned scope is accurate.
 
 ### 2. Authentication — Core Future Phase
 
