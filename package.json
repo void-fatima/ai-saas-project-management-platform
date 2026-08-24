@@ -15,7 +15,12 @@
     "typecheck": "turbo typecheck",
     "test": "turbo test",
     "format": "prettier . --write",
-    "format:check": "prettier . --check"
+    "format:check": "prettier . --check",
+    "docker:config": "docker compose config --quiet",
+    "db:up": "docker compose up -d postgres",
+    "db:status": "docker compose ps postgres",
+    "db:logs": "docker compose logs --tail 100 postgres",
+    "db:down": "docker compose down"
   },
   "devDependencies": {
     "@eslint/js": "^9.33.0",

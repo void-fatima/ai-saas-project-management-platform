@@ -22,6 +22,7 @@ A production-minded full-stack foundation for a collaborative project management
 - PostgreSQL Docker Compose service with persistent volume and healthcheck
 - Prisma ORM persistence layer with the PostgreSQL driver adapter
 - startup database connectivity verification and a baseline migration
+- root scripts for validating and operating the local PostgreSQL service
 - ESLint, Prettier, type checking, Vitest smoke tests, and production builds
 - GitHub Actions quality workflow
 
@@ -90,8 +91,8 @@ Never commit `.env`.
 Start PostgreSQL and wait until it is healthy:
 
 ```bash
-docker compose up -d postgres
-docker compose ps
+pnpm db:up
+pnpm db:status
 ```
 
 Start both applications from the repository root:
@@ -155,9 +156,12 @@ pnpm typecheck
 pnpm test
 pnpm --filter @platform/api test:integration
 pnpm build
+pnpm docker:config
 ```
 
 The integration test requires the local PostgreSQL service and an `.env` with a valid `DATABASE_URL`.
+
+Database lifecycle helpers are also available through `pnpm db:up`, `pnpm db:status`, `pnpm db:logs`, and `pnpm db:down`. `db:down` stops the local stack but preserves the named PostgreSQL volume; use explicit Docker volume commands only when intentional data removal is required.
 
 CI runs installation with a frozen lockfile followed by format, lint, typecheck, test, and build checks. Deployment is intentionally outside the current phase.
 
@@ -165,4 +169,5 @@ CI runs installation with a frozen lockfile followed by format, lint, typecheck,
 
 - [Architecture overview](docs/architecture/overview.md)
 - [Full product roadmap](docs/roadmap/product-roadmap.md)
+- [Foundation verification](docs/verification/foundation.md)
 - [Coding-agent guidance](AGENTS.md)
