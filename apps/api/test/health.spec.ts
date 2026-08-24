@@ -14,7 +14,7 @@ describe('GET /health', () => {
   });
 
   afterAll(async () => {
-    await app.close();
+    await app?.close();
   });
 
   it('returns only the public service status', async () => {
