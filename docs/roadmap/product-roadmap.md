@@ -4,8 +4,9 @@ This document preserves approved product scope while keeping implementation incr
 
 ## Scope Classification
 
-- **Current Phase:** Phase 1 foundation only.
-- **Core Future Phase:** Phases 2–21, delivering the secure collaborative product and its primary AI value.
+- **Completed Phase:** Phase 1 foundation.
+- **Current Phase:** Phase 2 authentication. The secure registration/login/session core is implemented; verification and recovery are pending.
+- **Core Future Phase:** the remainder of Phase 2 and Phases 3–21, delivering the secure collaborative product and its primary AI value.
 - **Production Hardening:** Phases 22–27, continuously considered earlier and formally hardened here.
 - **Advanced Future Phase:** deeper real-time, analytics, search, AI, enterprise, and infrastructure capabilities after core workflows prove their value.
 - **Nice-to-Have / Bonus:** Phase 29 and the Future / Bonus Backlog. These are preserved but unscheduled.
@@ -14,7 +15,7 @@ Security, tenant isolation, accessibility, testing, and observability are contin
 
 ## Phased Delivery
 
-### 1. Foundation — Current Phase
+### 1. Foundation — Complete
 
 - **Objective:** establish a reproducible full-stack TypeScript monorepo.
 - **Major deliverables:** React/Vite web shell; NestJS API and `/health`; validated environment; PostgreSQL Compose service; strict TypeScript; lint, format, tests, build, documentation, and CI.
@@ -22,13 +23,30 @@ Security, tenant isolation, accessibility, testing, and observability are contin
 - **Main risks:** unused abstractions, cross-platform scripts, configuration drift, or overstating implemented functionality.
 - **Definition of Done:** clean install; format, lint, typecheck, tests, and builds pass; Compose is valid; current versus planned scope is accurate.
 
-### 2. Authentication — Core Future Phase
+### 2. Authentication — Current Phase (In Progress)
 
 - **Objective:** provide secure user identity and session lifecycle.
 - **Major deliverables:** registration, login/logout, email verification, forgot/reset password, Argon2id hashing, opaque secure-cookie sessions, rotation, revocation, logout-all-devices, protected routes, and authentication rate limits.
 - **Dependencies:** Phase 1 and the first reviewed persistence schema.
 - **Main risks:** account enumeration, token leakage, weak cookies, broken revocation, and confusing authentication with authorization.
 - **Definition of Done:** security-sensitive integration tests cover valid, invalid, expired, rotated, and revoked flows; secrets and sensitive logs are redacted.
+
+#### Implemented slice
+
+- PostgreSQL-backed users and hashed opaque sessions with a committed migration
+- registration and login with normalized email, strict input validation, and Argon2id
+- HttpOnly, SameSite=Strict session cookies with production `__Host-` naming
+- expiry, periodic rotation, individual logout, logout-all, and a ten-session cap
+- generic invalid-credential failures, non-cacheable auth responses, and endpoint rate limits
+- API tests for validation, registration, login, authenticated identity, and revocation
+
+#### Remaining before Phase 2 completion
+
+- email verification delivery and verified token lifecycle
+- forgot/reset password delivery and token lifecycle
+- explicit session listing and selective revocation where product UX requires it
+- integration coverage against PostgreSQL for expiry, rotation, concurrency, and migration behavior
+- final authentication threat review and production proxy/rate-limit deployment configuration
 
 ### 3. Workspace System — Core Future Phase
 
