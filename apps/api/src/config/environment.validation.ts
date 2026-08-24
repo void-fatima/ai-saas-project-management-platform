@@ -5,6 +5,18 @@ const environmentSchema = z.object({
   API_PORT: z.coerce.number().int().min(1).max(65_535).default(3000),
   WEB_ORIGIN: z.url(),
   DATABASE_URL: z.url({ protocol: /^postgres(ql)?$/ }),
+  SESSION_TTL_HOURS: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(24 * 30)
+    .default(24 * 7),
+  SESSION_ROTATION_HOURS: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(24 * 7)
+    .default(24),
 });
 
 export type Environment = z.infer<typeof environmentSchema>;

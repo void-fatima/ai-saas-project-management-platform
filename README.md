@@ -4,7 +4,7 @@ A production-minded full-stack foundation for a collaborative project management
 
 ## Status
 
-**Phase 1 — Foundation is implemented.** This repository does not yet implement authentication, workspaces, projects, tasks, Kanban, collaboration, real-time features, or AI. See the [product roadmap](docs/roadmap/product-roadmap.md) for approved future scope.
+**Phase 2 — Authentication is in progress.** The secure account and opaque-session core is implemented. Email verification, password recovery, and the remaining Phase 2 hardening are still pending. Workspaces, projects, tasks, Kanban, collaboration, real-time features, and AI remain planned. See the [product roadmap](docs/roadmap/product-roadmap.md) for approved future scope.
 
 ### Implemented
 
@@ -14,6 +14,11 @@ A production-minded full-stack foundation for a collaborative project management
 - validated backend environment configuration
 - constrained development CORS configuration
 - safe `GET /health` response
+- PostgreSQL user and session schema with deployable Prisma migration
+- account registration and login with boundary validation and Argon2id password hashing
+- opaque, hashed, expiring, rotating, revocable cookie sessions
+- authenticated profile, current-session logout, and all-session logout endpoints
+- authentication rate limits and API-level lifecycle tests
 - PostgreSQL Docker Compose service with persistent volume and healthcheck
 - Prisma ORM persistence layer with the PostgreSQL driver adapter
 - startup database connectivity verification and a baseline migration
@@ -22,14 +27,14 @@ A production-minded full-stack foundation for a collaborative project management
 
 ### Planned
 
-Workspace-scoped multi-tenancy, secure identity and sessions, capability-based RBAC, project/task/Kanban workflows, collaboration, notifications, real-time updates, analytics, search, audit logs, AI planning and reporting, security/testing/performance hardening, production infrastructure, and UX polish are documented but intentionally not implemented yet.
+Email verification and password recovery, workspace-scoped multi-tenancy, capability-based RBAC, project/task/Kanban workflows, collaboration, notifications, real-time updates, analytics, search, audit logs, AI planning and reporting, security/testing/performance hardening, production infrastructure, and UX polish are documented but intentionally not implemented yet.
 
 ## Technology
 
 - Node.js 22+
 - pnpm 10 and Turborepo
 - React 19, Vite, TypeScript
-- NestJS, Zod environment validation
+- NestJS, Zod boundary validation, Prisma ORM, Argon2id
 - PostgreSQL 17 for local development
 - Vitest, Testing Library, Supertest
 - ESLint and Prettier
@@ -40,7 +45,7 @@ The long-term architecture remains a TypeScript modular monolith with PostgreSQL
 
 ```text
 apps/
-  api/                 NestJS API foundation
+  api/                 NestJS modular API and Prisma migrations
   web/                 React/Vite web foundation
 docs/
   architecture/        architecture direction and decisions
@@ -104,7 +109,7 @@ pnpm --filter @platform/api dev
 pnpm --filter @platform/web dev
 ```
 
-The current API validates `NODE_ENV`, `API_PORT`, `WEB_ORIGIN`, and `DATABASE_URL` and verifies PostgreSQL connectivity during startup. Database connectivity is intentionally not exposed in the public health response. The baseline migration enables `pgcrypto`; domain tables remain deferred to their implementing phases.
+The current API validates `NODE_ENV`, `API_PORT`, `WEB_ORIGIN`, `DATABASE_URL`, and session policy configuration, and verifies PostgreSQL connectivity during startup. Database connectivity is intentionally not exposed in the public health response. The baseline migration enables `pgcrypto`; later migrations add users and sessions.
 
 ## Database Workflow
 
@@ -125,6 +130,20 @@ Create a development migration only while implementing an approved schema change
 ```bash
 pnpm --filter @platform/api prisma:migrate:dev -- --name <migration-name>
 ```
+
+## Authentication API
+
+All authentication responses are marked `Cache-Control: no-store`. The session credential is delivered only through an HttpOnly, SameSite=Strict cookie; the database stores only its SHA-256 hash.
+
+| Method | Path               | Purpose                                 |
+| ------ | ------------------ | --------------------------------------- |
+| `POST` | `/auth/register`   | Create an account and session           |
+| `POST` | `/auth/login`      | Verify credentials and create a session |
+| `GET`  | `/auth/me`         | Return the authenticated user           |
+| `POST` | `/auth/logout`     | Revoke the current session              |
+| `POST` | `/auth/logout-all` | Revoke every session for the user       |
+
+Registration accepts `name`, `email`, and `password`. Passwords must be 12–128 characters and contain at least one letter and one number. Browser clients must send requests with credentials enabled.
 
 ## Quality Commands
 

@@ -14,15 +14,25 @@ Browser -> React/Vite -> NestJS REST API -> application/domain modules -> Postgr
 
 Production routing will eventually use Nginx or an equivalent managed edge. Deployable components will use secure Docker images. Logs, errors, metrics, and traces will be introduced proportionally as operational needs become real.
 
-## Current Foundation
+## Current Implementation
 
 - `apps/web`: React/Vite application shell and API health indicator.
-- `apps/api`: NestJS bootstrap, validated environment, constrained CORS, and `GET /health`.
+- `apps/api`: NestJS modular API, validated environment, constrained CORS, rate limiting, and `GET /health`.
 - PostgreSQL development service with persistent storage and a healthcheck.
-- Prisma ORM with the PostgreSQL driver adapter, Nest lifecycle management, and a baseline migration.
+- Prisma ORM with the PostgreSQL driver adapter, Nest lifecycle management, and committed migrations for the baseline, users, and sessions.
+- Authentication module with Argon2id credentials and opaque secure-cookie sessions.
 - pnpm workspaces, Turborepo, strict TypeScript, ESLint, Prettier, Vitest, and CI.
 
-No domain schema, domain module, authentication, tenant logic, Redis, worker, WebSocket, or AI integration exists in Phase 1.
+Workspace tenant logic, Redis, workers, WebSockets, and AI integrations do not exist yet. Email verification and password recovery remain pending within Phase 2.
+
+### Authentication boundaries
+
+- HTTP controllers validate transport input and delegate lifecycle rules to `AuthService`.
+- `AuthRepository` keeps application logic independent of Prisma; `PrismaAuthRepository` is the PostgreSQL adapter.
+- Passwords use Argon2id and are never selected for public API responses.
+- Session credentials contain 256 bits of randomness. Only a SHA-256 token hash is persisted.
+- Sessions expire, rotate, support individual/all-device revocation, and are capped at ten active sessions per user.
+- Authentication endpoints return non-cacheable responses and use HttpOnly, SameSite=Strict cookies.
 
 ## Boundary Rules
 

@@ -5,7 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "nest start --watch",
-    "build": "nest build",
+    "build": "prisma generate && nest build",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:migrate:deploy": "prisma migrate deploy",
     "lint": "eslint src test",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
@@ -23,6 +26,9 @@
     "@prisma/adapter-pg": "^7.9.1",
     "@prisma/client": "^7.9.1",
     "pg": "^8.23.0",
+    "@nestjs/throttler": "6.5.0",
+    "argon2": "0.45.1",
+    "cookie": "1.1.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
     "zod": "^4.0.17"
