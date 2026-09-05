@@ -3,11 +3,13 @@ import {
   ExecutionContext,
   Inject,
   Injectable,
+  InternalServerErrorException,
   UnauthorizedException,
 } from '@nestjs/common';
 
 import { AuthService } from './auth.service.js';
 import type { AuthenticatedRequest, HttpResponse } from './auth.types.js';
+import { InvalidSessionError } from './invalid-session.error.js';
 import { SessionCookieService } from './session-cookie.service.js';
 
 @Injectable()
@@ -39,8 +41,12 @@ export class SessionAuthGuard implements CanActivate {
       }
       return true;
     } catch (error: unknown) {
-      this.cookies.clear(response);
-      throw error;
+      // An older response must never erase a cookie installed by another request.
+      // Only explicit logout clears cookies; operational failures preserve them too.
+      if (error instanceof InvalidSessionError) {
+        throw new UnauthorizedException('Authentication is required.');
+      }
+      throw new InternalServerErrorException('Unable to authenticate right now.');
     }
   }
 }

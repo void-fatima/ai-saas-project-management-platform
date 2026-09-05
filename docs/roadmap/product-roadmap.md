@@ -37,15 +37,18 @@ Security, tenant isolation, accessibility, testing, and observability are contin
 - registration and login with normalized email, strict input validation, and Argon2id
 - HttpOnly, SameSite=Strict session cookies with production `__Host-` naming
 - expiry, periodic rotation, individual logout, logout-all, and a ten-session cap
+- conditional rotation with a bounded predecessor-token grace period and revalidation after conflicts
+- explicit invalid-session errors; infrastructure failures preserve cookies and return safe server errors
 - generic invalid-credential failures, non-cacheable auth responses, and endpoint rate limits
 - API tests for validation, registration, login, authenticated identity, and revocation
+- HTTP session lifecycle regressions, including overlapping rotation and cookie preservation; focused PostgreSQL repository tests for creation, expiry, conditional rotation, and revocation
 
 #### Remaining before Phase 2 completion
 
 - email verification delivery and verified token lifecycle
 - forgot/reset password delivery and token lifecycle
 - explicit session listing and selective revocation where product UX requires it
-- integration coverage against PostgreSQL for expiry, rotation, concurrency, and migration behavior
+- broader PostgreSQL authentication and migration regression coverage beyond the focused session lifecycle tests
 - final authentication threat review and production proxy/rate-limit deployment configuration
 
 ### 3. Workspace System — Core Future Phase

@@ -21,15 +21,17 @@ model User {
 }
 
 model Session {
-  id         String    @id @default(uuid()) @db.Uuid
-  userId     String    @map("user_id") @db.Uuid
-  tokenHash  String    @unique(map: "sessions_token_hash_key") @map("token_hash") @db.Char(64)
-  expiresAt  DateTime  @map("expires_at") @db.Timestamptz(3)
-  rotatedAt  DateTime  @default(now()) @map("rotated_at") @db.Timestamptz(3)
-  lastSeenAt DateTime  @default(now()) @map("last_seen_at") @db.Timestamptz(3)
-  revokedAt  DateTime? @map("revoked_at") @db.Timestamptz(3)
-  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
-  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                     String    @id @default(uuid()) @db.Uuid
+  userId                 String    @map("user_id") @db.Uuid
+  tokenHash              String    @unique(map: "sessions_token_hash_key") @map("token_hash") @db.Char(64)
+  previousTokenHash      String?   @unique(map: "sessions_previous_token_hash_key") @map("previous_token_hash") @db.Char(64)
+  previousTokenExpiresAt DateTime? @map("previous_token_expires_at") @db.Timestamptz(3)
+  expiresAt              DateTime  @map("expires_at") @db.Timestamptz(3)
+  rotatedAt              DateTime  @default(now()) @map("rotated_at") @db.Timestamptz(3)
+  lastSeenAt             DateTime  @default(now()) @map("last_seen_at") @db.Timestamptz(3)
+  revokedAt              DateTime? @map("revoked_at") @db.Timestamptz(3)
+  createdAt              DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  user                   User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, revokedAt, expiresAt], map: "sessions_user_active_idx")
   @@index([expiresAt], map: "sessions_expires_at_idx")

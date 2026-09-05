@@ -146,6 +146,10 @@ All authentication responses are marked `Cache-Control: no-store`. The session c
 
 Registration accepts `name`, `email`, and `password`. Passwords must be 12–128 characters and contain at least one letter and one number. Browser clients must send requests with credentials enabled.
 
+Session rotation updates the existing row with a conditional token-hash comparison. Only the winning request sends a replacement cookie. The previous token hash remains usable for overlapping requests for at most 30 seconds, never beyond that token's original expiry; it cannot trigger another rotation. A losing rotation rechecks the persisted session before returning identity, so revocation and expiry still take effect. Only hashes are stored, including the predecessor. Apply the additive `20260905090000_harden_session_rotation` migration before running this API version.
+
+Missing, malformed, unknown, expired, or revoked session credentials return 401. Session lookup/rotation infrastructure failures return a generic 500 without exposing internal details. Neither response clears cookies: a delayed response must not erase a newer cookie from another request. Explicit logout and logout-all revoke sessions and clear the browser cookie. A request using the predecessor after its grace period receives 401; if the winning replacement response is lost entirely, signing in again is required after grace expires.
+
 ## Quality Commands
 
 ```bash
@@ -159,7 +163,7 @@ pnpm build
 pnpm docker:config
 ```
 
-The integration test requires the local PostgreSQL service and an `.env` with a valid `DATABASE_URL`.
+Integration tests require the local PostgreSQL service, an `.env` with a valid `DATABASE_URL`, and all committed migrations applied (`pnpm --filter @platform/api prisma:migrate:deploy`). They cover connectivity and session creation, expiry, concurrent conditional rotation, predecessor grace, and revocation. Session fixtures use unique accounts and delete only their own data; no database reset is performed. HTTP error/cookie and forced service-level race regressions use `MemoryAuthRepository` in the regular API suite.
 
 Database lifecycle helpers are also available through `pnpm db:up`, `pnpm db:status`, `pnpm db:logs`, and `pnpm db:down`. `db:down` stops the local stack but preserves the named PostgreSQL volume; use explicit Docker volume commands only when intentional data removal is required.
 

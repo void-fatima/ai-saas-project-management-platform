@@ -7,6 +7,10 @@ export interface NewSession {
   tokenHash: string;
 }
 
+export interface RotatedSession extends NewSession {
+  previousTokenExpiresAt: Date;
+}
+
 export interface NewUser {
   email: string;
   name: string;
@@ -27,7 +31,7 @@ export interface AuthRepository {
   rotateSession(
     sessionId: string,
     currentTokenHash: string,
-    nextSession: NewSession,
+    nextSession: RotatedSession,
     now: Date,
   ): Promise<boolean>;
 }

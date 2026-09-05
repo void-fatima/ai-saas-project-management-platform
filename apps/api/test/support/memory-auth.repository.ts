@@ -1,11 +1,18 @@
 import { randomUUID } from 'node:crypto';
 
-import type { AuthRepository, NewSession, NewUser } from '../../src/auth/auth.repository.js';
+import type {
+  AuthRepository,
+  NewSession,
+  NewUser,
+  RotatedSession,
+} from '../../src/auth/auth.repository.js';
 import type { ActiveSessionRecord, UserRecord } from '../../src/auth/auth.types.js';
 
 interface StoredSession {
   expiresAt: Date;
   id: string;
+  previousTokenExpiresAt: Date | null;
+  previousTokenHash: string | null;
   revokedAt: Date | null;
   rotatedAt: Date;
   tokenHash: string;
@@ -44,6 +51,8 @@ export class MemoryAuthRepository implements AuthRepository {
     this.sessions.set(id, {
       ...session,
       id,
+      previousTokenExpiresAt: null,
+      previousTokenHash: null,
       revokedAt: null,
       rotatedAt: now,
       userId,
@@ -58,7 +67,10 @@ export class MemoryAuthRepository implements AuthRepository {
   findActiveSession(tokenHash: string, now: Date): Promise<ActiveSessionRecord | null> {
     const session = [...this.sessions.values()].find(
       (candidate) =>
-        candidate.tokenHash === tokenHash &&
+        (candidate.tokenHash === tokenHash ||
+          (candidate.previousTokenHash === tokenHash &&
+            candidate.previousTokenExpiresAt !== null &&
+            candidate.previousTokenExpiresAt > now)) &&
         candidate.revokedAt === null &&
         candidate.expiresAt > now,
     );
@@ -70,6 +82,7 @@ export class MemoryAuthRepository implements AuthRepository {
       expiresAt: session.expiresAt,
       id: session.id,
       rotatedAt: session.rotatedAt,
+      tokenHash: session.tokenHash,
       user,
     });
   }
@@ -77,7 +90,7 @@ export class MemoryAuthRepository implements AuthRepository {
   rotateSession(
     sessionId: string,
     currentTokenHash: string,
-    nextSession: NewSession,
+    nextSession: RotatedSession,
     now: Date,
   ): Promise<boolean> {
     const session = this.sessions.get(sessionId);
@@ -89,7 +102,7 @@ export class MemoryAuthRepository implements AuthRepository {
     ) {
       return Promise.resolve(false);
     }
-    Object.assign(session, nextSession, { rotatedAt: now });
+    Object.assign(session, nextSession, { previousTokenHash: currentTokenHash, rotatedAt: now });
     return Promise.resolve(true);
   }
 

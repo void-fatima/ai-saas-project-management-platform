@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 
 import { PrismaService } from '../database/prisma.service.js';
 import { Prisma } from '../generated/prisma/client.js';
-import type { AuthRepository, NewSession, NewUser } from './auth.repository.js';
+import type { AuthRepository, NewSession, NewUser, RotatedSession } from './auth.repository.js';
 import type { ActiveSessionRecord, UserRecord } from './auth.types.js';
 
 const userSelect = {
@@ -88,22 +88,29 @@ export class PrismaAuthRepository implements AuthRepository {
         expiresAt: true,
         id: true,
         rotatedAt: true,
+        tokenHash: true,
         user: { select: userSelect },
       },
-      where: { expiresAt: { gt: now }, revokedAt: null, tokenHash },
+      where: {
+        expiresAt: { gt: now },
+        revokedAt: null,
+        OR: [{ tokenHash }, { previousTokenHash: tokenHash, previousTokenExpiresAt: { gt: now } }],
+      },
     });
   }
 
   async rotateSession(
     sessionId: string,
     currentTokenHash: string,
-    nextSession: NewSession,
+    nextSession: RotatedSession,
     now: Date,
   ): Promise<boolean> {
     const result = await this.prisma.session.updateMany({
       data: {
         expiresAt: nextSession.expiresAt,
         lastSeenAt: now,
+        previousTokenExpiresAt: nextSession.previousTokenExpiresAt,
+        previousTokenHash: currentTokenHash,
         rotatedAt: now,
         tokenHash: nextSession.tokenHash,
       },
