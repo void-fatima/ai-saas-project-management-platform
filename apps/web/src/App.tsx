@@ -1,5 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
 
+import { apiUrl } from './api/config';
+import { AuthView } from './auth/AuthView';
 import aiCoreOrb from './assets/ai-core-orb.png';
 import aiCoreOrbits from './assets/ai-core-orbits.png';
 import { ActivityFeed } from './components/ActivityFeed';
@@ -25,12 +27,11 @@ import { FormField } from './components/ui/FormField';
 type ApiStatus = 'checking' | 'available' | 'unavailable';
 type CoreStatus = 'online' | 'processing' | 'warning';
 
-const apiUrl = import.meta.env.VITE_API_URL ?? 'http://localhost:3000';
 const developerUnlockClicks = 5;
 
 const coreStatusCopy: Record<CoreStatus, { description: string; label: string }> = {
   online: {
-    description: 'Core services are connected. Authentication integration is next.',
+    description: 'Core services are connected. Sign in or create your account to get started.',
     label: 'Online',
   },
   processing: {
@@ -44,6 +45,38 @@ const coreStatusCopy: Record<CoreStatus, { description: string; label: string }>
 };
 
 export function App() {
+  const [showAuth, setShowAuth] = useState(false);
+  const signInRef = useRef<HTMLButtonElement>(null);
+  const returnFocus = useRef(false);
+
+  useEffect(() => {
+    if (!showAuth && returnFocus.current) {
+      signInRef.current?.focus();
+      returnFocus.current = false;
+    }
+  }, [showAuth]);
+
+  if (showAuth) {
+    return <AuthView onBack={() => setShowAuth(false)} />;
+  }
+  return (
+    <Observatory
+      signInRef={signInRef}
+      onSignIn={() => {
+        returnFocus.current = true;
+        setShowAuth(true);
+      }}
+    />
+  );
+}
+
+function Observatory({
+  onSignIn,
+  signInRef,
+}: {
+  onSignIn: () => void;
+  signInRef: RefObject<HTMLButtonElement | null>;
+}) {
   const [apiStatus, setApiStatus] = useState<ApiStatus>('checking');
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [coreClicks, setCoreClicks] = useState(0);
@@ -110,6 +143,9 @@ export function App() {
             <h1>AI System Observatory</h1>
           </div>
           <div className="topbar__actions">
+            <Button onClick={onSignIn} ref={signInRef} variant="secondary">
+              Sign in
+            </Button>
             <SystemClock />
             <div className="input-container">
               <span aria-hidden="true" className="input-container__surface">

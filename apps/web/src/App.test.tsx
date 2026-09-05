@@ -8,6 +8,25 @@ describe('App', () => {
     vi.unstubAllGlobals();
   });
 
+  it('opens authentication from the shell and restores focus when returning', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true });
+    vi.stubGlobal('fetch', fetchMock);
+    render(<App />);
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('available'));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+    expect(screen.getByRole('form', { name: 'Login' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Create an account' }));
+    expect(screen.getByRole('form', { name: 'Register' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Back to overview' }));
+
+    expect(screen.getByRole('button', { name: 'Sign in' })).toHaveFocus();
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('available'));
+    expect(
+      fetchMock.mock.calls.every(([url]) => typeof url === 'string' && url.endsWith('/health')),
+    ).toBe(true);
+  });
+
   it('renders the AI observatory and reports a healthy API', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true }));
 
