@@ -1,10 +1,10 @@
-import type { ButtonHTMLAttributes } from 'react';
+import type { ComponentPropsWithRef } from 'react';
 
 import { SpinnerGapIcon } from '../icons';
 
 type ButtonVariant = 'primary' | 'secondary' | 'ghost';
 
-export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+export interface ButtonProps extends ComponentPropsWithRef<'button'> {
   loading?: boolean;
   variant?: ButtonVariant;
 }

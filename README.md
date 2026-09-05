@@ -16,6 +16,7 @@ A production-minded full-stack foundation for a collaborative project management
 - safe `GET /health` response
 - PostgreSQL user and session schema with deployable Prisma migration
 - account registration and login with boundary validation and Argon2id password hashing
+- login/register views with client validation, cookie-enabled API submission, and accessible loading/error/success feedback
 - opaque, hashed, expiring, rotating, revocable cookie sessions
 - authenticated profile, current-session logout, and all-session logout endpoints
 - authentication rate limits and API-level lifecycle tests
@@ -145,6 +146,10 @@ All authentication responses are marked `Cache-Control: no-store`. The session c
 | `POST` | `/auth/logout-all` | Revoke every session for the user       |
 
 Registration accepts `name`, `email`, and `password`. Passwords must be 12–128 characters and contain at least one letter and one number. Browser clients must send requests with credentials enabled.
+
+Use **Sign in** in the web shell to open the login view, then **Create an account** to register. The forms use `VITE_API_URL` and send credentials so the browser can accept the API's HttpOnly cookie. Keep the web and API on the same site (and use the same hostname locally) for the existing SameSite=Strict policy; `WEB_ORIGIN` must match the frontend origin. Production cookies require HTTPS.
+
+Issue 04 ends with submission feedback. Returning to the overview does not restore or track authentication. Frontend auth state, session restoration, protected routes, logout integration, and application-wide 401 handling remain deferred to Issue 06.
 
 ## Quality Commands
 

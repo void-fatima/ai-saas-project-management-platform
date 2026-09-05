@@ -1,0 +1,166 @@
+.auth-page {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: clamp(1rem, 4vw, 4rem);
+  background:
+    radial-gradient(ellipse at top left, rgb(111 82 217 / 14%), transparent 65%), var(--bg);
+  font-family: var(--font-ui);
+}
+
+.auth-layout {
+  display: grid;
+  width: min(100%, 64rem);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  align-items: center;
+  gap: clamp(2rem, 6vw, 5rem);
+}
+
+.auth-intro {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.auth-intro h2 {
+  max-width: 12ch;
+  font-size: clamp(2rem, 4vw, 3.5rem);
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  line-height: 1.1;
+}
+
+.auth-intro > p:not(.eyebrow),
+.auth-heading > p:not(.eyebrow),
+.auth-footer p {
+  color: var(--text-soft);
+  line-height: 1.6;
+}
+
+.auth-emblem {
+  display: grid;
+  width: 5rem;
+  height: 5rem;
+  place-items: center;
+  border: 1px solid var(--border-bright);
+  border-radius: var(--radius-lg);
+  color: var(--violet-bright);
+  background: var(--surface-soft);
+}
+
+.auth-security {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--text-soft);
+  font-size: 0.875rem;
+}
+
+.auth-card {
+  min-width: 0;
+  padding: clamp(1.25rem, 3vw, 2.5rem);
+  border: 1px solid var(--border-bright);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-panel);
+}
+
+.auth-heading {
+  display: grid;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+}
+
+.auth-heading h1 {
+  font-size: clamp(1.75rem, 3vw, 2.25rem);
+  letter-spacing: -0.035em;
+}
+
+.auth-fields {
+  display: grid;
+  gap: 1rem;
+}
+
+.auth-card .form-field {
+  gap: 0.5rem;
+}
+
+.auth-card .form-field__label {
+  color: var(--text-soft);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.auth-card .input {
+  min-height: 3rem;
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 1rem;
+}
+
+.auth-card .input:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.auth-card .form-field__message {
+  min-height: 2.7em;
+  color: var(--text-soft);
+  font-size: 0.8125rem;
+  line-height: 1.35;
+}
+
+.auth-card .form-field__message--error,
+.auth-feedback--error {
+  color: var(--danger);
+}
+
+.auth-feedback {
+  min-height: 5.5rem;
+  padding-block: 1rem;
+  color: var(--text-soft);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.auth-feedback--success {
+  color: var(--green);
+}
+
+.auth-card .button {
+  min-height: 2.75rem;
+  font-size: 0.875rem;
+}
+
+.auth-submit {
+  width: 100%;
+}
+
+.auth-footer {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1.75rem;
+  text-align: center;
+  font-size: 0.875rem;
+}
+
+@media (max-width: 720px) {
+  .auth-layout {
+    max-width: 30rem;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.5rem;
+  }
+
+  .auth-intro {
+    gap: 0.75rem;
+  }
+
+  .auth-intro h2,
+  .auth-intro > p:not(.eyebrow),
+  .auth-emblem,
+  .auth-security {
+    display: none;
+  }
+}

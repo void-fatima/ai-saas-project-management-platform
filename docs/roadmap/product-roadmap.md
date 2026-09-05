@@ -39,9 +39,11 @@ Security, tenant isolation, accessibility, testing, and observability are contin
 - expiry, periodic rotation, individual logout, logout-all, and a ten-session cap
 - generic invalid-credential failures, non-cacheable auth responses, and endpoint rate limits
 - API tests for validation, registration, login, authenticated identity, and revocation
+- Issue 04: responsive login/register views using the existing UI components, client validation, cookie-enabled API submissions, and loading/error/success feedback
 
 #### Remaining before Phase 2 completion
 
+- Issue 06: frontend authentication state, session restoration through `/auth/me`, protected routes, logout integration, and application-wide 401 handling
 - email verification delivery and verified token lifecycle
 - forgot/reset password delivery and token lifecycle
 - explicit session listing and selective revocation where product UX requires it
