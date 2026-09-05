@@ -5,6 +5,7 @@ import type { Environment } from '../config/environment.validation.js';
 import { AUTH_REPOSITORY, type AuthRepository } from './auth.repository.js';
 import type { LoginInput, RegisterInput } from './auth.schemas.js';
 import type { PublicUser, UserRecord } from './auth.types.js';
+import { InvalidSessionError } from './invalid-session.error.js';
 import { PasswordService } from './password.service.js';
 import { SessionTokenService } from './session-token.service.js';
 
@@ -87,12 +88,14 @@ export class AuthService {
   }
 
   async authenticate(rawToken: string): Promise<AuthenticatedSession> {
+    if (!this.sessionTokens.isValid(rawToken)) throw new InvalidSessionError();
+
     const now = new Date();
     const currentTokenHash = this.sessionTokens.hash(rawToken);
     const session = await this.repository.findActiveSession(currentTokenHash, now);
 
     if (!session) {
-      throw new UnauthorizedException('Authentication is required.');
+      throw new InvalidSessionError();
     }
 
     const result: AuthenticatedSession = {
@@ -100,15 +103,35 @@ export class AuthService {
       user: this.toPublicUser(session.user),
     };
 
-    if (now.getTime() - session.rotatedAt.getTime() >= this.rotationMilliseconds) {
+    // A predecessor token may finish an overlapping request but cannot rotate again.
+    if (
+      session.tokenHash === currentTokenHash &&
+      now.getTime() - session.rotatedAt.getTime() >= this.rotationMilliseconds
+    ) {
       const nextToken = this.sessionTokens.issue();
       const rotated = await this.repository.rotateSession(
         session.id,
         currentTokenHash,
-        { expiresAt: this.expirationFrom(now), tokenHash: nextToken.hash },
+        {
+          expiresAt: this.expirationFrom(now),
+          previousTokenExpiresAt: new Date(
+            Math.min(session.expiresAt.getTime(), now.getTime() + 30_000),
+          ),
+          tokenHash: nextToken.hash,
+        },
         now,
       );
-      if (rotated) result.rotatedToken = nextToken.raw;
+      if (rotated) {
+        result.rotatedToken = nextToken.raw;
+      } else {
+        // A failed CAS can also mean revocation or expiry. Never trust the old snapshot.
+        const current = await this.repository.findActiveSession(currentTokenHash, new Date());
+        if (!current || current.id !== session.id) throw new InvalidSessionError();
+        if (current.tokenHash === currentTokenHash) {
+          throw new Error('Session rotation did not advance.');
+        }
+        return { sessionId: current.id, user: this.toPublicUser(current.user) };
+      }
     }
 
     return result;

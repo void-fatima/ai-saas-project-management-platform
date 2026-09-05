@@ -19,6 +19,7 @@ export interface ActiveSessionRecord {
   expiresAt: Date;
   id: string;
   rotatedAt: Date;
+  tokenHash: string;
   user: UserRecord;
 }
 
