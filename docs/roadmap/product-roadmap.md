@@ -41,13 +41,13 @@ Security, tenant isolation, accessibility, testing, and observability are contin
 - explicit invalid-session errors; infrastructure failures preserve cookies and return safe server errors
 - generic invalid-credential failures, non-cacheable auth responses, and endpoint rate limits
 - API tests for validation, registration, login, authenticated identity, and revocation
+- cookie-based bootstrap, protected application rendering, logout/logout-all, and distinct invalid-session versus temporary-failure states
 - responsive login/register views using the existing UI components, client validation, cookie-enabled API submissions, and loading/error/success feedback
-
 - HTTP session lifecycle regressions, including overlapping rotation and cookie preservation; focused PostgreSQL repository tests for creation, expiry, conditional rotation, and revocation
 
 #### Remaining before Phase 2 completion
 
-- frontend authentication state, session restoration through `/auth/me`, protected routes, logout integration, and application-wide 401 handling
+- real browser verification of frontend session restoration, protected rendering, logout, and session error handling
 - email verification delivery and verified token lifecycle
 - forgot/reset password delivery and token lifecycle
 - explicit session listing and selective revocation where product UX requires it

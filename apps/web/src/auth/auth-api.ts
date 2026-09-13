@@ -7,7 +7,7 @@ import {
   type RegisterInput,
 } from './auth-validation';
 
-interface AuthResponse {
+export interface AuthResponse {
   user: {
     id: string;
     name: string;
@@ -31,7 +31,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-function isAuthResponse(value: unknown): value is AuthResponse {
+export function isAuthResponse(value: unknown): value is AuthResponse {
   if (!isRecord(value) || !isRecord(value.user)) return false;
   const user = value.user;
   return (

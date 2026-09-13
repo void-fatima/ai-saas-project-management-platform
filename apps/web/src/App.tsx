@@ -1,7 +1,9 @@
-import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { apiUrl } from './api/config';
 import { AuthView } from './auth/AuthView';
+import { useSession } from './auth/use-session';
+import type { SessionUser } from './auth/session-api';
 import aiCoreOrb from './assets/ai-core-orb.png';
 import aiCoreOrbits from './assets/ai-core-orbits.png';
 import { ActivityFeed } from './components/ActivityFeed';
@@ -45,37 +47,66 @@ const coreStatusCopy: Record<CoreStatus, { description: string; label: string }>
 };
 
 export function App() {
-  const [showAuth, setShowAuth] = useState(false);
-  const signInRef = useRef<HTMLButtonElement>(null);
-  const returnFocus = useRef(false);
-
-  useEffect(() => {
-    if (!showAuth && returnFocus.current) {
-      signInRef.current?.focus();
-      returnFocus.current = false;
+  const session = useSession();
+  const [welcome, setWelcome] = useState(false);
+  if (session.state.status === 'checking') {
+    return (
+      <main className="auth-page">
+        <p role="status">Checking your session…</p>
+      </main>
+    );
+  }
+  if (!session.state.user) {
+    if (session.state.status === 'service-failure') {
+      return (
+        <main className="auth-page">
+          <section className="auth-card">
+            <h1>Connection interrupted</h1>
+            <p role="alert">{session.state.message}</p>
+            <Button loading={session.pending} onClick={() => void session.refresh()}>
+              Retry session check
+            </Button>
+          </section>
+        </main>
+      );
     }
-  }, [showAuth]);
-
-  if (showAuth) {
-    return <AuthView onBack={() => setShowAuth(false)} />;
+    if (welcome) {
+      return (
+        <main className="auth-page">
+          <section className="auth-card">
+            <h1>Project Platform</h1>
+            <p>Sign in to access your account.</p>
+            <Button onClick={() => setWelcome(false)}>Sign in</Button>
+          </section>
+        </main>
+      );
+    }
+    return <AuthView onBack={() => setWelcome(true)} onAuthenticated={session.accept} />;
   }
   return (
     <Observatory
-      signInRef={signInRef}
-      onSignIn={() => {
-        returnFocus.current = true;
-        setShowAuth(true);
-      }}
+      key={session.state.user.id}
+      user={session.state.user}
+      pending={session.pending}
+      onLogout={(all) => void session.logout(all)}
+      onRefreshSession={() => void session.refresh()}
+      error={session.state.status === 'service-failure' ? session.state.message : undefined}
     />
   );
 }
 
 function Observatory({
-  onSignIn,
-  signInRef,
+  user,
+  pending,
+  onLogout,
+  onRefreshSession,
+  error,
 }: {
-  onSignIn: () => void;
-  signInRef: RefObject<HTMLButtonElement | null>;
+  user: SessionUser;
+  pending: boolean;
+  onLogout: (all: boolean) => void;
+  onRefreshSession: () => void;
+  error?: string;
 }) {
   const [apiStatus, setApiStatus] = useState<ApiStatus>('checking');
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
@@ -143,8 +174,12 @@ function Observatory({
             <h1>AI System Observatory</h1>
           </div>
           <div className="topbar__actions">
-            <Button onClick={onSignIn} ref={signInRef} variant="secondary">
-              Sign in
+            <span aria-label="Signed-in account">{user.name}</span>
+            <Button disabled={pending} onClick={() => onLogout(false)} variant="secondary">
+              Sign out
+            </Button>
+            <Button disabled={pending} onClick={() => onLogout(true)} variant="ghost">
+              Sign out all devices
             </Button>
             <SystemClock />
             <div className="input-container">
@@ -176,6 +211,14 @@ function Observatory({
         </header>
 
         <div className="observatory__grid">
+          {error ? (
+            <section role="alert">
+              <p>{error}</p>
+              <Button loading={pending} onClick={onRefreshSession}>
+                Retry session check
+              </Button>
+            </section>
+          ) : null}
           <section className="core-panel" aria-labelledby="core-title">
             <div className="core-panel__copy">
               <p className="eyebrow">AI Core</p>

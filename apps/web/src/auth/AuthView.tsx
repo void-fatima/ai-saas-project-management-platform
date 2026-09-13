@@ -5,6 +5,7 @@ import { Button } from '../components/ui/Button';
 import { Form } from '../components/ui/Form';
 import { FormField } from '../components/ui/FormField';
 import { AuthApiError, login, register } from './auth-api';
+import type { SessionUser } from './session-api';
 import {
   fieldGuidance,
   validateAuthInput,
@@ -17,9 +18,10 @@ import './auth.css';
 
 interface AuthViewProps {
   onBack: () => void;
+  onAuthenticated?: (user: SessionUser) => void;
 }
 
-export function AuthView({ onBack }: AuthViewProps) {
+export function AuthView({ onBack, onAuthenticated }: AuthViewProps) {
   const [mode, setMode] = useState<AuthMode>('login');
 
   return (
@@ -37,7 +39,13 @@ export function AuthView({ onBack }: AuthViewProps) {
             Secure account access
           </span>
         </aside>
-        <AuthForm key={mode} mode={mode} onBack={onBack} onModeChange={setMode} />
+        <AuthForm
+          key={mode}
+          mode={mode}
+          onBack={onBack}
+          onModeChange={setMode}
+          onAuthenticated={onAuthenticated}
+        />
       </div>
     </main>
   );
@@ -50,7 +58,7 @@ interface AuthFormProps extends AuthViewProps {
 
 type Feedback = { kind: 'error' | 'success'; message: string };
 
-function AuthForm({ mode, onBack, onModeChange }: AuthFormProps) {
+function AuthForm({ mode, onBack, onModeChange, onAuthenticated }: AuthFormProps) {
   const isRegister = mode === 'register';
   const [values, setValues] = useState<RegisterInput>({ name: '', email: '', password: '' });
   const [errors, setErrors] = useState<FieldErrors>({});
@@ -99,11 +107,13 @@ function AuthForm({ mode, onBack, onModeChange }: AuthFormProps) {
     setPending(true);
     setFeedback(null);
     try {
-      if (isRegister) await register(values, controller.signal);
-      else await login(values, controller.signal);
+      const result = isRegister
+        ? await register(values, controller.signal)
+        : await login(values, controller.signal);
       if (requestRef.current !== controller) return;
       completedRef.current = true;
       setValues((current) => ({ ...current, password: '' }));
+      onAuthenticated?.(result.user);
       setFeedback({
         kind: 'success',
         message: isRegister ? 'Your account has been created.' : 'You’re signed in.',
