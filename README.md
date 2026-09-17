@@ -180,3 +180,7 @@ CI runs installation with a frozen lockfile followed by format, lint, typecheck,
 - [Full product roadmap](docs/roadmap/product-roadmap.md)
 - [Foundation verification](docs/verification/foundation.md)
 - [Coding-agent guidance](AGENTS.md)
+
+### Concurrent session policy
+
+Session creation and logout-all serialize on the user's PostgreSQL row. Each creation prunes to ten active sessions ordered by `createdAt DESC, id DESC`. Concurrent requests cannot independently overfill the cap. A login serialized before logout-all is revoked; one serialized afterward creates a new valid session. Rotation cannot resurrect revoked sessions. The concurrent PostgreSQL regression is committed but requires a working PostgreSQL environment to execute.

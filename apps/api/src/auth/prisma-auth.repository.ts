@@ -49,6 +49,7 @@ export class PrismaAuthRepository implements AuthRepository {
 
   async createSession(userId: string, session: NewSession, now: Date): Promise<string> {
     return this.prisma.$transaction(async (transaction) => {
+      await transaction.$queryRaw`SELECT id FROM users WHERE id = ${userId}::uuid FOR UPDATE`;
       const created = await transaction.session.create({
         data: {
           expiresAt: session.expiresAt,
@@ -61,7 +62,7 @@ export class PrismaAuthRepository implements AuthRepository {
       });
 
       const staleSessions = await transaction.session.findMany({
-        orderBy: { createdAt: 'desc' },
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
         select: { id: true },
         skip: 10,
         where: { expiresAt: { gt: now }, revokedAt: null, userId },
@@ -133,9 +134,12 @@ export class PrismaAuthRepository implements AuthRepository {
   }
 
   async revokeAllSessions(userId: string, now: Date): Promise<void> {
-    await this.prisma.session.updateMany({
-      data: { revokedAt: now },
-      where: { revokedAt: null, userId },
+    await this.prisma.$transaction(async (transaction) => {
+      await transaction.$queryRaw`SELECT id FROM users WHERE id = ${userId}::uuid FOR UPDATE`;
+      await transaction.session.updateMany({
+        data: { revokedAt: now },
+        where: { revokedAt: null, userId },
+      });
     });
   }
 }

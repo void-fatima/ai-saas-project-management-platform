@@ -65,6 +65,35 @@ describe('PostgreSQL session lifecycle', () => {
     expect(await repository.findActiveSession(session.token.hash, session.expiresAt)).toBeNull();
   });
 
+  it('enforces ten active sessions under twenty concurrent creations with deterministic ties', async () => {
+    const session = await fixture();
+    await Promise.all(
+      Array.from({ length: 20 }, () =>
+        repository.createSession(
+          session.user.id,
+          { expiresAt: session.expiresAt, tokenHash: tokens.issue().hash },
+          session.now,
+        ),
+      ),
+    );
+    const active = await prisma.session.findMany({
+      where: { userId: session.user.id, revokedAt: null, expiresAt: { gt: session.now } },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+    });
+    expect(active).toHaveLength(10);
+    await repository.revokeAllSessions(session.user.id, session.now);
+    expect(
+      await prisma.session.count({ where: { userId: session.user.id, revokedAt: null } }),
+    ).toBe(0);
+    const fresh = tokens.issue();
+    await repository.createSession(
+      session.user.id,
+      { expiresAt: session.expiresAt, tokenHash: fresh.hash },
+      session.now,
+    );
+    expect(await repository.findActiveSession(fresh.hash, session.now)).not.toBeNull();
+  });
+
   it('permits exactly one concurrent CAS, retains one row, and expires the predecessor', async () => {
     const session = await fixture();
     const replacements = [tokens.issue(), tokens.issue()];
