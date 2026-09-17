@@ -48,8 +48,8 @@ Security, tenant isolation, accessibility, testing, and observability are contin
 #### Remaining before Phase 2 completion
 
 - real browser verification of frontend session restoration, protected rendering, logout, and session error handling
-- email verification delivery and verified token lifecycle
-- forgot/reset password delivery and token lifecycle
+- production email delivery adapter and deployment verification (development token lifecycle implemented)
+- real PostgreSQL/browser verification of account verification and password reset
 - explicit session listing and selective revocation where product UX requires it
 - broader PostgreSQL authentication and migration regression coverage beyond the focused session lifecycle tests
 - final authentication threat review and production proxy/rate-limit deployment configuration

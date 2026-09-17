@@ -4,7 +4,7 @@ A production-minded full-stack foundation for a collaborative project management
 
 ## Status
 
-**Phase 2 — Authentication is in progress.** The secure account and opaque-session core is implemented. Email verification, password recovery, and the remaining Phase 2 hardening are still pending. Workspaces, projects, tasks, Kanban, collaboration, real-time features, and AI remain planned. See the [product roadmap](docs/roadmap/product-roadmap.md) for approved future scope.
+**Phase 2 — Authentication is in progress.** The secure account and opaque-session core is implemented. Verification and password recovery are implemented with a development-only mailbox; real PostgreSQL/browser verification and the remaining hardening are still pending. Workspaces, projects, tasks, Kanban, collaboration, real-time features, and AI remain planned. See the [product roadmap](docs/roadmap/product-roadmap.md) for approved future scope.
 
 ### Implemented
 
@@ -29,7 +29,7 @@ A production-minded full-stack foundation for a collaborative project management
 
 ### Planned
 
-Email verification and password recovery, workspace-scoped multi-tenancy, capability-based RBAC, project/task/Kanban workflows, collaboration, notifications, real-time updates, analytics, search, audit logs, AI planning and reporting, security/testing/performance hardening, production infrastructure, and UX polish are documented but intentionally not implemented yet.
+Production email delivery, workspace-scoped multi-tenancy, capability-based RBAC, project/task/Kanban workflows, collaboration, notifications, real-time updates, analytics, search, audit logs, AI planning and reporting, security/testing/performance hardening, production infrastructure, and UX polish are documented but intentionally not implemented yet.
 
 ## Technology
 
@@ -206,3 +206,22 @@ DELETE FROM sessions WHERE id IN (
 `WEB_ORIGIN` must be a canonical HTTP(S) origin without credentials, trailing slash, path, query, or fragment. Production requires HTTPS. Serve web and API on the same HTTPS site (prefer a single origin with `/auth` routed to the API); cross-site deployment is unsupported with SameSite=Strict. Production cookies keep Secure, HttpOnly, Path=/, no Domain, and the `__Host-` prefix. The API currently supports one directly exposed process or an edge that preserves a trustworthy client address without trusting arbitrary forwarding headers; multi-replica rate limiting is not supported yet.
 
 Turbo accounts for ignored root `.env` files and public output variables. Backend `DATABASE_URL` is passed only to processes, never exposed through a `VITE_*` name; tests are uncached. Vite loads the root env for public variables; Nest and Prisma read the root env and prefer injected shell values. Development PostgreSQL binds to loopback by default.
+
+### Verification and password recovery
+
+Apply the new `20260917000000_account_recovery` migration. `account_tokens` stores SHA-256 hashes, purpose, issuance/expiry, and consumption timestamps; it never stores the raw credential. Verification expires after 24 hours; password reset after 30 minutes. Consumption, identity mutation, and reset-driven session revocation are atomic. Resending replaces the previous link, with a database-enforced one-minute per-account/purpose cooldown and five HTTP attempts per minute per client/endpoint.
+
+- `POST /auth/resend-verification` and `POST /auth/forgot-password`: `{ email }`, generic 202 for eligible, unknown, verified, or cooldown cases.
+- `POST /auth/verify-email`: `{ token }`, 204 on success.
+- `POST /auth/reset-password`: `{ token, password }`, 204 on success; every session is revoked. No replacement session is issued.
+- Malformed/expired/used links return 400; throttling returns 429; unavailable delivery returns 503 honestly.
+
+The account shell exposes **Verify email**; login exposes **Forgot password?**. Email links use fragments, which are removed from browser history after reading and never sent to the server as URL parameters. Verification requires an explicit confirmation; reset requires a new valid password.
+
+For local development set `MAIL_MODE=development-file` in the ignored root `.env`. Requests deliver JSON messages into ignored `.tools/mail/*.json`; open the `url` locally to exercise the flow. This mailbox contains real development credentials: keep it private and delete messages when testing ends. It is not served over HTTP and secrets are never printed in application logs. `MAIL_MODE=disabled` is the default. Production forbids the development transport and returns 503 until a real `AccountMailDelivery` adapter is installed; no production delivery is claimed. Tests override delivery and do not send real email.
+
+Login verifies the password again under the same user-row lock by comparing the hash that was authenticated. A login racing with password reset cannot create a new session from the old password after reset completes. Session rotation continues to honor revocation.
+
+Account token rows may be removed in bounded batches once `expires_at` is more than 30 days old, using the same operator-driven retention approach as sessions.
+
+Authentication responses, including guard/validation/rate-limit failures, receive early `Cache-Control: no-store`. API responses have nosniff, frame denial, no-referrer, and restrictive CSP headers; production adds HSTS. Mutations reject mismatched Origin, and auth endpoints reject cross-site Fetch Metadata. Clients without Origin remain supported for non-browser use; browser CORS stays restricted. Forwarding headers are not trusted. Unexpected request errors return a generic response and only a static failure message is logged.

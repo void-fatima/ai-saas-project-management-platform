@@ -31,3 +31,12 @@ export const loginSchema = z
 
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
+
+export const emailRequestSchema = z.object({ email: emailSchema }).strict();
+export const tokenInputSchema = z
+  .object({ token: z.string().regex(/^[A-Za-z0-9_-]{43}$/) })
+  .strict();
+export const resetInputSchema = tokenInputSchema.extend({ password: passwordSchema });
+export type EmailRequestInput = z.infer<typeof emailRequestSchema>;
+export type TokenInput = z.infer<typeof tokenInputSchema>;
+export type ResetInput = z.infer<typeof resetInputSchema>;

@@ -47,9 +47,21 @@ export class PrismaAuthRepository implements AuthRepository {
     }
   }
 
-  async createSession(userId: string, session: NewSession, now: Date): Promise<string> {
+  async createSession(
+    userId: string,
+    session: NewSession,
+    now: Date,
+    expectedPasswordHash?: string,
+  ): Promise<string | null> {
     return this.prisma.$transaction(async (transaction) => {
       await transaction.$queryRaw`SELECT id FROM users WHERE id = ${userId}::uuid FOR UPDATE`;
+      if (expectedPasswordHash) {
+        const user = await transaction.user.findUnique({
+          where: { id: userId },
+          select: { passwordHash: true },
+        });
+        if (user?.passwordHash !== expectedPasswordHash) return null;
+      }
       const created = await transaction.session.create({
         data: {
           expiresAt: session.expiresAt,

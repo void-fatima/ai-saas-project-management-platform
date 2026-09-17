@@ -1,4 +1,3 @@
-import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 
@@ -6,7 +5,7 @@ import { AppModule } from './app.module.js';
 import type { Environment } from './config/environment.validation.js';
 
 async function bootstrap(): Promise<void> {
-  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  const app = await NestFactory.create(AppModule, { logger: false, abortOnError: false });
   const config = app.get<ConfigService<Environment, true>>(ConfigService);
 
   app.enableCors({
@@ -18,11 +17,10 @@ async function bootstrap(): Promise<void> {
 
   const port = config.get('API_PORT', { infer: true });
   await app.listen(port);
-  Logger.log(`API listening on port ${port}`, 'Bootstrap');
+  console.info(`API listening on port ${port}`);
 }
 
-bootstrap().catch((error: unknown) => {
-  const message = error instanceof Error ? error.message : 'Unknown bootstrap failure';
-  Logger.error(message, undefined, 'Bootstrap');
+bootstrap().catch(() => {
+  console.error('API startup failed. Check service configuration and database availability.');
   process.exitCode = 1;
 });

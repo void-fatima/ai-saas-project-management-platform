@@ -79,6 +79,12 @@ export function useSession() {
     state,
     pending,
     accept,
+    clear: () => {
+      active.current?.abort();
+      active.current = null;
+      setPending(false);
+      setState({ status: 'unauthenticated', user: null });
+    },
     refresh: () => run('restore'),
     logout: (all = false) => run(all ? 'logout-all' : 'logout'),
   };

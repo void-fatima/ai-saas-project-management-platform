@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 const environmentSchema = z
   .object({
+    MAIL_MODE: z.enum(['disabled', 'development-file']).default('disabled'),
     NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
     API_PORT: z.coerce.number().int().min(1).max(65_535).default(3000),
     WEB_ORIGIN: z.url({ protocol: /^https?$/ }).refine((value) => {
@@ -29,6 +30,13 @@ const environmentSchema = z
       .default(24 * 30),
   })
   .superRefine((config, context) => {
+    if (config.NODE_ENV === 'production' && config.MAIL_MODE === 'development-file') {
+      context.addIssue({
+        code: 'custom',
+        path: ['MAIL_MODE'],
+        message: 'Development mail is forbidden in production.',
+      });
+    }
     if (config.SESSION_ROTATION_HOURS >= config.SESSION_TTL_HOURS) {
       context.addIssue({
         code: 'custom',

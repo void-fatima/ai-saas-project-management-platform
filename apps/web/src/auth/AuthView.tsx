@@ -17,11 +17,12 @@ import {
 import './auth.css';
 
 interface AuthViewProps {
+  onForgot?: () => void;
   onBack: () => void;
   onAuthenticated?: (user: SessionUser) => void;
 }
 
-export function AuthView({ onBack, onAuthenticated }: AuthViewProps) {
+export function AuthView({ onBack, onAuthenticated, onForgot }: AuthViewProps) {
   const [mode, setMode] = useState<AuthMode>('login');
 
   return (
@@ -45,6 +46,7 @@ export function AuthView({ onBack, onAuthenticated }: AuthViewProps) {
           onBack={onBack}
           onModeChange={setMode}
           onAuthenticated={onAuthenticated}
+          onForgot={onForgot}
         />
       </div>
     </main>
@@ -58,7 +60,7 @@ interface AuthFormProps extends AuthViewProps {
 
 type Feedback = { kind: 'error' | 'success'; message: string };
 
-function AuthForm({ mode, onBack, onModeChange, onAuthenticated }: AuthFormProps) {
+function AuthForm({ mode, onBack, onModeChange, onAuthenticated, onForgot }: AuthFormProps) {
   const isRegister = mode === 'register';
   const [values, setValues] = useState<RegisterInput>({ name: '', email: '', password: '' });
   const [errors, setErrors] = useState<FieldErrors>({});
@@ -223,6 +225,11 @@ function AuthForm({ mode, onBack, onModeChange, onAuthenticated }: AuthFormProps
 
       {!succeeded ? (
         <footer className="auth-footer">
+          {onForgot ? (
+            <Button disabled={pending} onClick={onForgot} variant="ghost">
+              Forgot password?
+            </Button>
+          ) : null}
           <p>{isRegister ? 'Already have an account?' : 'New to Project Platform?'}</p>
           <Button
             disabled={pending}

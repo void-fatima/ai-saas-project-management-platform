@@ -80,7 +80,9 @@ export class AuthService {
       user.id,
       { expiresAt: this.expirationFrom(now), tokenHash: token.hash },
       now,
+      user.passwordHash,
     );
+    if (!sessionId) throw new UnauthorizedException('Invalid email or password.');
 
     return {
       maxAgeSeconds: this.sessionMaxAgeSeconds,

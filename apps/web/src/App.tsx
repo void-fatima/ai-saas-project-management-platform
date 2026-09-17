@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { apiUrl } from './api/config';
 import { AuthView } from './auth/AuthView';
+import { AccountRecoveryView, type AccountAction } from './auth/AccountRecoveryView';
 import { useSession } from './auth/use-session';
 import type { SessionUser } from './auth/session-api';
 import aiCoreOrb from './assets/ai-core-orb.png';
@@ -49,6 +50,31 @@ const coreStatusCopy: Record<CoreStatus, { description: string; label: string }>
 export function App() {
   const session = useSession();
   const [welcome, setWelcome] = useState(false);
+  const [accountAction, setAccountAction] = useState<{
+    action: AccountAction;
+    token?: string;
+  } | null>(() => {
+    const match = /^#(verify|reset)=([A-Za-z0-9_-]*)$/.exec(window.location.hash);
+    return match ? { action: match[1] === 'verify' ? 'verify' : 'reset', token: match[2] } : null;
+  });
+  useEffect(() => {
+    if (window.location.hash.startsWith('#verify=') || window.location.hash.startsWith('#reset=')) {
+      window.history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
+  }, []);
+  if (accountAction)
+    return (
+      <AccountRecoveryView
+        key={accountAction.action}
+        {...accountAction}
+        initialEmail={session.state.user?.email}
+        onBack={() => setAccountAction(null)}
+        onSuccess={() => {
+          if (accountAction.action === 'reset') session.clear();
+          if (accountAction.action === 'verify') void session.refresh();
+        }}
+      />
+    );
   if (session.state.status === 'checking') {
     return (
       <main className="auth-page">
@@ -81,12 +107,19 @@ export function App() {
         </main>
       );
     }
-    return <AuthView onBack={() => setWelcome(true)} onAuthenticated={session.accept} />;
+    return (
+      <AuthView
+        onBack={() => setWelcome(true)}
+        onAuthenticated={session.accept}
+        onForgot={() => setAccountAction({ action: 'forgot' })}
+      />
+    );
   }
   return (
     <Observatory
       key={session.state.user.id}
       user={session.state.user}
+      onVerify={() => setAccountAction({ action: 'resend' })}
       pending={session.pending}
       onLogout={(all) => void session.logout(all)}
       onRefreshSession={() => void session.refresh()}
@@ -97,12 +130,14 @@ export function App() {
 
 function Observatory({
   user,
+  onVerify,
   pending,
   onLogout,
   onRefreshSession,
   error,
 }: {
   user: SessionUser;
+  onVerify: () => void;
   pending: boolean;
   onLogout: (all: boolean) => void;
   onRefreshSession: () => void;
@@ -175,6 +210,13 @@ function Observatory({
           </div>
           <div className="topbar__actions">
             <span aria-label="Signed-in account">{user.name}</span>
+            {!user.emailVerified ? (
+              <Button variant="secondary" onClick={onVerify}>
+                Verify email
+              </Button>
+            ) : (
+              <span>Email verified</span>
+            )}
             <Button disabled={pending} onClick={() => onLogout(false)} variant="secondary">
               Sign out
             </Button>

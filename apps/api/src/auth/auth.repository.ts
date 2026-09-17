@@ -18,7 +18,12 @@ export interface NewUser {
 }
 
 export interface AuthRepository {
-  createSession(userId: string, session: NewSession, now: Date): Promise<string>;
+  createSession(
+    userId: string,
+    session: NewSession,
+    now: Date,
+    expectedPasswordHash?: string,
+  ): Promise<string | null>;
   createUserWithSession(
     user: NewUser,
     session: NewSession,
