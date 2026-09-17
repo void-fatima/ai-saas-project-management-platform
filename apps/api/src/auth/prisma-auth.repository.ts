@@ -86,6 +86,7 @@ export class PrismaAuthRepository implements AuthRepository {
   async findActiveSession(tokenHash: string, now: Date): Promise<ActiveSessionRecord | null> {
     return this.prisma.session.findFirst({
       select: {
+        createdAt: true,
         expiresAt: true,
         id: true,
         rotatedAt: true,

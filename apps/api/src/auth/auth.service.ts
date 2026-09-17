@@ -17,6 +17,7 @@ interface IssuedSession {
 }
 
 export interface AuthenticatedSession {
+  rotatedMaxAgeSeconds?: number;
   rotatedToken?: string;
   sessionId: string;
   user: PublicUser;
@@ -26,6 +27,7 @@ export interface AuthenticatedSession {
 export class AuthService {
   private readonly rotationMilliseconds: number;
   private readonly sessionMilliseconds: number;
+  private readonly absoluteMilliseconds: number;
   readonly sessionMaxAgeSeconds: number;
 
   constructor(
@@ -37,6 +39,7 @@ export class AuthService {
     const sessionHours = config.get('SESSION_TTL_HOURS', { infer: true });
     const rotationHours = config.get('SESSION_ROTATION_HOURS', { infer: true });
     this.sessionMilliseconds = sessionHours * 60 * 60 * 1000;
+    this.absoluteMilliseconds = config.get('SESSION_ABSOLUTE_HOURS', { infer: true }) * 3_600_000;
     this.rotationMilliseconds = rotationHours * 60 * 60 * 1000;
     this.sessionMaxAgeSeconds = sessionHours * 60 * 60;
   }
@@ -94,7 +97,7 @@ export class AuthService {
     const currentTokenHash = this.sessionTokens.hash(rawToken);
     const session = await this.repository.findActiveSession(currentTokenHash, now);
 
-    if (!session) {
+    if (!session || session.createdAt.getTime() + this.absoluteMilliseconds <= now.getTime()) {
       throw new InvalidSessionError();
     }
 
@@ -109,11 +112,17 @@ export class AuthService {
       now.getTime() - session.rotatedAt.getTime() >= this.rotationMilliseconds
     ) {
       const nextToken = this.sessionTokens.issue();
+      const expiresAt = new Date(
+        Math.min(
+          this.expirationFrom(now).getTime(),
+          session.createdAt.getTime() + this.absoluteMilliseconds,
+        ),
+      );
       const rotated = await this.repository.rotateSession(
         session.id,
         currentTokenHash,
         {
-          expiresAt: this.expirationFrom(now),
+          expiresAt,
           previousTokenExpiresAt: new Date(
             Math.min(session.expiresAt.getTime(), now.getTime() + 30_000),
           ),
@@ -123,6 +132,10 @@ export class AuthService {
       );
       if (rotated) {
         result.rotatedToken = nextToken.raw;
+        result.rotatedMaxAgeSeconds = Math.max(
+          0,
+          Math.floor((expiresAt.getTime() - now.getTime()) / 1000),
+        );
       } else {
         // A failed CAS can also mean revocation or expiry. Never trust the old snapshot.
         const current = await this.repository.findActiveSession(currentTokenHash, new Date());

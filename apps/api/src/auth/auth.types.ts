@@ -16,6 +16,7 @@ export interface PublicUser {
 }
 
 export interface ActiveSessionRecord {
+  createdAt: Date;
   expiresAt: Date;
   id: string;
   rotatedAt: Date;

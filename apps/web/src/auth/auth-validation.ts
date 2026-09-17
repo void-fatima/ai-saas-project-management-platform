@@ -28,7 +28,7 @@ export function validateAuthInput(mode: AuthMode, input: RegisterInput): FieldEr
   if (mode === 'register' && (input.name.trim().length < 2 || input.name.trim().length > 100)) {
     errors.name = fieldGuidance.name;
   }
-  if (input.email.length > 254 || !emailPattern.test(input.email)) {
+  if (input.email.trim().length > 254 || !emailPattern.test(input.email.trim())) {
     errors.email = fieldGuidance.email;
   }
   if (mode === 'login') {

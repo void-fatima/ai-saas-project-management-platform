@@ -1,5 +1,16 @@
 {
   "$schema": "https://turbo.build/schema.json",
+  "globalDependencies": [".env", ".env.*"],
+  "globalEnv": [
+    "NODE_ENV",
+    "VITE_API_URL",
+    "API_PORT",
+    "WEB_ORIGIN",
+    "SESSION_TTL_HOURS",
+    "SESSION_ROTATION_HOURS",
+    "SESSION_ABSOLUTE_HOURS"
+  ],
+  "globalPassThroughEnv": ["DATABASE_URL"],
   "tasks": {
     "dev": {
       "cache": false,
@@ -16,6 +27,7 @@
       "dependsOn": ["^typecheck"]
     },
     "test": {
+      "cache": false,
       "dependsOn": ["^test"]
     }
   }

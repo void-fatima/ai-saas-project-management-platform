@@ -1,8 +1,10 @@
 import { z } from 'zod';
 
 const emailSchema = z
-  .email('Enter a valid email address.')
+  .string()
+  .trim()
   .max(254, 'Email must be at most 254 characters.')
+  .pipe(z.email('Enter a valid email address.'))
   .transform((email) => email.trim().toLowerCase());
 
 const passwordSchema = z

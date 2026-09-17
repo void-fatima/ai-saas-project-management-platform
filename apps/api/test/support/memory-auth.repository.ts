@@ -9,6 +9,7 @@ import type {
 import type { ActiveSessionRecord, UserRecord } from '../../src/auth/auth.types.js';
 
 interface StoredSession {
+  createdAt: Date;
   expiresAt: Date;
   id: string;
   previousTokenExpiresAt: Date | null;
@@ -50,6 +51,7 @@ export class MemoryAuthRepository implements AuthRepository {
     const id = randomUUID();
     this.sessions.set(id, {
       ...session,
+      createdAt: now,
       id,
       previousTokenExpiresAt: null,
       previousTokenHash: null,
@@ -79,6 +81,7 @@ export class MemoryAuthRepository implements AuthRepository {
     const user = this.users.get(session.userId);
     if (!user) return Promise.resolve(null);
     return Promise.resolve({
+      createdAt: session.createdAt,
       expiresAt: session.expiresAt,
       id: session.id,
       rotatedAt: session.rotatedAt,

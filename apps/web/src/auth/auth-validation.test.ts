@@ -7,6 +7,11 @@ const valid: RegisterInput = {
 };
 
 describe('Authentication validation contract', () => {
+  it('accepts surrounding email whitespace consistently with the API', () => {
+    expect(validateAuthInput('register', { ...valid, email: '  TAYLOR@example.com  ' })).toEqual(
+      {},
+    );
+  });
   it.each(['short42', 'onlyletterslongenough', '123456789012', `${'a'.repeat(128)}1`])(
     'rejects registration password %s',
     (password) => {

@@ -37,7 +37,11 @@ export class SessionAuthGuard implements CanActivate {
         userId: session.user.id,
       };
       if (session.rotatedToken) {
-        this.cookies.write(response, session.rotatedToken, this.auth.sessionMaxAgeSeconds);
+        this.cookies.write(
+          response,
+          session.rotatedToken,
+          session.rotatedMaxAgeSeconds ?? this.auth.sessionMaxAgeSeconds,
+        );
       }
       return true;
     } catch (error: unknown) {

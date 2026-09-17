@@ -8,7 +8,7 @@ import { PrismaService } from '../src/database/prisma.service.js';
 import { MemoryAuthRepository } from './support/memory-auth.repository.js';
 
 const validAccount = {
-  email: 'OWNER@EXAMPLE.COM',
+  email: '  OWNER@EXAMPLE.COM  ',
   name: 'Platform Owner',
   password: 'correct-horse-42',
 };
@@ -68,7 +68,10 @@ describe('Authentication API', () => {
     expect(String(registration.headers['set-cookie'])).toContain('SameSite=Strict');
     expect(registration.headers['cache-control']).toBe('no-store');
 
-    await firstDevice.post('/auth/register').send(validAccount).expect(409);
+    await firstDevice
+      .post('/auth/register')
+      .send({ ...validAccount, email: 'owner@example.com' })
+      .expect(409);
     await secondDevice
       .post('/auth/login')
       .send({ email: validAccount.email, password: 'wrong-password' })

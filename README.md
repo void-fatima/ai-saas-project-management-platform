@@ -184,3 +184,25 @@ CI runs installation with a frozen lockfile followed by format, lint, typecheck,
 ### Concurrent session policy
 
 Session creation and logout-all serialize on the user's PostgreSQL row. Each creation prunes to ten active sessions ordered by `createdAt DESC, id DESC`. Concurrent requests cannot independently overfill the cap. A login serialized before logout-all is revoked; one serialized afterward creates a new valid session. Rotation cannot resurrect revoked sessions. The concurrent PostgreSQL regression is committed but requires a working PostgreSQL environment to execute.
+
+### Lifetime, retention, and deployment configuration
+
+`SESSION_TTL_HOURS` defaults to 168, `SESSION_ROTATION_HOURS` to 24, and `SESSION_ABSOLUTE_HOURS` to 720. Rotation must be strictly shorter than TTL; TTL cannot exceed absolute lifetime. A session never authenticates beyond `createdAt + absolute lifetime`, even after rotations. Replacement cookie lifetime is capped at this boundary. Configuration changes apply to existing sessions too.
+
+Expiry slides only when the current token rotates; ordinary reads and predecessor requests do not extend expiry. The effective inactivity window is therefore between TTL minus rotation interval and TTL. `lastSeenAt` is deliberately sampled: it records creation or successful rotation, not every request, and must not be shown as an exact last-active time.
+
+Retain expired/revoked rows for 30 days for troubleshooting. An operator may periodically run the following bounded cleanup (repeat until zero rows); no scheduler or Redis is required. The 120-day bound also covers absolute expiry under the maximum supported 90-day configuration plus retention.
+
+```sql
+DELETE FROM sessions WHERE id IN (
+  SELECT id FROM sessions
+  WHERE expires_at < now() - interval '30 days'
+     OR revoked_at < now() - interval '30 days'
+     OR created_at < now() - interval '120 days'
+  ORDER BY id LIMIT 500
+);
+```
+
+`WEB_ORIGIN` must be a canonical HTTP(S) origin without credentials, trailing slash, path, query, or fragment. Production requires HTTPS. Serve web and API on the same HTTPS site (prefer a single origin with `/auth` routed to the API); cross-site deployment is unsupported with SameSite=Strict. Production cookies keep Secure, HttpOnly, Path=/, no Domain, and the `__Host-` prefix. The API currently supports one directly exposed process or an edge that preserves a trustworthy client address without trusting arbitrary forwarding headers; multi-replica rate limiting is not supported yet.
+
+Turbo accounts for ignored root `.env` files and public output variables. Backend `DATABASE_URL` is passed only to processes, never exposed through a `VITE_*` name; tests are uncached. Vite loads the root env for public variables; Nest and Prisma read the root env and prefer injected shell values. Development PostgreSQL binds to loopback by default.

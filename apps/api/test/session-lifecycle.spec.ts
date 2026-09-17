@@ -71,6 +71,22 @@ describe('Session lifecycle HTTP regressions', () => {
     expect(response.headers['set-cookie']).toBeUndefined();
   });
 
+  it('caps rotation at the absolute lifetime and rejects the exact boundary', async () => {
+    const session = await fixture({ rotationDue: true });
+    const lookup = repository.findActiveSession.bind(repository);
+    vi.spyOn(repository, 'findActiveSession').mockImplementation(async (...args) => {
+      const value = await lookup(...args);
+      return value
+        ? { ...value, createdAt: new Date(now.getTime() - 30 * 24 * 3_600_000 + 60_000) }
+        : null;
+    });
+    const response = await me(session.cookie).expect(200);
+    expect(String(response.headers['set-cookie'])).toContain('Max-Age=60');
+    const replacement = String(response.headers['set-cookie']).split(';')[0]!;
+    vi.setSystemTime(now.getTime() + 60_000);
+    await me(replacement).expect(401);
+  });
+
   it.each(['bad-token', 'a'.repeat(44), '%00'])(
     'rejects malformed token %s before lookup',
     async (raw) => {
