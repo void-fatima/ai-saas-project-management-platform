@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-const emailSchema = z
+export const emailSchema = z
   .string()
   .trim()
   .max(254, 'Email must be at most 254 characters.')

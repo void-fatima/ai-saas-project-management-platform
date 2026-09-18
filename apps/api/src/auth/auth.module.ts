@@ -17,6 +17,13 @@ import { SessionCookieService } from './session-cookie.service.js';
 import { SessionTokenService } from './session-token.service.js';
 
 @Module({
+  exports: [
+    SessionAuthGuard,
+    SessionTokenService,
+    AccountMailDelivery,
+    AuthService,
+    SessionCookieService,
+  ],
   controllers: [AuthController, AccountRecoveryController],
   providers: [
     AccountRecoveryService,

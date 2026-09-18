@@ -7,7 +7,7 @@ import type { Environment } from '../config/environment.validation.js';
 
 export interface AccountMail {
   to: string;
-  purpose: 'verify' | 'reset';
+  purpose: 'verify' | 'reset' | 'invite';
   url: string;
 }
 export abstract class AccountMailDelivery {

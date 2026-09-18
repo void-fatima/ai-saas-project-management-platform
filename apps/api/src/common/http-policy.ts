@@ -32,7 +32,12 @@ export class HttpPolicy implements NestMiddleware {
     if (this.config.get('NODE_ENV', { infer: true }) === 'production')
       response.setHeader('Strict-Transport-Security', 'max-age=31536000');
     const path = request.originalUrl.split('?')[0] ?? '';
-    if (path === '/auth' || path.startsWith('/auth/')) {
+    if (
+      path === '/auth' ||
+      path.startsWith('/auth/') ||
+      path === '/workspaces' ||
+      path.startsWith('/workspaces/')
+    ) {
       response.setHeader('Cache-Control', 'no-store');
       const origin = request.headers.origin;
       if (

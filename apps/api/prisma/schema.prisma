@@ -8,17 +8,74 @@ datasource db {
 }
 
 model User {
-  id              String    @id @default(uuid()) @db.Uuid
-  email           String    @unique(map: "users_email_key") @db.VarChar(254)
-  name            String    @db.VarChar(100)
-  passwordHash    String    @map("password_hash")
-  emailVerifiedAt DateTime? @map("email_verified_at") @db.Timestamptz(3)
-  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  id              String                @id @default(uuid()) @db.Uuid
+  email           String                @unique(map: "users_email_key") @db.VarChar(254)
+  name            String                @db.VarChar(100)
+  passwordHash    String                @map("password_hash")
+  emailVerifiedAt DateTime?             @map("email_verified_at") @db.Timestamptz(3)
+  createdAt       DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime              @updatedAt @map("updated_at") @db.Timestamptz(3)
   sessions        Session[]
   accountTokens   AccountToken[]
+  ownedWorkspaces Workspace[]           @relation("WorkspaceOwner")
+  memberships     WorkspaceMembership[]
+  invitations     WorkspaceInvitation[] @relation("WorkspaceInviter")
 
   @@map("users")
+}
+
+enum WorkspaceRole {
+  Owner
+  Admin
+  Manager
+  Member
+  Viewer
+}
+
+model Workspace {
+  id          String                @id @default(uuid()) @db.Uuid
+  name        String                @db.VarChar(100)
+  ownerId     String                @map("owner_id") @db.Uuid
+  createdAt   DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime              @updatedAt @map("updated_at") @db.Timestamptz(3)
+  owner       User                  @relation("WorkspaceOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+  memberships WorkspaceMembership[]
+  invitations WorkspaceInvitation[]
+
+  @@map("workspaces")
+}
+
+model WorkspaceMembership {
+  workspaceId String        @map("workspace_id") @db.Uuid
+  userId      String        @map("user_id") @db.Uuid
+  role        WorkspaceRole
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+  workspace   Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([workspaceId, userId])
+  @@index([userId])
+  @@map("workspace_memberships")
+}
+
+model WorkspaceInvitation {
+  id          String        @id @default(uuid()) @db.Uuid
+  workspaceId String        @map("workspace_id") @db.Uuid
+  email       String        @db.VarChar(254)
+  role        WorkspaceRole
+  tokenHash   String        @unique @map("token_hash") @db.Char(64)
+  inviterId   String?       @map("inviter_id") @db.Uuid
+  issuedAt    DateTime      @map("issued_at") @db.Timestamptz(3)
+  expiresAt   DateTime      @map("expires_at") @db.Timestamptz(3)
+  consumedAt  DateTime?     @map("consumed_at") @db.Timestamptz(3)
+  revokedAt   DateTime?     @map("revoked_at") @db.Timestamptz(3)
+  workspace   Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  inviter     User?         @relation("WorkspaceInviter", fields: [inviterId], references: [id], onDelete: SetNull)
+
+  @@unique([workspaceId, email])
+  @@index([expiresAt])
+  @@map("workspace_invitations")
 }
 
 enum AccountTokenKind {

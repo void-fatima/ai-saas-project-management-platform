@@ -5,6 +5,7 @@ import { HttpPolicy, SafeExceptionFilter } from './common/http-policy.js';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 
 import { AuthModule } from './auth/auth.module.js';
+import { WorkspaceModule } from './workspaces/workspace.module.js';
 import { validateEnvironment } from './config/environment.validation.js';
 import { DatabaseModule } from './database/database.module.js';
 import { HealthController } from './health/health.controller.js';
@@ -20,6 +21,7 @@ import { HealthController } from './health/health.controller.js';
     ThrottlerModule.forRoot([{ name: 'default', limit: 100, ttl: 60_000 }]),
     DatabaseModule,
     AuthModule,
+    WorkspaceModule,
   ],
   controllers: [HealthController],
   providers: [
