@@ -7,6 +7,7 @@ import { PrismaService } from '../src/database/prisma.service.js';
 
 describe('GET /health', () => {
   let app: INestApplication;
+  const checkReadiness = vi.fn<() => Promise<void>>().mockResolvedValue(undefined);
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
@@ -14,6 +15,7 @@ describe('GET /health', () => {
       .useValue({
         $connect: vi.fn(),
         $disconnect: vi.fn(),
+        checkReadiness,
       })
       .compile();
     app = moduleRef.createNestApplication();
@@ -30,5 +32,20 @@ describe('GET /health', () => {
     const response = await request(app.getHttpServer()).get('/health').expect(200);
 
     expect(response.body).toEqual({ status: 'ok' });
+  });
+
+  it('checks database readiness without exposing database failures', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    await request(app.getHttpServer()).get('/health/ready').expect(200, { status: 'ok' });
+    checkReadiness.mockRejectedValueOnce(new Error('private-connection-details'));
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    const response = await request(app.getHttpServer()).get('/health/ready').expect(503);
+    expect(JSON.stringify(response.body)).not.toContain('private-connection-details');
+  });
+
+  it('bounds a stalled readiness probe', async () => {
+    checkReadiness.mockImplementationOnce(() => new Promise(() => {}));
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    await request(app.getHttpServer()).get('/health/ready').expect(503);
   });
 });

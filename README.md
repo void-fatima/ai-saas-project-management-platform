@@ -111,7 +111,9 @@ pnpm --filter @platform/api dev
 pnpm --filter @platform/web dev
 ```
 
-The current API validates `NODE_ENV`, `API_PORT`, `WEB_ORIGIN`, `DATABASE_URL`, and session policy configuration, and verifies PostgreSQL connectivity during startup. Database connectivity is intentionally not exposed in the public health response. The baseline migration enables `pgcrypto`; later migrations add users and sessions.
+The current API validates `NODE_ENV`, `API_PORT`, `WEB_ORIGIN`, `DATABASE_URL`, mail mode, and session policy configuration, and verifies PostgreSQL connectivity during startup. The baseline migration enables `pgcrypto`; later migrations add users, sessions, and account tokens.
+
+`GET /health` reports process liveness. `GET /health/ready` performs a bounded PostgreSQL query and returns `{ "status": "ok" }` or a generic 503 without connection details. The readiness response deadline is 2.5 seconds, with shorter connection/transaction/statement limits. Both endpoints bypass request throttling and disable caching. The web indicator uses readiness, validates the JSON shape, aborts after five seconds, and cancels or ignores superseded requests; retry remains available.
 
 ## Database Workflow
 

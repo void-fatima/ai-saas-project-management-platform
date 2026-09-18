@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { apiUrl } from './api/config';
+import { useHealth } from './api/use-health';
 import { AuthView } from './auth/AuthView';
 import { AccountRecoveryView, type AccountAction } from './auth/AccountRecoveryView';
 import { useSession } from './auth/use-session';
@@ -27,7 +28,6 @@ import { Button } from './components/ui/Button';
 import { Form } from './components/ui/Form';
 import { FormField } from './components/ui/FormField';
 
-type ApiStatus = 'checking' | 'available' | 'unavailable';
 type CoreStatus = 'online' | 'processing' | 'warning';
 
 const developerUnlockClicks = 5;
@@ -143,29 +143,11 @@ function Observatory({
   onRefreshSession: () => void;
   error?: string;
 }) {
-  const [apiStatus, setApiStatus] = useState<ApiStatus>('checking');
+  const { status: apiStatus, check: checkApi } = useHealth();
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [coreClicks, setCoreClicks] = useState(0);
   const [developerPanelOpen, setDeveloperPanelOpen] = useState(false);
   const apiSectionRef = useRef<HTMLElement>(null);
-
-  const checkApi = useCallback(async (signal?: AbortSignal): Promise<void> => {
-    setApiStatus('checking');
-
-    try {
-      const response = await fetch(`${apiUrl}/health`, { signal });
-      setApiStatus(response.ok ? 'available' : 'unavailable');
-    } catch (error: unknown) {
-      if (error instanceof DOMException && error.name === 'AbortError') return;
-      setApiStatus('unavailable');
-    }
-  }, []);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    void checkApi(controller.signal);
-    return () => controller.abort();
-  }, [checkApi]);
 
   useEffect(() => {
     function handleCommandShortcut(event: KeyboardEvent): void {

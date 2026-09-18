@@ -42,6 +42,10 @@ Recovery completed on `feature/authentication`: `e132010` (auth UI), `cb86a68` (
 
 The next slices remain verification/recovery delivery and token persistence, concurrency-safe session limits and lifetime/retention, configuration/security, health/readiness, accessibility, real PostgreSQL and browser coverage, and CI. Later product capabilities remain deferred in the roadmap.
 
+### Readiness checkpoint — 2026-09-18
+
+Liveness and bounded database readiness are separate. The frontend validates readiness responses, times out, and ignores stale probes. API lint, typecheck, 45 unit/HTTP tests, and build passed; web lint, typecheck, 54 component/unit tests, and build passed. Real PostgreSQL and browser checks remain unverified: Docker reports that the Desktop Linux engine pipe is absent. These mocked health regressions do not establish database connectivity.
+
 ### Continued hardening at b1518c0
 
 Revalidated: verification/reset, lifetime, environment/Turbo, readiness, UI fixes OPEN; session cap, HTTP policy, DB coverage PARTIAL; PostgreSQL and real E2E execution BLOCKED BY ENVIRONMENT at initial inspection. On September 17 Docker Desktop was found installed and started, but engine availability is still being checked. Two backup stashes retained. Session creation and logout-all now share a user-row lock and deterministic pruning; real concurrency regression added, execution blocked.

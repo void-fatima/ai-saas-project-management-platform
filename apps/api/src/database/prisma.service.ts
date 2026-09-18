@@ -9,7 +9,7 @@ import { PrismaClient } from '../generated/prisma/client.js';
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
   constructor(@Inject(ConfigService) configService: ConfigService<Environment, true>) {
     const connectionString = configService.get('DATABASE_URL', { infer: true });
-    const adapter = new PrismaPg({ connectionString });
+    const adapter = new PrismaPg({ connectionString, connectionTimeoutMillis: 2000 });
 
     super({ adapter });
   }
@@ -21,5 +21,15 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
 
   async onModuleDestroy(): Promise<void> {
     await this.$disconnect();
+  }
+
+  async checkReadiness(): Promise<void> {
+    await this.$transaction(
+      async (tx) => {
+        await tx.$executeRaw`SET LOCAL statement_timeout = '1500ms'`;
+        await tx.$queryRaw`SELECT 1`;
+      },
+      { maxWait: 1000, timeout: 2000 },
+    );
   }
 }

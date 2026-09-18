@@ -5,7 +5,7 @@ This document preserves approved product scope while keeping implementation incr
 ## Scope Classification
 
 - **Completed Phase:** Phase 1 foundation.
-- **Current Phase:** Phase 2 authentication. The secure registration/login/session core is implemented; verification and recovery are pending.
+- **Current Phase:** Phase 2 authentication. Registration/login/session, verification, and recovery lifecycles are implemented; real PostgreSQL/browser verification and remaining hardening are pending.
 - **Core Future Phase:** the remainder of Phase 2 and Phases 3–21, delivering the secure collaborative product and its primary AI value.
 - **Production Hardening:** Phases 22–27, continuously considered earlier and formally hardened here.
 - **Advanced Future Phase:** deeper real-time, analytics, search, AI, enterprise, and infrastructure capabilities after core workflows prove their value.
@@ -33,6 +33,7 @@ Security, tenant isolation, accessibility, testing, and observability are contin
 
 #### Implemented slice
 
+- separate process liveness and bounded PostgreSQL readiness, with a validated, cancellable frontend readiness client
 - PostgreSQL-backed users and hashed opaque sessions with a committed migration
 - registration and login with normalized email, strict input validation, and Argon2id
 - HttpOnly, SameSite=Strict session cookies with production `__Host-` naming
