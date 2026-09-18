@@ -4,7 +4,7 @@ A production-minded full-stack foundation for a collaborative project management
 
 ## Status
 
-**Phase 2 — Authentication is in progress.** The secure account and opaque-session core is implemented. Verification and password recovery are implemented with a development-only mailbox; real PostgreSQL/browser verification and the remaining hardening are still pending. Workspaces, projects, tasks, Kanban, collaboration, real-time features, and AI remain planned. See the [product roadmap](docs/roadmap/product-roadmap.md) for approved future scope.
+**Foundation and authentication implementation is complete for the next product phase.** Account/session, verification, and recovery lifecycles have real PostgreSQL and browser coverage. Email delivery uses an explicitly development-only mailbox; production requires a delivery adapter and deployment hardening. Workspaces, projects, tasks, Kanban, collaboration, real-time features, and AI remain planned. See the [product roadmap](docs/roadmap/product-roadmap.md) for approved future scope.
 
 ### Implemented
 
@@ -151,7 +151,7 @@ Registration accepts `name`, `email`, and `password`. Passwords must be 12–128
 
 The web app restores identity through `/auth/me` before showing the protected application shell. Without a valid session it opens the login view; use **Create an account** to register. The forms use `VITE_API_URL` and send credentials so the browser can accept the API's HttpOnly cookie. Keep the web and API on the same site (and use the same hostname locally) for the existing SameSite=Strict policy; `WEB_ORIGIN` must match the frontend origin. Production cookies require HTTPS.
 
-Successful registration/login enters the application. Reloading restores the HttpOnly cookie session; **Sign out** and **Sign out all devices** revoke sessions and remove protected UI. Authenticated session requests distinguish 401 from permission errors, throttling, and temporary service failures. Only 401 or successful logout clears local identity. Bootstrap failures offer a bounded retry without displaying protected content. Returning to the tab revalidates identity. These transitions have component coverage; real browser/PostgreSQL verification is still required.
+Successful registration/login enters the application. Reloading restores the HttpOnly cookie session; **Sign out** and **Sign out all devices** revoke sessions and remove protected UI. Authenticated session requests distinguish 401 from permission errors, throttling, and temporary service failures. Only 401 or successful logout clears local identity. Bootstrap failures offer a bounded retry without displaying protected content. Returning to the tab revalidates identity. These transitions have component and real browser/PostgreSQL coverage.
 
 Session rotation updates the existing row with a conditional token-hash comparison. Only the winning request sends a replacement cookie. The previous token hash remains usable for overlapping requests for at most 30 seconds, never beyond that token's original expiry; it cannot trigger another rotation. A losing rotation rechecks the persisted session before returning identity, so revocation and expiry still take effect. Only hashes are stored, including the predecessor. Apply the additive `20260905090000_harden_session_rotation` migration before running this API version.
 
@@ -174,7 +174,21 @@ Integration tests require the local PostgreSQL service, an `.env` with a valid `
 
 Database lifecycle helpers are also available through `pnpm db:up`, `pnpm db:status`, `pnpm db:logs`, and `pnpm db:down`. `db:down` stops the local stack but preserves the named PostgreSQL volume; use explicit Docker volume commands only when intentional data removal is required.
 
-CI runs installation with a frozen lockfile followed by format, lint, typecheck, test, and build checks. Deployment is intentionally outside the current phase.
+### Browser verification
+
+Use a disposable PostgreSQL database named `platform_auth_test`, inject its `DATABASE_URL` explicitly, and apply migrations before running:
+
+```bash
+pnpm build
+pnpm --filter @platform/web exec playwright install chromium
+pnpm --filter @platform/web test:e2e
+```
+
+The suite starts its own API and web servers on ports 3000 and 5173, refuses to reuse existing servers, and uses real browser cookies and database writes. It exercises registration/login, refresh restoration, logout, verification, password reset and other-device revocation, plus modal keyboard and small-viewport behavior. Unique test accounts remain in this disposable database; discard the test database when finished. Only mail files matching the unique test account are removed. No test sends real email. Traces, videos, and screenshots are disabled to avoid recording recovery credentials.
+
+When Chromium download is unavailable but Microsoft Edge is installed, set `E2E_BROWSER_CHANNEL=msedge`. Local verification on Windows used an isolated PostgreSQL 17 cluster under ignored `.tools`, listening only on `127.0.0.1:55432`, because Docker Desktop's engine failed. It did not use or reset the installed database service. CI uses its own disposable PostgreSQL service and Chromium.
+
+CI retains frozen installation, format, lint, typecheck, unit tests, builds, and Compose validation. A separate PostgreSQL 17 job applies migrations to a clean disposable database, runs integration regressions, builds the applications, installs Chromium, and runs real browser authentication. Both jobs run on pull requests and pushes to main or feature/authentication. Deployment remains outside this phase.
 
 ## Documentation
 
@@ -185,7 +199,7 @@ CI runs installation with a frozen lockfile followed by format, lint, typecheck,
 
 ### Concurrent session policy
 
-Session creation and logout-all serialize on the user's PostgreSQL row. Each creation prunes to ten active sessions ordered by `createdAt DESC, id DESC`. Concurrent requests cannot independently overfill the cap. A login serialized before logout-all is revoked; one serialized afterward creates a new valid session. Rotation cannot resurrect revoked sessions. The concurrent PostgreSQL regression is committed but requires a working PostgreSQL environment to execute.
+Session creation and logout-all serialize on the user's PostgreSQL row. Each creation prunes to ten active sessions ordered by `createdAt DESC, id DESC`. Concurrent requests cannot independently overfill the cap. A login serialized before logout-all is revoked; one serialized afterward creates a new valid session. Rotation cannot resurrect revoked sessions. Real PostgreSQL regressions verify concurrent creation, timestamp ties, rotation, and revocation.
 
 ### Lifetime, retention, and deployment configuration
 

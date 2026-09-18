@@ -5,7 +5,7 @@ This document preserves approved product scope while keeping implementation incr
 ## Scope Classification
 
 - **Completed Phase:** Phase 1 foundation.
-- **Current Phase:** Phase 2 authentication. Registration/login/session, verification, and recovery lifecycles are implemented; real PostgreSQL/browser verification and remaining hardening are pending.
+- **Current Phase:** Phase 2 authentication milestone verification. Registration/login/session, verification, and recovery lifecycles pass real PostgreSQL and browser checks. The next product phase remains unimplemented.
 - **Core Future Phase:** the remainder of Phase 2 and Phases 3–21, delivering the secure collaborative product and its primary AI value.
 - **Production Hardening:** Phases 22–27, continuously considered earlier and formally hardened here.
 - **Advanced Future Phase:** deeper real-time, analytics, search, AI, enterprise, and infrastructure capabilities after core workflows prove their value.
@@ -23,7 +23,7 @@ Security, tenant isolation, accessibility, testing, and observability are contin
 - **Main risks:** unused abstractions, cross-platform scripts, configuration drift, or overstating implemented functionality.
 - **Definition of Done:** clean install; format, lint, typecheck, tests, and builds pass; Compose is valid; the baseline migration applies and PostgreSQL connectivity is integration-tested; current versus planned scope is accurate.
 
-### 2. Authentication — Current Phase (In Progress)
+### 2. Authentication — Implemented (Milestone Verification)
 
 - **Objective:** provide secure user identity and session lifecycle.
 - **Major deliverables:** registration, login/logout, email verification, forgot/reset password, Argon2id hashing, opaque secure-cookie sessions, rotation, revocation, logout-all-devices, protected routes, and authentication rate limits.
@@ -46,14 +46,16 @@ Security, tenant isolation, accessibility, testing, and observability are contin
 - responsive login/register views using the existing UI components, client validation, cookie-enabled API submissions, and loading/error/success feedback
 - HTTP session lifecycle regressions, including overlapping rotation and cookie preservation; focused PostgreSQL repository tests for creation, expiry, conditional rotation, and revocation
 
-#### Remaining before Phase 2 completion
+#### Deployment and later security UX follow-up
 
-- real browser verification of frontend session restoration, protected rendering, logout, and session error handling
-- production email delivery adapter and deployment verification (development token lifecycle implemented)
-- real PostgreSQL/browser verification of account verification and password reset
+- production email delivery adapter and deployment verification (development lifecycle is implemented and browser-verified; production fails honestly until configured)
 - explicit session listing and selective revocation where product UX requires it
-- broader PostgreSQL authentication and migration regression coverage beyond the focused session lifecycle tests
+- extend PostgreSQL and browser regressions as future authentication capabilities are added
 - final authentication threat review and production proxy/rate-limit deployment configuration
+
+Current evidence includes 21 real PostgreSQL tests, clean application of all four migrations, and two real Edge browser flows. CI is configured to repeat integration and browser checks using PostgreSQL 17 and Chromium. See the verification record for the latest observed CI status. Workspace implementation still requires its own authorized slice.
+
+The four imported decorative PNG assets remain a measured performance follow-up (about 5.1 MB uncompressed transfer total): optimize format/size with visual comparison in Phase 24. This does not remove approved asset optimization from scope or claim it is complete.
 
 ### 3. Workspace System — Core Future Phase
 

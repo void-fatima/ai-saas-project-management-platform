@@ -23,7 +23,7 @@ Production routing will eventually use Nginx or an equivalent managed edge. Depl
 - Authentication module with Argon2id credentials and opaque secure-cookie sessions.
 - pnpm workspaces, Turborepo, strict TypeScript, ESLint, Prettier, Vitest, and CI.
 
-Workspace tenant logic, Redis, workers, WebSockets, and AI integrations do not exist yet. Email verification and password recovery remain pending within Phase 2.
+Workspace tenant logic, Redis, workers, WebSockets, and AI integrations do not exist yet. Email verification and password recovery use hashed, expiring, atomically consumed tokens and a replaceable mail boundary. Local delivery is development-only; a production adapter remains deployment work. Separate liveness and bounded database readiness endpoints support operational checks.
 
 ### Authentication boundaries
 
