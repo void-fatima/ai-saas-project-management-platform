@@ -309,6 +309,12 @@ describe('PostgreSQL workspace tenant boundary', () => {
       .send({ name: 'Unsafe' })
       .expect(403);
     await client()
+      .post('/Workspaces')
+      .set('Cookie', `platform_session=${owner.token}`)
+      .set('Origin', 'https://evil.example')
+      .send({ name: 'Unsafe alternate casing' })
+      .expect(403);
+    await client()
       .post('/workspaces')
       .set('Cookie', `platform_session=${owner.token}`)
       .send({ name: 'x', userId: outsider.id })
