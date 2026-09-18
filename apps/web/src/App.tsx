@@ -34,8 +34,8 @@ const developerUnlockClicks = 5;
 
 const coreStatusCopy: Record<CoreStatus, { description: string; label: string }> = {
   online: {
-    description: 'Core services are connected. Sign in or create your account to get started.',
-    label: 'Online',
+    description: 'The API and database readiness check succeeded. AI capabilities remain planned.',
+    label: 'API connected',
   },
   processing: {
     description: 'The observatory is checking the configured service connection.',
@@ -153,13 +153,13 @@ function Observatory({
     function handleCommandShortcut(event: KeyboardEvent): void {
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
         event.preventDefault();
-        setCommandPaletteOpen(true);
+        if (!developerPanelOpen) setCommandPaletteOpen(true);
       }
     }
 
     window.addEventListener('keydown', handleCommandShortcut);
     return () => window.removeEventListener('keydown', handleCommandShortcut);
-  }, []);
+  }, [developerPanelOpen]);
 
   const coreStatus: CoreStatus =
     apiStatus === 'checking' ? 'processing' : apiStatus === 'available' ? 'online' : 'warning';
@@ -184,7 +184,7 @@ function Observatory({
     <div className="app-shell">
       <Sidebar />
 
-      <main className="observatory">
+      <main className="observatory" id="overview" tabIndex={-1}>
         <header className="topbar">
           <div>
             <p className="eyebrow">Foundation / Overview</p>
@@ -210,17 +210,14 @@ function Observatory({
               <span aria-hidden="true" className="input-container__surface">
                 <span className="input-container__placeholder">Search AI workspace...</span>
               </span>
-              <input
+              <button
                 aria-label="Open AI workspace search"
-                autoComplete="off"
                 className="command-search-input"
-                name="workspace-search"
                 onClick={() => setCommandPaletteOpen(true)}
-                onFocus={() => setCommandPaletteOpen(true)}
-                placeholder="Search AI workspace..."
-                readOnly
-                type="text"
-              />
+                type="button"
+              >
+                Search AI workspace...
+              </button>
               <span aria-hidden="true" className="input-container__cursor">
                 |
               </span>
@@ -262,14 +259,14 @@ function Observatory({
                     <ShieldCheckIcon aria-hidden="true" size={19} />
                     Quality gates
                   </dt>
-                  <dd className="status-inline status-inline--online">Verified</dd>
+                  <dd>See verification record</dd>
                 </div>
                 <div>
                   <dt>
                     <CheckCircleIcon aria-hidden="true" size={19} />
                     Foundation
                   </dt>
-                  <dd>Complete</dd>
+                  <dd>Authentication in progress</dd>
                 </div>
               </dl>
             </div>
@@ -361,7 +358,7 @@ function Observatory({
               </span>
               <span>
                 <strong>Identity and secure sessions</strong>
-                <small>Issue 03 API contract · Issue 04 interface</small>
+                <small>Account verification and recovery</small>
               </span>
             </div>
           </section>
@@ -370,7 +367,7 @@ function Observatory({
             <ClockIcon aria-hidden="true" size={18} />
             <span>
               <small>Current phase</small>
-              <strong>Foundation complete</strong>
+              <strong>Authentication hardening</strong>
             </span>
           </section>
         </div>

@@ -44,6 +44,8 @@ The next slices remain verification/recovery delivery and token persistence, con
 
 ### Readiness checkpoint — 2026-09-18
 
+Accessibility follow-up: native modal dialogs provide browser focus containment/background inertness; explicit focus restoration, a button search trigger, combobox active-option semantics, named collapsed navigation, disabled environment selector, viewport-bounded scrolling, readable small text, and honest planned/readiness labels are implemented. Web lint/typecheck/build and 55 component/unit tests pass. Native browser behavior still requires E2E verification; jsdom's dialog shim is not proof of containment.
+
 Liveness and bounded database readiness are separate. The frontend validates readiness responses, times out, and ignores stale probes. API lint, typecheck, 45 unit/HTTP tests, and build passed; web lint, typecheck, 54 component/unit tests, and build passed. Real PostgreSQL and browser checks remain unverified: Docker reports that the Desktop Linux engine pipe is absent. These mocked health regressions do not establish database connectivity.
 
 ### Continued hardening at b1518c0

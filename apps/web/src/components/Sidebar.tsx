@@ -74,6 +74,13 @@ export function Sidebar() {
               {group.items.map((item) => (
                 <li key={item.label}>
                   <button
+                    aria-label={item.state === 'planned' ? `${item.label} — Planned` : item.label}
+                    title={item.state === 'planned' ? `${item.label} — Planned` : item.label}
+                    onClick={
+                      item.state === 'active'
+                        ? () => document.getElementById('overview')?.focus()
+                        : undefined
+                    }
                     aria-current={item.state === 'active' ? 'page' : undefined}
                     className={`navigation__item navigation__item--${item.state}`}
                     disabled={item.state === 'planned'}
@@ -90,7 +97,7 @@ export function Sidebar() {
         ))}
       </nav>
 
-      <button className="environment" type="button">
+      <button className="environment" type="button" disabled aria-label="Development environment">
         <span className="environment__avatar" aria-hidden="true">
           D
         </span>

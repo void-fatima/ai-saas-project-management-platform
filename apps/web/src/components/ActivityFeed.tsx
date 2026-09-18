@@ -36,7 +36,7 @@ export function ActivityFeed() {
       <header className="section-heading section-heading--row">
         <div>
           <p className="eyebrow">Monitor</p>
-          <h2 id="activity-title">Live AI activity</h2>
+          <h2 id="activity-title">Activity preview</h2>
         </div>
         <span className="demo-label">Demo data</span>
       </header>

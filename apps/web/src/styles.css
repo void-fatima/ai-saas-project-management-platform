@@ -163,7 +163,7 @@ dd {
 .brand__copy small {
   margin-top: 0.15rem;
   color: var(--text-muted);
-  font-size: 0.65rem;
+  font-size: 0.75rem;
 }
 
 .navigation {
@@ -187,7 +187,7 @@ dd {
   margin: 0 0 0.55rem;
   padding: 0 0.55rem;
   color: #9185d4;
-  font-size: 0.64rem;
+  font-size: 0.75rem;
   font-weight: 800;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -245,7 +245,7 @@ dd {
   border-radius: 0.3rem;
   color: #818b9c;
   background: #101a28;
-  font-size: 0.5rem;
+  font-size: 0.75rem;
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -283,7 +283,7 @@ dd {
 .environment small {
   margin-top: 0.18rem;
   color: var(--text-muted);
-  font-size: 0.61rem;
+  font-size: 0.75rem;
 }
 
 .environment__avatar,
@@ -301,7 +301,7 @@ dd {
 .environment__avatar {
   width: 2rem;
   height: 2rem;
-  font-size: 0.69rem;
+  font-size: 0.75rem;
 }
 
 .profile-mark {
@@ -329,7 +329,7 @@ dd {
 .eyebrow {
   margin-bottom: 0.35rem;
   color: #9988ea;
-  font-size: 0.62rem;
+  font-size: 0.75rem;
   font-weight: 800;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -344,6 +344,7 @@ dd {
 }
 
 .topbar__actions {
+  flex-wrap: wrap;
   display: flex;
   align-items: center;
   gap: 0.55rem;
@@ -379,7 +380,7 @@ dd {
 .system-clock small {
   margin-top: 0.12rem;
   color: var(--text-muted);
-  font-size: 0.5rem;
+  font-size: 0.75rem;
   letter-spacing: 0.04em;
   white-space: nowrap;
 }
@@ -440,7 +441,8 @@ dd {
   color: var(--text);
   background: transparent;
   box-shadow: none;
-  cursor: text;
+  cursor: pointer;
+  text-align: left;
   font-family: 'Courier New', monospace;
   font-size: 0.82rem;
 }
@@ -469,7 +471,7 @@ dd {
   box-shadow: 8px 8px 0 var(--search-shadow-focus);
 }
 
-.command-search-input:not(:placeholder-shown) {
+.command-search-input:active {
   font-weight: 700;
   letter-spacing: 0.06em;
   animation: command-search-glitch 1s linear infinite;
@@ -479,11 +481,11 @@ dd {
   animation: command-search-glitch 1s linear infinite;
 }
 
-.command-search-input:not(:placeholder-shown) + .input-container__cursor {
+.command-search-input:active + .input-container__cursor {
   color: var(--text);
 }
 
-.input-container:has(.command-search-input:not(:placeholder-shown)) .input-container__placeholder {
+.input-container:has(.command-search-input:active) .input-container__placeholder {
   visibility: hidden;
 }
 
@@ -583,7 +585,7 @@ dd {
   align-items: center;
   gap: 0.5rem;
   color: #8996a8;
-  font-size: 0.61rem;
+  font-size: 0.75rem;
   font-weight: 750;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -722,7 +724,7 @@ dd {
   right: 1rem;
   bottom: 0.8rem;
   color: #69788c;
-  font-size: 0.57rem;
+  font-size: 0.75rem;
   letter-spacing: 0.09em;
   text-transform: uppercase;
 }
@@ -758,7 +760,7 @@ dd {
   border-radius: 0.35rem;
   color: #9285cf;
   background: #101829;
-  font-size: 0.52rem;
+  font-size: 0.75rem;
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -825,14 +827,14 @@ dd {
 .activity__copy small {
   margin-top: 0.35rem;
   color: var(--text-muted);
-  font-size: 0.64rem;
+  font-size: 0.75rem;
   line-height: 1.5;
 }
 
 .activity__item time {
   grid-column: 2;
   color: #5f6c7f;
-  font-size: 0.56rem;
+  font-size: 0.75rem;
 }
 
 .ecosystem {
@@ -1012,7 +1014,7 @@ dd {
 
 .ecosystem__nodes strong {
   color: var(--node-color);
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   font-weight: 650;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -1020,7 +1022,7 @@ dd {
 
 .ecosystem__nodes small {
   color: color-mix(in srgb, var(--node-color) 54%, #555f72);
-  font-size: 0.49rem;
+  font-size: 0.75rem;
   font-weight: 800;
   letter-spacing: 0.11em;
   text-transform: uppercase;
@@ -1068,7 +1070,7 @@ dd {
 
 .form-field__label {
   color: #8c96a8;
-  font-size: 0.58rem;
+  font-size: 0.75rem;
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -1100,7 +1102,7 @@ dd {
 
 .form-field__message {
   color: #606d7f;
-  font-size: 0.55rem;
+  font-size: 0.75rem;
 }
 
 .form-field__message--error {
@@ -1117,7 +1119,7 @@ dd {
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
   cursor: pointer;
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-weight: 750;
   transition:
     transform 160ms ease,
@@ -1192,7 +1194,7 @@ dd {
 .milestone__content small {
   margin-top: 0.28rem;
   color: var(--text-muted);
-  font-size: 0.59rem;
+  font-size: 0.75rem;
   line-height: 1.35;
 }
 
@@ -1205,7 +1207,7 @@ dd {
 
 .last-updated small {
   color: #73669e;
-  font-size: 0.56rem;
+  font-size: 0.75rem;
   font-weight: 800;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -1217,21 +1219,19 @@ dd {
   font-size: 0.7rem;
 }
 
-.command-backdrop,
-.developer-backdrop {
-  position: fixed;
-  z-index: 50;
-  inset: 0;
-  display: grid;
-  place-items: start center;
-  padding: 11vh 1rem 1rem;
+.command-palette::backdrop,
+.developer-panel::backdrop {
   background: rgb(2 6 12 / 76%);
   backdrop-filter: blur(10px);
 }
 
 .command-palette {
-  width: min(100%, 38rem);
-  overflow: hidden;
+  width: min(calc(100% - 2rem), 38rem);
+  max-height: calc(100dvh - 2rem);
+  overflow: auto;
+  margin: auto;
+  padding: 0;
+  color: var(--text);
   border: 1px solid rgb(159 139 245 / 34%);
   border-radius: var(--radius-lg);
   background: #0a1421;
@@ -1287,7 +1287,7 @@ dd {
 .command-palette__label {
   padding: 0.25rem 0.45rem 0.55rem;
   color: #6f7d90;
-  font-size: 0.58rem;
+  font-size: 0.75rem;
   font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -1335,7 +1335,7 @@ dd {
 
 .command-list button small {
   color: #71678f;
-  font-size: 0.53rem;
+  font-size: 0.75rem;
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -1355,17 +1355,16 @@ dd {
   border-top: 1px solid var(--border);
   color: #647287;
   background: #08111d;
-  font-size: 0.55rem;
-}
-
-.developer-backdrop {
-  place-items: center;
-  padding-top: 1rem;
+  font-size: 0.75rem;
 }
 
 .developer-panel {
-  width: min(100%, 31rem);
-  overflow: hidden;
+  width: min(calc(100% - 2rem), 31rem);
+  max-height: calc(100dvh - 2rem);
+  overflow: auto;
+  margin: auto;
+  padding: 0;
+  color: var(--text);
   border: 1px solid rgb(82 211 245 / 30%);
   border-radius: var(--radius-md);
   background: #07121b;
@@ -1407,7 +1406,7 @@ dd {
 
 .developer-panel dt {
   color: #66778a;
-  font-size: 0.58rem;
+  font-size: 0.75rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
@@ -1421,7 +1420,7 @@ dd {
 .developer-panel p {
   padding: 0 1.85rem 1.4rem;
   color: #68798b;
-  font-size: 0.63rem;
+  font-size: 0.75rem;
 }
 
 @keyframes spin {

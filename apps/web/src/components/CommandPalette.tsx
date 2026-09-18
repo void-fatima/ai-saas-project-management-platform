@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useModalDialog } from './use-modal-dialog';
 
 import {
   ArrowClockwiseIcon,
@@ -29,6 +30,7 @@ export function CommandPalette({ onClose, onFocusApi, onRefresh, open }: Command
   const [query, setQuery] = useState('');
   const [activeIndex, setActiveIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  const dialogRef = useModalDialog(open);
 
   const commands = useMemo<Command[]>(
     () => [
@@ -52,19 +54,7 @@ export function CommandPalette({ onClose, onFocusApi, onRefresh, open }: Command
     if (!open) return;
     setQuery('');
     setActiveIndex(0);
-    requestAnimationFrame(() => inputRef.current?.focus());
   }, [open]);
-
-  useEffect(() => {
-    if (!open) return;
-
-    function handleEscape(event: KeyboardEvent): void {
-      if (event.key === 'Escape') onClose();
-    }
-
-    window.addEventListener('keydown', handleEscape);
-    return () => window.removeEventListener('keydown', handleEscape);
-  }, [onClose, open]);
 
   if (!open) return null;
 
@@ -75,80 +65,94 @@ export function CommandPalette({ onClose, onFocusApi, onRefresh, open }: Command
   }
 
   return (
-    <div className="command-backdrop" onMouseDown={onClose} role="presentation">
-      <section
-        aria-label="Command palette"
-        aria-modal="true"
-        className="command-palette"
-        onMouseDown={(event) => event.stopPropagation()}
-        role="dialog"
-      >
-        <div className="command-palette__search">
-          <MagnifyingGlassIcon aria-hidden="true" size={21} />
-          <input
-            aria-label="Search AI workspace"
-            onChange={(event) => {
-              setQuery(event.target.value);
-              setActiveIndex(0);
-            }}
-            onKeyDown={(event) => {
-              if (event.key === 'ArrowDown') {
-                event.preventDefault();
-                setActiveIndex((index) =>
-                  Math.min(index + 1, Math.max(0, actionableCommands.length - 1)),
-                );
-              }
-              if (event.key === 'ArrowUp') {
-                event.preventDefault();
-                setActiveIndex((index) => Math.max(index - 1, 0));
-              }
-              if (event.key === 'Enter' && actionableCommands[activeIndex]) {
-                runCommand(actionableCommands[activeIndex]);
-              }
-            }}
-            placeholder="Search AI workspace..."
-            ref={inputRef}
-            value={query}
-          />
-          <button aria-label="Close command palette" onClick={onClose} type="button">
-            <XIcon size={18} />
-          </button>
-        </div>
+    <dialog
+      ref={dialogRef}
+      aria-label="Command palette"
+      aria-modal="true"
+      className="command-palette"
+      onCancel={(event) => {
+        event.preventDefault();
+        onClose();
+      }}
+    >
+      <div className="command-palette__search">
+        <MagnifyingGlassIcon aria-hidden="true" size={21} />
+        <input
+          aria-label="Search AI workspace"
+          role="combobox"
+          aria-expanded="true"
+          aria-controls="command-options"
+          aria-autocomplete="list"
+          aria-activedescendant={
+            actionableCommands[activeIndex]
+              ? `command-option-${commands.indexOf(actionableCommands[activeIndex])}`
+              : undefined
+          }
+          onChange={(event) => {
+            setQuery(event.target.value);
+            setActiveIndex(0);
+          }}
+          onKeyDown={(event) => {
+            if (event.key === 'ArrowDown') {
+              event.preventDefault();
+              setActiveIndex((index) =>
+                Math.min(index + 1, Math.max(0, actionableCommands.length - 1)),
+              );
+            }
+            if (event.key === 'ArrowUp') {
+              event.preventDefault();
+              setActiveIndex((index) => Math.max(index - 1, 0));
+            }
+            if (event.key === 'Enter' && actionableCommands[activeIndex]) {
+              runCommand(actionableCommands[activeIndex]);
+            }
+          }}
+          placeholder="Search AI workspace..."
+          ref={inputRef}
+          value={query}
+        />
+        <button aria-label="Close command palette" onClick={onClose} type="button">
+          <XIcon size={18} />
+        </button>
+      </div>
 
-        <div className="command-palette__body">
-          <p className="command-palette__label">Actions</p>
-          {filteredCommands.length ? (
-            <ul className="command-list">
-              {filteredCommands.map((command) => {
-                const actionableIndex = actionableCommands.indexOf(command);
-                const active = !command.planned && actionableIndex === activeIndex;
-                return (
-                  <li key={command.label}>
-                    <button
-                      aria-disabled={command.planned || undefined}
-                      aria-label={command.label}
-                      className={active ? 'is-active' : ''}
-                      onClick={() => runCommand(command)}
-                      type="button"
-                    >
-                      {command.icon}
-                      <span>{command.label}</span>
-                      {command.planned ? <small>Planned</small> : <kbd>Enter</kbd>}
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          ) : (
-            <p className="command-palette__empty">No matching commands.</p>
-          )}
-        </div>
-        <footer className="command-palette__footer">
-          <span>Arrow keys to navigate</span>
-          <span>Enter to select</span>
-          <span>Esc to close</span>
-        </footer>
-      </section>
-    </div>
+      <div className="command-palette__body">
+        <p className="command-palette__label">Actions</p>
+        {filteredCommands.length ? (
+          <ul className="command-list" role="listbox" id="command-options" aria-label="Commands">
+            {filteredCommands.map((command) => {
+              const actionableIndex = actionableCommands.indexOf(command);
+              const active = !command.planned && actionableIndex === activeIndex;
+              return (
+                <li key={command.label} role="presentation">
+                  <button
+                    role="option"
+                    id={`command-option-${commands.indexOf(command)}`}
+                    aria-selected={active}
+                    tabIndex={-1}
+                    aria-disabled={command.planned || undefined}
+                    aria-label={command.label}
+                    className={active ? 'is-active' : ''}
+                    onClick={() => runCommand(command)}
+                    type="button"
+                  >
+                    {command.icon}
+                    <span>{command.label}</span>
+                    {command.planned ? <small>Planned</small> : <kbd>Enter</kbd>}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        ) : (
+          <p className="command-palette__empty">No matching commands.</p>
+        )}
+      </div>
+      <footer className="command-palette__footer">
+        <span>Arrow keys to navigate</span>
+        <span>Enter to select</span>
+        <span>Esc to close</span>
+      </footer>
+    </dialog>
   );
 }

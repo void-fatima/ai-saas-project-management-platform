@@ -40,7 +40,7 @@ export function WorkspaceEcosystem() {
             <CubeIcon className="ecosystem__core-cube" size={28} weight="duotone" />
           </span>
           <strong>AI Core</strong>
-          <span className="status-inline status-inline--online">Operational</span>
+          <span className="status-inline">Planned</span>
         </div>
 
         <img alt="" aria-hidden="true" className="ecosystem__branches" src={workspaceBranches} />

@@ -230,10 +230,28 @@ describe('Authenticated application', () => {
     await shell();
     fireEvent.keyDown(window, { ctrlKey: true, key: 'k' });
     expect(screen.getByRole('dialog', { name: 'Command palette' })).toBeInTheDocument();
-    fireEvent.keyDown(window, { key: 'Escape' });
+    fireEvent(screen.getByRole('dialog'), new Event('cancel', { cancelable: true }));
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     const core = screen.getByRole('button', { name: 'Interactive AI Core' });
     for (let click = 0; click < 5; click += 1) fireEvent.click(core);
     expect(screen.getByRole('dialog', { name: 'Developer system panel' })).toBeInTheDocument();
+  });
+
+  it('restores command trigger focus without reopening and names the selected command', async () => {
+    setupAuthenticated();
+    render(<App />);
+    await shell();
+    const trigger = screen.getByRole('button', { name: 'Open AI workspace search' });
+    trigger.focus();
+    fireEvent.click(trigger);
+    const search = screen.getByRole('combobox');
+    expect(search).toHaveFocus();
+    fireEvent.keyDown(search, { key: 'ArrowDown' });
+    expect(
+      document.getElementById(search.getAttribute('aria-activedescendant') ?? ''),
+    ).toHaveTextContent('View API connection');
+    fireEvent.click(screen.getByRole('button', { name: 'Close command palette' }));
+    expect(trigger).toHaveFocus();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 });
