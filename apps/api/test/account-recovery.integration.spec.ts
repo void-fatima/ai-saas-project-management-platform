@@ -106,6 +106,7 @@ describe('PostgreSQL account recovery', () => {
   it.each(['VERIFY_EMAIL', 'RESET_PASSWORD'] as const)(
     'allows exactly one concurrent %s consumption and rejects replay',
     async (kind) => {
+      const secondSession = await auth.login({ email, password: 'initial-password-42' });
       const raw = await link(kind);
       const stored = await prisma.accountToken.findUniqueOrThrow({
         where: { tokenHash: tokens.hash(raw) },
@@ -125,6 +126,7 @@ describe('PostgreSQL account recovery', () => {
         ).not.toBeNull();
       else {
         await expect(auth.authenticate(originalToken)).rejects.toThrow();
+        await expect(auth.authenticate(secondSession.token)).rejects.toThrow();
         await expect(auth.login({ email, password: 'initial-password-42' })).rejects.toThrow(
           'Invalid',
         );
@@ -132,6 +134,29 @@ describe('PostgreSQL account recovery', () => {
           auth.login({ email, password: 'replacement-password-42' }),
         ).resolves.toBeDefined();
       }
+    },
+  );
+
+  it.each(['VERIFY_EMAIL', 'RESET_PASSWORD'] as const)(
+    'serializes concurrent %s requests, enforces cooldown, and replaces old links',
+    async (kind) => {
+      await Promise.all([recovery.request(email, kind), recovery.request(email, kind)]);
+      expect(messages).toHaveLength(1);
+      const first = new URL(messages[0]!.url).hash.split('=')[1]!;
+      await recovery.request(email, kind);
+      expect(messages).toHaveLength(1);
+      await prisma.accountToken.update({
+        where: { tokenHash: tokens.hash(first) },
+        data: { issuedAt: new Date(Date.now() - 61_000) },
+      });
+      const replacement = await link(kind);
+      expect(messages).toHaveLength(2);
+      await expect(recovery.consume(first, kind, 'replacement-password-42')).rejects.toThrow(
+        'invalid',
+      );
+      await expect(
+        recovery.consume(replacement, kind, 'replacement-password-42'),
+      ).resolves.toBeUndefined();
     },
   );
 

@@ -24,4 +24,8 @@ describe('PostgreSQL persistence', () => {
 
     expect(rows).toEqual([{ connected: 1 }]);
   });
+
+  it('runs the production bounded readiness transaction', async () => {
+    await expect(prisma.checkReadiness()).resolves.toBeUndefined();
+  });
 });

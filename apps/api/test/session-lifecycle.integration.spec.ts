@@ -65,7 +65,7 @@ describe('PostgreSQL session lifecycle', () => {
     expect(await repository.findActiveSession(session.token.hash, session.expiresAt)).toBeNull();
   });
 
-  it('enforces ten active sessions under twenty concurrent creations with deterministic ties', async () => {
+  it('enforces ten active sessions under twenty concurrent creations', async () => {
     const session = await fixture();
     await Promise.all(
       Array.from({ length: 20 }, () =>
@@ -92,6 +92,62 @@ describe('PostgreSQL session lifecycle', () => {
       session.now,
     );
     expect(await repository.findActiveSession(fresh.hash, session.now)).not.toBeNull();
+  });
+
+  it('prunes tied creation times using descending UUID order', async () => {
+    const session = await fixture();
+    const ids = Array.from({ length: 12 }, () => randomUUID())
+      .sort()
+      .reverse();
+    await prisma.session.createMany({
+      data: ids.map((id) => ({
+        id,
+        userId: session.user.id,
+        tokenHash: tokens.issue().hash,
+        expiresAt: session.expiresAt,
+        createdAt: new Date(0),
+      })),
+    });
+    await repository.createSession(
+      session.user.id,
+      { expiresAt: session.expiresAt, tokenHash: tokens.issue().hash },
+      session.now,
+    );
+    const survivors = await prisma.session.findMany({
+      where: { userId: session.user.id, revokedAt: null, createdAt: new Date(0) },
+      orderBy: { id: 'desc' },
+      select: { id: true },
+    });
+    expect(survivors.map(({ id }) => id)).toEqual(ids.slice(0, 8));
+  });
+
+  it('rejects an absolutely expired session even with a future rolling expiry', async () => {
+    const session = await fixture();
+    await prisma.session.update({
+      where: { id: session.sessionId },
+      data: { createdAt: new Date(0) },
+    });
+    await expect(app.get(AuthService).authenticate(session.token.raw)).rejects.toThrow();
+  });
+
+  it('serializes logout-all racing with new sessions without reviving old credentials', async () => {
+    const session = await fixture();
+    const fresh = tokens.issue();
+    await Promise.all([
+      repository.createSession(
+        session.user.id,
+        { expiresAt: session.expiresAt, tokenHash: fresh.hash },
+        session.now,
+      ),
+      repository.revokeAllSessions(session.user.id, session.now),
+    ]);
+    expect(await repository.findActiveSession(session.token.hash, session.now)).toBeNull();
+    // Either lock order is legal: the new login is revoked or is the sole surviving session.
+    const survivors = await prisma.session.findMany({
+      where: { userId: session.user.id, revokedAt: null },
+    });
+    expect(survivors.length).toBeLessThanOrEqual(1);
+    if (survivors.length) expect(survivors[0]?.tokenHash).toBe(fresh.hash);
   });
 
   it('permits exactly one concurrent CAS, retains one row, and expires the predecessor', async () => {
