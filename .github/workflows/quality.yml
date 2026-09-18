@@ -2,7 +2,7 @@ name: Quality
 
 on:
   push:
-    branches: [main, feature/authentication]
+    branches: [main, feature/authentication, feature/workspaces-rbac]
   pull_request:
 
 permissions:
