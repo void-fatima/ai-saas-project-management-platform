@@ -2,7 +2,7 @@ name: Quality
 
 on:
   push:
-    branches: [main]
+    branches: [main, feature/authentication]
   pull_request:
 
 permissions:
@@ -49,3 +49,47 @@ jobs:
 
       - name: Validate Docker Compose
         run: pnpm docker:config
+
+  postgres-authentication:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: platform_auth_test
+          POSTGRES_USER: platform_auth_test
+          POSTGRES_PASSWORD: disposable-ci-only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U platform_auth_test -d platform_auth_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://platform_auth_test:disposable-ci-only@localhost:5432/platform_auth_test?schema=public
+      NODE_ENV: test
+      WEB_ORIGIN: http://localhost:5173
+      VITE_API_URL: http://localhost:3000
+      MAIL_MODE: development-file
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.15.0
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Apply migrations to clean PostgreSQL
+        run: pnpm --filter @platform/api prisma:migrate:deploy
+      - name: PostgreSQL regressions
+        run: pnpm --filter @platform/api test:integration
+      - name: Build applications
+        run: pnpm build
+      - name: Install Chromium
+        run: pnpm --filter @platform/web exec playwright install --with-deps chromium
+      - name: Real browser authentication
+        run: pnpm --filter @platform/web test:e2e
