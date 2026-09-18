@@ -1,0 +1,85 @@
+.workspace-panel {
+  max-width: 64rem;
+  margin: 1.5rem auto;
+  padding: clamp(1rem, 3vw, 2rem);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+.workspace-panel h2,
+.workspace-panel h3 {
+  margin: 1.25rem 0 0.75rem;
+}
+.workspace-panel p {
+  color: var(--text-soft);
+  line-height: 1.6;
+}
+.workspace-panel form {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+.workspace-panel label {
+  display: grid;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+.workspace-panel select {
+  padding: 0.7rem;
+  color: var(--text);
+  background: var(--surface-strong);
+  border: 1px solid var(--border-bright);
+  border-radius: var(--radius-sm);
+  max-width: 100%;
+  min-width: 0;
+}
+.workspace-select {
+  margin: 1.5rem 0;
+}
+.workspace-members {
+  list-style: none;
+  padding: 0;
+}
+.workspace-members li {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.workspace-members li > span {
+  flex: 1 1 12rem;
+  overflow-wrap: anywhere;
+}
+.workspace-members small {
+  display: block;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+  color: var(--text-soft);
+}
+.workspace-confirm {
+  color: var(--text);
+  background: var(--surface-strong);
+  border: 1px solid var(--border-bright);
+  border-radius: var(--radius-lg);
+  max-width: min(32rem, calc(100% - 2rem));
+  max-height: calc(100dvh - 2rem);
+  padding: 1.5rem;
+  overflow: auto;
+}
+.workspace-confirm::backdrop {
+  background: rgb(2 6 12 / 76%);
+  backdrop-filter: blur(10px);
+}
+.workspace-confirm button {
+  margin: 0.5rem;
+}
+@media (max-width: 600px) {
+  .workspace-panel form > *,
+  .workspace-members label {
+    width: 100%;
+  }
+}

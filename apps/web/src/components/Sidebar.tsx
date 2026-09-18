@@ -53,7 +53,13 @@ const navigationGroups: NavigationGroup[] = [
   },
 ];
 
-export function Sidebar() {
+export function Sidebar({
+  workspacesOpen,
+  onNavigate,
+}: {
+  workspacesOpen: boolean;
+  onNavigate: (workspaces: boolean) => void;
+}) {
   return (
     <aside className="sidebar">
       <div className="brand" aria-label="Project Platform">
@@ -67,6 +73,17 @@ export function Sidebar() {
       </div>
 
       <nav className="navigation" aria-label="Primary navigation">
+        <button
+          className={`navigation__item navigation__item--${workspacesOpen ? 'active' : 'available'}`}
+          aria-label="Workspaces"
+          title="Workspaces"
+          aria-current={workspacesOpen ? 'page' : undefined}
+          onClick={() => onNavigate(true)}
+          type="button"
+        >
+          <SquaresFourIcon size={19} />
+          <span>Workspaces</span>
+        </button>
         {navigationGroups.map((group) => (
           <section className="navigation__group" key={group.label}>
             <h2 className="navigation__label">{group.label}</h2>
@@ -78,10 +95,13 @@ export function Sidebar() {
                     title={item.state === 'planned' ? `${item.label} — Planned` : item.label}
                     onClick={
                       item.state === 'active'
-                        ? () => document.getElementById('overview')?.focus()
+                        ? () => {
+                            onNavigate(false);
+                            document.getElementById('overview')?.focus();
+                          }
                         : undefined
                     }
-                    aria-current={item.state === 'active' ? 'page' : undefined}
+                    aria-current={item.state === 'active' && !workspacesOpen ? 'page' : undefined}
                     className={`navigation__item navigation__item--${item.state}`}
                     disabled={item.state === 'planned'}
                     type="button"

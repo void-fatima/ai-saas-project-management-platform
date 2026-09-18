@@ -175,7 +175,7 @@ dd {
   border-bottom: 1px solid var(--border);
 }
 
-.navigation__group:first-child {
+.navigation__group:first-of-type {
   padding-top: 0;
 }
 
@@ -1651,11 +1651,13 @@ dd {
   }
 
   .navigation {
+    display: flex;
+    gap: 0.5rem;
     margin: 0;
   }
 
-  .navigation__group:not(:first-child),
-  .navigation__group:first-child li:not(:first-child),
+  .navigation__group:not(:first-of-type),
+  .navigation__group:first-of-type li:not(:first-child),
   .environment {
     display: none;
   }

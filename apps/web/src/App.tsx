@@ -5,6 +5,8 @@ import { useHealth } from './api/use-health';
 import { AuthView } from './auth/AuthView';
 import { AccountRecoveryView, type AccountAction } from './auth/AccountRecoveryView';
 import { useSession } from './auth/use-session';
+import { WorkspacePanel } from './workspaces/WorkspacePanel';
+import { InvitationView } from './workspaces/InvitationView';
 import type { SessionUser } from './auth/session-api';
 import aiCoreOrb from './assets/ai-core-orb.png';
 import aiCoreOrbits from './assets/ai-core-orbits.png';
@@ -56,6 +58,9 @@ const coreStatusCopy: Record<CoreStatus, { description: string; label: string }>
 
 export function App() {
   const session = useSession();
+  const [invitation, setInvitation] = useState<string | null>(() =>
+    window.location.hash.startsWith('#invite=') ? window.location.hash.slice(8) : null,
+  );
   const [welcome, setWelcome] = useState(false);
   const [accountAction, setAccountAction] = useState<{
     action: AccountAction;
@@ -63,6 +68,10 @@ export function App() {
   } | null>(readAccountLink);
   useEffect(() => {
     function consumeLink() {
+      if (window.location.hash.startsWith('#invite=')) {
+        setInvitation(window.location.hash.slice(8));
+        window.history.replaceState(null, '', window.location.pathname + window.location.search);
+      }
       const action = readAccountLink();
       if (action) {
         setAccountAction(action);
@@ -126,6 +135,21 @@ export function App() {
       />
     );
   }
+  if (invitation !== null)
+    return (
+      <InvitationView
+        token={invitation}
+        email={session.state.user.email}
+        onBack={() => setInvitation(null)}
+        onAccepted={() => {
+          const url = new URL(window.location.href);
+          url.searchParams.set('view', 'workspaces');
+          url.searchParams.delete('workspace');
+          window.history.replaceState(null, '', url.pathname + url.search);
+          setInvitation(null);
+        }}
+      />
+    );
   return (
     <Observatory
       key={session.state.user.id}
@@ -158,6 +182,9 @@ function Observatory({
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [coreClicks, setCoreClicks] = useState(0);
   const [developerPanelOpen, setDeveloperPanelOpen] = useState(false);
+  const [workspacesOpen, setWorkspacesOpen] = useState(
+    () => new URLSearchParams(window.location.search).get('view') === 'workspaces',
+  );
   const apiSectionRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -193,7 +220,16 @@ function Observatory({
 
   return (
     <div className="app-shell">
-      <Sidebar />
+      <Sidebar
+        workspacesOpen={workspacesOpen}
+        onNavigate={(open) => {
+          setWorkspacesOpen(open);
+          const url = new URL(window.location.href);
+          if (open) url.searchParams.set('view', 'workspaces');
+          else url.searchParams.delete('view');
+          window.history.replaceState(null, '', url.pathname + url.search);
+        }}
+      />
 
       <main className="observatory" id="overview" tabIndex={-1}>
         <header className="topbar">
@@ -242,146 +278,152 @@ function Observatory({
           </div>
         </header>
 
-        <div className="observatory__grid">
-          {error ? (
-            <section role="alert">
-              <p>{error}</p>
-              <Button loading={pending} onClick={onRefreshSession}>
-                Retry session check
-              </Button>
-            </section>
-          ) : null}
-          <section className="core-panel" aria-labelledby="core-title">
-            <div className="core-panel__copy">
-              <p className="eyebrow">AI Core</p>
-              <h2 id="core-title">Foundation mode</h2>
-              <p>{coreCopy.description}</p>
+        {workspacesOpen ? (
+          <WorkspacePanel userId={user.id} />
+        ) : (
+          <div className="observatory__grid">
+            {error ? (
+              <section role="alert">
+                <p>{error}</p>
+                <Button loading={pending} onClick={onRefreshSession}>
+                  Retry session check
+                </Button>
+              </section>
+            ) : null}
+            <section className="core-panel" aria-labelledby="core-title">
+              <div className="core-panel__copy">
+                <p className="eyebrow">AI Core</p>
+                <h2 id="core-title">Foundation mode</h2>
+                <p>{coreCopy.description}</p>
 
-              <dl className="core-signals">
-                <div>
-                  <dt>
-                    <PulseIcon aria-hidden="true" size={19} />
-                    Core status
-                  </dt>
-                  <dd className={`status-inline status-inline--${coreStatus}`}>{coreCopy.label}</dd>
-                </div>
-                <div>
-                  <dt>
-                    <ShieldCheckIcon aria-hidden="true" size={19} />
-                    Quality gates
-                  </dt>
-                  <dd>See verification record</dd>
-                </div>
-                <div>
-                  <dt>
-                    <CheckCircleIcon aria-hidden="true" size={19} />
-                    Foundation
-                  </dt>
-                  <dd>Authentication in progress</dd>
-                </div>
-              </dl>
-            </div>
-
-            <button
-              aria-label="Interactive AI Core"
-              className={`core-visual core-visual--${coreStatus}`}
-              onClick={handleCoreClick}
-              type="button"
-            >
-              <span className="core-visual__stage">
-                <img
-                  aria-hidden="true"
-                  alt=""
-                  className="core-visual__orb core-visual__orb--orbits"
-                  src={aiCoreOrbits}
-                />
-                <img
-                  alt="Purple neural AI core with orbital processing paths"
-                  className="core-visual__orb core-visual__orb--base"
-                  src={aiCoreOrb}
-                />
-                <img
-                  aria-hidden="true"
-                  alt=""
-                  className="core-visual__orb core-visual__orb--inner"
-                  src={aiCoreOrb}
-                />
-              </span>
-              <span className="core-visual__hint">Interactive core</span>
-            </button>
-          </section>
-
-          <ActivityFeed />
-          <WorkspaceEcosystem />
-
-          <section
-            className="api-connection"
-            id="api-connection"
-            ref={apiSectionRef}
-            aria-labelledby="api-title"
-          >
-            <header className="section-heading section-heading--row">
-              <div>
-                <p className="eyebrow">System health</p>
-                <h2 id="api-title">API connection</h2>
+                <dl className="core-signals">
+                  <div>
+                    <dt>
+                      <PulseIcon aria-hidden="true" size={19} />
+                      Core status
+                    </dt>
+                    <dd className={`status-inline status-inline--${coreStatus}`}>
+                      {coreCopy.label}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>
+                      <ShieldCheckIcon aria-hidden="true" size={19} />
+                      Quality gates
+                    </dt>
+                    <dd>See verification record</dd>
+                  </div>
+                  <div>
+                    <dt>
+                      <CheckCircleIcon aria-hidden="true" size={19} />
+                      Foundation
+                    </dt>
+                    <dd>Authentication verified</dd>
+                  </div>
+                </dl>
               </div>
-              <span
-                className={`api-state api-state--${apiStatus}`}
-                role="status"
-                aria-live="polite"
-              >
-                {apiStatus === 'available' ? (
-                  <CheckCircleIcon aria-hidden="true" size={16} />
-                ) : (
-                  <WarningCircleIcon aria-hidden="true" size={16} />
-                )}
-                {apiStatus}
-              </span>
-            </header>
 
-            <Form className="connection-form" onSubmit={() => void checkApi()}>
-              <FormField
-                hint="Configured through VITE_API_URL"
-                label="API endpoint"
-                readOnly
-                value={apiUrl}
-              />
-              <Button
-                aria-label="Check API connection"
-                loading={apiStatus === 'checking'}
-                type="submit"
-                variant="secondary"
+              <button
+                aria-label="Interactive AI Core"
+                className={`core-visual core-visual--${coreStatus}`}
+                onClick={handleCoreClick}
+                type="button"
               >
-                <ArrowClockwiseIcon aria-hidden="true" size={17} />
-                Check
-              </Button>
-            </Form>
-          </section>
+                <span className="core-visual__stage">
+                  <img
+                    aria-hidden="true"
+                    alt=""
+                    className="core-visual__orb core-visual__orb--orbits"
+                    src={aiCoreOrbits}
+                  />
+                  <img
+                    alt="Purple neural AI core with orbital processing paths"
+                    className="core-visual__orb core-visual__orb--base"
+                    src={aiCoreOrb}
+                  />
+                  <img
+                    aria-hidden="true"
+                    alt=""
+                    className="core-visual__orb core-visual__orb--inner"
+                    src={aiCoreOrb}
+                  />
+                </span>
+                <span className="core-visual__hint">Interactive core</span>
+              </button>
+            </section>
 
-          <section className="milestone" aria-labelledby="milestone-title">
-            <header className="section-heading">
-              <p className="eyebrow">Next milestone</p>
-              <h2 id="milestone-title">Authentication</h2>
-            </header>
-            <div className="milestone__content">
-              <span className="milestone__icon" aria-hidden="true">
-                <LockIcon size={23} weight="duotone" />
-              </span>
+            <ActivityFeed />
+            <WorkspaceEcosystem />
+
+            <section
+              className="api-connection"
+              id="api-connection"
+              ref={apiSectionRef}
+              aria-labelledby="api-title"
+            >
+              <header className="section-heading section-heading--row">
+                <div>
+                  <p className="eyebrow">System health</p>
+                  <h2 id="api-title">API connection</h2>
+                </div>
+                <span
+                  className={`api-state api-state--${apiStatus}`}
+                  role="status"
+                  aria-live="polite"
+                >
+                  {apiStatus === 'available' ? (
+                    <CheckCircleIcon aria-hidden="true" size={16} />
+                  ) : (
+                    <WarningCircleIcon aria-hidden="true" size={16} />
+                  )}
+                  {apiStatus}
+                </span>
+              </header>
+
+              <Form className="connection-form" onSubmit={() => void checkApi()}>
+                <FormField
+                  hint="Configured through VITE_API_URL"
+                  label="API endpoint"
+                  readOnly
+                  value={apiUrl}
+                />
+                <Button
+                  aria-label="Check API connection"
+                  loading={apiStatus === 'checking'}
+                  type="submit"
+                  variant="secondary"
+                >
+                  <ArrowClockwiseIcon aria-hidden="true" size={17} />
+                  Check
+                </Button>
+              </Form>
+            </section>
+
+            <section className="milestone" aria-labelledby="milestone-title">
+              <header className="section-heading">
+                <p className="eyebrow">Next milestone</p>
+                <h2 id="milestone-title">Workspaces</h2>
+              </header>
+              <div className="milestone__content">
+                <span className="milestone__icon" aria-hidden="true">
+                  <LockIcon size={23} weight="duotone" />
+                </span>
+                <span>
+                  <strong>Membership and workspace access</strong>
+                  <small>Open Workspaces from the navigation</small>
+                </span>
+              </div>
+            </section>
+
+            <section className="last-updated" aria-label="Last updated">
+              <ClockIcon aria-hidden="true" size={18} />
               <span>
-                <strong>Identity and secure sessions</strong>
-                <small>Account verification and recovery</small>
+                <small>Current phase</small>
+                <strong>Workspaces and permissions</strong>
               </span>
-            </div>
-          </section>
-
-          <section className="last-updated" aria-label="Last updated">
-            <ClockIcon aria-hidden="true" size={18} />
-            <span>
-              <small>Current phase</small>
-              <strong>Authentication hardening</strong>
-            </span>
-          </section>
-        </div>
+            </section>
+          </div>
+        )}
       </main>
 
       <CommandPalette
