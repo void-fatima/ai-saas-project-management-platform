@@ -2,7 +2,7 @@
 
 ## Direction
 
-The platform is an end-to-end TypeScript modular monolith. The browser runs a React application, which communicates with a NestJS REST API. PostgreSQL is the system of record. Workspace will become the tenant boundary when the workspace phase begins.
+The platform is an end-to-end TypeScript modular monolith. The browser runs a React application, which communicates with a NestJS REST API. PostgreSQL is the system of record. Workspace is the tenant boundary; membership and permissions are resolved server-side for each scoped operation.
 
 ```text
 Browser -> React/Vite -> NestJS REST API -> application/domain modules -> PostgreSQL
@@ -23,7 +23,7 @@ Production routing will eventually use Nginx or an equivalent managed edge. Depl
 - Authentication module with Argon2id credentials and opaque secure-cookie sessions.
 - pnpm workspaces, Turborepo, strict TypeScript, ESLint, Prettier, Vitest, and CI.
 
-Workspace tenant logic, Redis, workers, WebSockets, and AI integrations do not exist yet. Email verification and password recovery use hashed, expiring, atomically consumed tokens and a replaceable mail boundary. Local delivery is development-only; a production adapter remains deployment work. Separate liveness and bounded database readiness endpoints support operational checks.
+Workspace creation, membership, invitations and minimal RBAC are implemented through a [transactional tenant boundary](workspace-tenancy.md). Redis, workers, WebSockets, and AI integrations do not exist yet. Email verification and password recovery use hashed, expiring, atomically consumed tokens and a replaceable mail boundary, also reused for workspace invitations. Local delivery is development-only; a production adapter remains deployment work. Separate liveness and bounded database readiness endpoints support operational checks.
 
 ### Authentication boundaries
 

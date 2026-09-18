@@ -4,7 +4,7 @@ A production-minded full-stack foundation for a collaborative project management
 
 ## Status
 
-**Foundation and authentication implementation is complete for the next product phase.** Account/session, verification, and recovery lifecycles have real PostgreSQL and browser coverage. Email delivery uses an explicitly development-only mailbox; production requires a delivery adapter and deployment hardening. Workspaces, projects, tasks, Kanban, collaboration, real-time features, and AI remain planned. See the [product roadmap](docs/roadmap/product-roadmap.md) for approved future scope.
+**Foundation, authentication and the minimal Workspace/Tenancy/RBAC slice are implemented.** Accounts, invitations, membership and workspace permissions have real PostgreSQL and browser coverage. Email delivery uses an explicitly development-only mailbox; production requires a delivery adapter and deployment hardening. Projects, Tasks, Kanban, collaboration, realtime and AI remain planned. See the [product roadmap](docs/roadmap/product-roadmap.md), [workspace contract](docs/architecture/workspace-tenancy.md), and [workspace verification](docs/verification/workspaces-rbac.md).
 
 ### Implemented
 
@@ -29,7 +29,7 @@ A production-minded full-stack foundation for a collaborative project management
 
 ### Planned
 
-Production email delivery, workspace-scoped multi-tenancy, capability-based RBAC, project/task/Kanban workflows, collaboration, notifications, real-time updates, analytics, search, audit logs, AI planning and reporting, security/testing/performance hardening, production infrastructure, and UX polish are documented but intentionally not implemented yet.
+Production email delivery, project/task permissions and workflows, Kanban, collaboration, notifications, realtime, analytics, search, audit logs, AI planning and reporting, production infrastructure, and further hardening remain deferred. Ownership transfer, explicit invitation decline and custom roles remain documented follow-ups.
 
 ## Technology
 
@@ -157,6 +157,51 @@ Session rotation updates the existing row with a conditional token-hash comparis
 
 Missing, malformed, unknown, expired, or revoked session credentials return 401. Session lookup/rotation infrastructure failures return a generic 500 without exposing internal details. Neither response clears cookies: a delayed response must not erase a newer cookie from another request. Explicit logout and logout-all revoke sessions and clear the browser cookie. A request using the predecessor after its grace period receives 401; if the winning replacement response is lost entirely, signing in again is required after grace expires.
 
+## Workspaces, membership and invitations
+
+After signing in, open **Workspaces** in the sidebar. Create a workspace, switch with **Active workspace**, rename it, and manage members according to your role. Workspace selection survives reload through a non-authoritative URL preference; the server validates membership each time. Removed memberships and forbidden actions are distinct from temporary service failures.
+
+The creator is the single Owner. Owner can manage all non-owner roles and delete the workspace. Admin can rename and manage only Manager/Member/Viewer. Manager, Member and Viewer can view workspace/members and leave. Owner cannot leave, be removed or be demoted. No invitation grants Owner and no self role changes are supported. These rules are enforced server-side; hidden UI controls are only convenience.
+
+Apply `20260918000000_workspace_tenancy` with the existing migration deployment command. It adds Workspace, WorkspaceMembership, WorkspaceInvitation and the five-role enum. PostgreSQL constraints enforce membership uniqueness, exactly one matching owner, non-owner invitations, and workspace-owned cascade deletion. Names are 2–100 trimmed characters; UUIDs provide stable identity without a public slug namespace.
+
+| Method               | Path                                                 | Result                                                                                     |
+| -------------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| GET / POST           | `/workspaces`                                        | List own workspaces / atomically create workspace and Owner membership                     |
+| GET / PATCH / DELETE | `/workspaces/:workspaceId`                           | Detail with members, manageable invitations and permissions / rename / Owner-only deletion |
+| POST                 | `/workspaces/:workspaceId/leave`                     | Non-owner leaves                                                                           |
+| PATCH / DELETE       | `/workspaces/:workspaceId/members/:userId`           | Change non-owner role / remove eligible member                                             |
+| POST                 | `/workspaces/:workspaceId/invitations`               | Issue or reissue `{ email, role }`                                                         |
+| DELETE               | `/workspaces/:workspaceId/invitations/:invitationId` | Revoke an authorized invitation                                                            |
+| POST                 | `/workspaces/invitations/accept`                     | Accept `{ token }` for the authenticated matching email                                    |
+
+Creation/rename accepts `{ name }`; role change accepts `{ role }`. Anonymous requests receive 401; non-member and nonexistent workspace IDs both receive 404; insufficient member permissions receive 403. Invalid input/link is 400, conflicting membership or resend cooldown is 409, request throttling is 429, unavailable delivery is 503, and unexpected infrastructure errors return a generic 500. All workspace responses disable caching and use the existing safe headers and origin policy.
+
+Invitations expire in seven days, use hashed 256-bit random tokens and consume atomically with membership creation. Resending replaces the old link after a one-minute cooldown. Revoke/replay/expiry/mismatched email fail safely; acceptance also checks that the inviter still has authority. Set `MAIL_MODE=development-file` to deliver private local links to ignored `.tools/mail/*.json`. Open the link, sign in or register with the invited email, then explicitly accept. Reopen the original link if the page is reloaded before acceptance. Production delivery remains unavailable until an actual mail adapter is configured; no external email is sent by tests.
+
+`WorkspaceAccess.run` reloads membership and evaluates capabilities inside a transaction locking the workspace row; repository operations bind the workspace ID. Role changes/removal/acceptance/deletion use the same lock. Future Projects/Tasks must reuse this boundary and preserve the [workspace-level guarantees](docs/architecture/workspace-tenancy.md).
+
+### PostgreSQL without Docker (Windows)
+
+Use a separate disposable cluster with the installed PostgreSQL binaries, for example under ignored `.tools/pg-workspace-tests` on loopback port 55432. Do not point `initdb` or test cleanup at an existing database directory. If this directory or port already exists, inspect it and select a new test location instead of resetting it. Create an ignored password file containing a disposable local password, then:
+
+```powershell
+& 'C:\Program Files\PostgreSQL\17\bin\initdb.exe' -D .tools/pg-workspace-tests -U platform_auth_test --auth=scram-sha-256 --pwfile=.tools/test-db-password.txt --encoding=UTF8 --locale=C
+& 'C:\Program Files\PostgreSQL\17\bin\pg_ctl.exe' -D .tools/pg-workspace-tests -l .tools/pg-workspace-tests.log -o '-p 55432 -h 127.0.0.1' -w start
+& 'C:\Program Files\PostgreSQL\17\bin\createdb.exe' -h 127.0.0.1 -p 55432 -U platform_auth_test -W platform_auth_test
+$env:DATABASE_URL='postgresql://platform_auth_test:YOUR_DISPOSABLE_PASSWORD@127.0.0.1:55432/platform_auth_test?schema=public'
+$env:WEB_ORIGIN='http://localhost:5173'
+$env:NODE_ENV='test'
+pnpm --filter @platform/api prisma:migrate:deploy
+pnpm --filter @platform/api test:integration
+pnpm build
+$env:E2E_BROWSER_CHANNEL='msedge' # optional installed Edge; CI uses Chromium
+pnpm --filter @platform/web test:e2e
+& 'C:\Program Files\PostgreSQL\17\bin\pg_ctl.exe' -D .tools/pg-workspace-tests -m fast -w stop
+```
+
+Integration fixtures delete only their own records. Browser fixtures remain in the explicitly disposable database; no real database is reset. Keep local test mail/database files private. All five migrations were also verified from a fresh database.
+
 ## Quality Commands
 
 ```bash
@@ -188,7 +233,7 @@ The suite starts its own API and web servers on ports 3000 and 5173, refuses to 
 
 When Chromium download is unavailable but Microsoft Edge is installed, set `E2E_BROWSER_CHANNEL=msedge`. Local verification on Windows used an isolated PostgreSQL 17 cluster under ignored `.tools`, listening only on `127.0.0.1:55432`, because Docker Desktop's engine failed. It did not use or reset the installed database service. CI uses its own disposable PostgreSQL service and Chromium.
 
-CI retains frozen installation, format, lint, typecheck, unit tests, builds, and Compose validation. A separate PostgreSQL 17 job applies migrations to a clean disposable database, runs integration regressions, builds the applications, installs Chromium, and runs real browser authentication. Both jobs run on pull requests and pushes to main or feature/authentication. Deployment remains outside this phase.
+CI retains frozen installation, format, lint, typecheck, unit tests, builds, and Compose validation. The PostgreSQL 17 job applies migrations to a clean disposable database, runs integration regressions, builds the applications, installs Chromium, and runs real browser authentication and workspace journeys. Both jobs run on pull requests and pushes to main, feature/authentication, or feature/workspaces-rbac. Deployment remains outside this phase.
 
 ## Documentation
 

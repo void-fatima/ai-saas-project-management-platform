@@ -4,9 +4,9 @@ This document preserves approved product scope while keeping implementation incr
 
 ## Scope Classification
 
-- **Completed Phase:** Phase 1 foundation.
-- **Current Phase:** Phase 2 authentication milestone verification. Registration/login/session, verification, and recovery lifecycles pass real PostgreSQL and browser checks. The next product phase remains unimplemented.
-- **Core Future Phase:** the remainder of Phase 2 and Phases 3–21, delivering the secure collaborative product and its primary AI value.
+- **Completed Phases:** foundation and authentication, plus the approved minimal Workspace/Tenancy/RBAC vertical slice.
+- **Current Phase:** Workspace/Tenancy/RBAC milestone verification. The approved five-role workspace contract, invitations and server-side isolation are implemented; verification evidence is recorded separately.
+- **Core Future Phase:** Projects/Tasks and subsequent Phases 6–21, plus the explicitly preserved follow-ups below. None starts automatically after this milestone.
 - **Production Hardening:** Phases 22–27, continuously considered earlier and formally hardened here.
 - **Advanced Future Phase:** deeper real-time, analytics, search, AI, enterprise, and infrastructure capabilities after core workflows prove their value.
 - **Nice-to-Have / Bonus:** Phase 29 and the Future / Bonus Backlog. These are preserved but unscheduled.
@@ -53,11 +53,11 @@ Security, tenant isolation, accessibility, testing, and observability are contin
 - extend PostgreSQL and browser regressions as future authentication capabilities are added
 - final authentication threat review and production proxy/rate-limit deployment configuration
 
-Current evidence includes 21 real PostgreSQL tests, clean application of all four migrations, and two real Edge browser flows. CI is configured to repeat integration and browser checks using PostgreSQL 17 and Chromium. See the verification record for the latest observed CI status. Workspace implementation still requires its own authorized slice.
+The authentication checkpoint included 21 real PostgreSQL tests, clean application of four migrations, and two real Edge browser flows. The subsequent authorized workspace slice extends those suites and adds a fifth migration. See the [workspace verification record](../verification/workspaces-rbac.md) for current counts and hosted CI evidence.
 
 The four imported decorative PNG assets remain a measured performance follow-up (about 5.1 MB uncompressed transfer total): optimize format/size with visual comparison in Phase 24. This does not remove approved asset optimization from scope or claim it is complete.
 
-### 3. Workspace System — Core Future Phase
+### 3. Workspace System — Minimal Slice Implemented
 
 - **Objective:** introduce organizations and membership lifecycle.
 - **Major deliverables:** create/edit/delete/switch workspace, membership, expiring hashed invitations, accept/decline, leave, member removal, and settings foundation.
@@ -65,7 +65,9 @@ The four imported decorative PNG assets remain a measured performance follow-up 
 - **Main risks:** orphaned ownership, invitation abuse, and ambiguous membership states.
 - **Definition of Done:** lifecycle constraints are enforced, the last owner is protected, and tests cover multiple workspaces per user.
 
-### 4. Multi-Tenancy — Core Future Phase
+The approved current contract uses one immutable Owner (the creator), workspace UUIDs, rename/delete/switch, membership management, invitation issue/reissue/revoke/accept, and non-owner leave. Explicit invitation decline remains deferred; ignoring a link does not consume it, and it expires after seven days. Ownership transfer remains deferred by explicit approval. See [workspace tenancy](../architecture/workspace-tenancy.md).
+
+### 4. Multi-Tenancy — Workspace Boundary Implemented
 
 - **Objective:** make Workspace the non-bypassable tenant boundary.
 - **Major deliverables:** `workspaceId` on tenant-owned rows, tenant-aware constraints/indexes, scoped repositories, verified request context, IDOR protection, and isolation suites for API/list/search paths.
@@ -73,13 +75,15 @@ The four imported decorative PNG assets remain a measured performance follow-up 
 - **Main risks:** cross-tenant reads/writes, global unique constraints, and indirect-resource leakage.
 - **Definition of Done:** users from one workspace cannot read, mutate, enumerate, cache-hit, or infer resources from another; CI runs isolation tests. PostgreSQL RLS is evaluated as later defense-in-depth.
 
-### 5. RBAC — Core Future Phase
+### 5. RBAC — Workspace Policy Implemented
 
 - **Objective:** enforce capability-based server authorization within each tenant.
 - **Major deliverables:** Owner, Admin, Manager, Member, Viewer; capability matrix; guards/policies; resource-level checks; ownership rules; audited role changes; useful project restrictions.
 - **Dependencies:** Phases 3–4.
 - **Main risks:** scattered role comparisons, privilege escalation, and project permissions exceeding workspace membership.
 - **Definition of Done:** policy tests cover allow/deny paths, owner invariants, and server enforcement independent of frontend state.
+
+Workspace permissions follow the approved [minimal RBAC contract](../architecture/workspace-tenancy.md). Manager, Member and Viewer intentionally have equal workspace-level read/leave permissions until Projects/Tasks introduces resource-specific capabilities. Admin cannot grant/manage Admin or Owner; only Owner deletes. The Owner cannot leave, be removed or be demoted. Audited role changes and the broader audit/event platform remain preserved for Phase 20; custom roles and ownership transfer are not implemented. Future resource permissions must preserve these workspace guarantees.
 
 ### 6. Projects — Core Future Phase
 
