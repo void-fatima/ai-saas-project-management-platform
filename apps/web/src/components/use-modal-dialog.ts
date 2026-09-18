@@ -8,7 +8,24 @@ export function useModalDialog(open: boolean) {
     const previous = document.activeElement;
     dialog.showModal();
     dialog.querySelector<HTMLElement>('input, button')?.focus();
+    function containTab(event: KeyboardEvent) {
+      if (event.key !== 'Tab' || !dialog) return;
+      const elements = dialog.querySelectorAll<HTMLElement>(
+        'input:not([disabled]), button:not([disabled]):not([tabindex="-1"]), [tabindex="0"]',
+      );
+      const first = elements[0];
+      const last = elements[elements.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last?.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first?.focus();
+      }
+    }
+    dialog.addEventListener('keydown', containTab);
     return () => {
+      dialog.removeEventListener('keydown', containTab);
       dialog.close();
       if (previous instanceof HTMLElement && previous.isConnected) previous.focus();
     };

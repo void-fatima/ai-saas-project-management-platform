@@ -32,6 +32,13 @@ type CoreStatus = 'online' | 'processing' | 'warning';
 
 const developerUnlockClicks = 5;
 
+function readAccountLink(): { action: AccountAction; token: string } | null {
+  const match = /^#(verify|reset)=(.*)$/.exec(window.location.hash);
+  return match
+    ? { action: match[1] === 'verify' ? 'verify' : 'reset', token: match[2] ?? '' }
+    : null;
+}
+
 const coreStatusCopy: Record<CoreStatus, { description: string; label: string }> = {
   online: {
     description: 'The API and database readiness check succeeded. AI capabilities remain planned.',
@@ -53,19 +60,23 @@ export function App() {
   const [accountAction, setAccountAction] = useState<{
     action: AccountAction;
     token?: string;
-  } | null>(() => {
-    const match = /^#(verify|reset)=([A-Za-z0-9_-]*)$/.exec(window.location.hash);
-    return match ? { action: match[1] === 'verify' ? 'verify' : 'reset', token: match[2] } : null;
-  });
+  } | null>(readAccountLink);
   useEffect(() => {
-    if (window.location.hash.startsWith('#verify=') || window.location.hash.startsWith('#reset=')) {
-      window.history.replaceState(null, '', window.location.pathname + window.location.search);
+    function consumeLink() {
+      const action = readAccountLink();
+      if (action) {
+        setAccountAction(action);
+        window.history.replaceState(null, '', window.location.pathname + window.location.search);
+      }
     }
+    consumeLink();
+    window.addEventListener('hashchange', consumeLink);
+    return () => window.removeEventListener('hashchange', consumeLink);
   }, []);
   if (accountAction)
     return (
       <AccountRecoveryView
-        key={accountAction.action}
+        key={`${accountAction.action}:${accountAction.token ?? ''}`}
         {...accountAction}
         initialEmail={session.state.user?.email}
         onBack={() => setAccountAction(null)}

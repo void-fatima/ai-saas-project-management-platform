@@ -4,6 +4,8 @@ node_modules/
 .turbo/
 dist/
 coverage/
+playwright-report/
+test-results/
 *.tsbuildinfo
 apps/api/src/generated/prisma/
 
