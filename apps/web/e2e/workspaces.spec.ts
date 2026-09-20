@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { readFile, readdir, unlink } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
+import { projectJourney, viewerJourney } from './projects.journey';
 
 async function register(page: Page, name: string, email: string) {
   await page.goto('http://localhost:5173');
@@ -51,6 +52,7 @@ test('workspace creation, switching, invitations, role changes and cross-tenant 
   page,
   browser,
 }) => {
+  test.setTimeout(120_000);
   const recipient = `invite-${randomUUID()}@example.com`;
   const second = await browser.newContext();
   try {
@@ -64,6 +66,7 @@ test('workspace creation, switching, invitations, role changes and cross-tenant 
     await expect(page.getByLabel('Active workspace')).toHaveValue(teamId);
     await register(other, 'Invited Member', recipient);
     const otherId = await create(other, 'Private workspace');
+    const project = await projectJourney(page, other, teamId);
     // Browser-context requests share real session cookies; no request interception.
     expect((await other.request.get(`http://localhost:3000/workspaces/${teamId}`)).status()).toBe(
       404,
@@ -97,6 +100,10 @@ test('workspace creation, switching, invitations, role changes and cross-tenant 
     await page.getByRole('button', { name: 'Refresh workspaces' }).click();
     const memberRow = page.getByRole('listitem').filter({ hasText: recipient });
     await expect(memberRow).toContainText('Member');
+    await page.getByLabel(`Role for ${recipient}`).selectOption('Viewer');
+    await memberRow.getByRole('button', { name: 'Save role' }).click();
+    await expect(memberRow).toContainText('Viewer');
+    await viewerJourney(other, teamId, project);
     await page.getByLabel(`Role for ${recipient}`).selectOption('Admin');
     await memberRow.getByRole('button', { name: 'Save role' }).click();
     await expect(memberRow).toContainText('Admin');

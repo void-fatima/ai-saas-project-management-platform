@@ -38,7 +38,6 @@ const navigationGroups: NavigationGroup[] = [
   {
     label: 'Build',
     items: [
-      { icon: <FolderIcon size={19} />, label: 'Projects', state: 'planned' },
       { icon: <LightningIcon size={19} />, label: 'Automations', state: 'planned' },
       { icon: <PlugsConnectedIcon size={19} />, label: 'Integrations', state: 'planned' },
     ],
@@ -55,9 +54,13 @@ const navigationGroups: NavigationGroup[] = [
 
 export function Sidebar({
   workspacesOpen,
+  projectsOpen,
+  onProjects,
   onNavigate,
 }: {
   workspacesOpen: boolean;
+  projectsOpen: boolean;
+  onProjects: () => void;
   onNavigate: (workspaces: boolean) => void;
 }) {
   return (
@@ -84,6 +87,17 @@ export function Sidebar({
           <SquaresFourIcon size={19} />
           <span>Workspaces</span>
         </button>
+        <button
+          className={`navigation__item navigation__item--${projectsOpen ? 'active' : 'available'}`}
+          aria-label="Projects"
+          title="Projects"
+          aria-current={projectsOpen ? 'page' : undefined}
+          onClick={onProjects}
+          type="button"
+        >
+          <FolderIcon size={19} />
+          <span>Projects</span>
+        </button>
         {navigationGroups.map((group) => (
           <section className="navigation__group" key={group.label}>
             <h2 className="navigation__label">{group.label}</h2>
@@ -101,7 +115,11 @@ export function Sidebar({
                           }
                         : undefined
                     }
-                    aria-current={item.state === 'active' && !workspacesOpen ? 'page' : undefined}
+                    aria-current={
+                      item.state === 'active' && !workspacesOpen && !projectsOpen
+                        ? 'page'
+                        : undefined
+                    }
                     className={`navigation__item navigation__item--${item.state}`}
                     disabled={item.state === 'planned'}
                     type="button"

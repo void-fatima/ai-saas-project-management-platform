@@ -7,11 +7,11 @@ export function useModalDialog(open: boolean) {
     if (!open || !dialog) return;
     const previous = document.activeElement;
     dialog.showModal();
-    dialog.querySelector<HTMLElement>('input, button')?.focus();
+    dialog.querySelector<HTMLElement>('input, button, select, textarea')?.focus();
     function containTab(event: KeyboardEvent) {
-      if (event.key !== 'Tab' || !dialog) return;
+      if (event.key !== 'Tab' || event.defaultPrevented || !dialog) return;
       const elements = dialog.querySelectorAll<HTMLElement>(
-        'input:not([disabled]), button:not([disabled]):not([tabindex="-1"]), [tabindex="0"]',
+        'input:not([disabled]), button:not([disabled]):not([tabindex="-1"]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex="0"]',
       );
       const first = elements[0];
       const last = elements[elements.length - 1];

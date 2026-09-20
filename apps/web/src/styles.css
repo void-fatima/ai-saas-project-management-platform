@@ -1779,3 +1779,126 @@ dd {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Projects use the existing dark surfaces, violet accents and native controls. */
+.projects-panel {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+.project-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: space-between;
+}
+.project-form {
+  display: grid;
+  gap: 0.75rem;
+  max-width: 42rem;
+}
+.project-form--inline {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+}
+.projects-panel select,
+.task-dialog select,
+.project-form textarea {
+  width: 100%;
+  min-height: 2.6rem;
+  padding: 0.65rem;
+  color: var(--text);
+  background: #151222;
+  border: 1px solid var(--border);
+  border-radius: 0.6rem;
+  font: inherit;
+}
+.project-form textarea {
+  min-height: 6rem;
+  resize: vertical;
+}
+.project-description {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.project-list,
+.subtask-list,
+.kanban-tasks {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+.project-list > li,
+.subtask-list > li,
+.project-settings {
+  border: 1px solid var(--border);
+  border-radius: 0.85rem;
+  padding: 1rem;
+  display: grid;
+  gap: 0.65rem;
+}
+.kanban {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
+  gap: 1rem;
+}
+.kanban-column {
+  min-width: 0;
+  padding: 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: rgb(13 10 25 / 70%);
+}
+.kanban-column h3 {
+  margin-top: 0;
+}
+.task-card {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+  background: rgb(119 85 210 / 8%);
+}
+.task-card__title {
+  width: 100%;
+  text-align: left;
+  justify-content: flex-start;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.task-card__controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+.task-card__controls label {
+  width: 100%;
+  display: grid;
+  gap: 0.4rem;
+}
+.task-dialog {
+  width: min(44rem, calc(100vw - 2rem));
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
+}
+.task-dialog .project-form {
+  margin-block: 1rem;
+}
+@media (max-width: 900px) {
+  .kanban {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 620px) {
+  .project-form--inline {
+    grid-template-columns: 1fr;
+  }
+  .brand__copy {
+    max-width: 7rem;
+  }
+}

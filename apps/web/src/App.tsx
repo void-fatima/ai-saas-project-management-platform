@@ -6,6 +6,7 @@ import { AuthView } from './auth/AuthView';
 import { AccountRecoveryView, type AccountAction } from './auth/AccountRecoveryView';
 import { useSession } from './auth/use-session';
 import { WorkspacePanel } from './workspaces/WorkspacePanel';
+import { ProjectsPanel } from './projects/ProjectsPanel';
 import { InvitationView } from './workspaces/InvitationView';
 import type { SessionUser } from './auth/session-api';
 import aiCoreOrb from './assets/ai-core-orb.png';
@@ -145,6 +146,8 @@ export function App() {
           const url = new URL(window.location.href);
           url.searchParams.set('view', 'workspaces');
           url.searchParams.delete('workspace');
+          url.searchParams.delete('project');
+          url.searchParams.delete('task');
           window.history.replaceState(null, '', url.pathname + url.search);
           setInvitation(null);
         }}
@@ -185,6 +188,9 @@ function Observatory({
   const [workspacesOpen, setWorkspacesOpen] = useState(
     () => new URLSearchParams(window.location.search).get('view') === 'workspaces',
   );
+  const [projectsOpen, setProjectsOpen] = useState(
+    () => new URLSearchParams(window.location.search).get('view') === 'projects',
+  );
   const apiSectionRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -222,11 +228,23 @@ function Observatory({
     <div className="app-shell">
       <Sidebar
         workspacesOpen={workspacesOpen}
+        projectsOpen={projectsOpen}
+        onProjects={() => {
+          setProjectsOpen(true);
+          setWorkspacesOpen(false);
+          const url = new URL(window.location.href);
+          url.searchParams.set('view', 'projects');
+          window.history.replaceState(null, '', url.pathname + url.search);
+        }}
         onNavigate={(open) => {
+          setProjectsOpen(false);
           setWorkspacesOpen(open);
           const url = new URL(window.location.href);
-          if (open) url.searchParams.set('view', 'workspaces');
-          else url.searchParams.delete('view');
+          if (open) {
+            url.searchParams.set('view', 'workspaces');
+            url.searchParams.delete('project');
+            url.searchParams.delete('task');
+          } else url.searchParams.delete('view');
           window.history.replaceState(null, '', url.pathname + url.search);
         }}
       />
@@ -278,7 +296,9 @@ function Observatory({
           </div>
         </header>
 
-        {workspacesOpen ? (
+        {projectsOpen ? (
+          <ProjectsPanel userId={user.id} />
+        ) : workspacesOpen ? (
           <WorkspacePanel userId={user.id} />
         ) : (
           <div className="observatory__grid">
@@ -401,16 +421,16 @@ function Observatory({
 
             <section className="milestone" aria-labelledby="milestone-title">
               <header className="section-heading">
-                <p className="eyebrow">Next milestone</p>
-                <h2 id="milestone-title">Workspaces</h2>
+                <p className="eyebrow">Current milestone</p>
+                <h2 id="milestone-title">Projects and tasks</h2>
               </header>
               <div className="milestone__content">
                 <span className="milestone__icon" aria-hidden="true">
                   <LockIcon size={23} weight="duotone" />
                 </span>
                 <span>
-                  <strong>Membership and workspace access</strong>
-                  <small>Open Workspaces from the navigation</small>
+                  <strong>Projects, tasks and Kanban</strong>
+                  <small>Open Projects from the navigation</small>
                 </span>
               </div>
             </section>
@@ -419,7 +439,7 @@ function Observatory({
               <ClockIcon aria-hidden="true" size={18} />
               <span>
                 <small>Current phase</small>
-                <strong>Workspaces and permissions</strong>
+                <strong>Projects, tasks and Kanban</strong>
               </span>
             </section>
           </div>
