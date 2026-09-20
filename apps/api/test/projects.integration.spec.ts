@@ -113,6 +113,26 @@ describe('PostgreSQL Projects, Tasks and Kanban', () => {
         .set('Cookie', cookie(user))
         .send({ title: 'Subtask' })
         .expect(edit ? 201 : 403);
+      const child = await createTask('Child permission checks', task.id);
+      await client()
+        .get(`${path()}/tasks/${task.id}/subtasks/${child.id}`)
+        .set('Cookie', cookie(user))
+        .expect(200);
+      await client()
+        .patch(`${path()}/tasks/${task.id}/subtasks/${child.id}`)
+        .set('Cookie', cookie(user))
+        .send({ title: 'Updated child', version: child.version })
+        .expect(edit ? 200 : 403);
+      const currentChild = await service.task(w, owner.id, p, child.id, task.id);
+      await client()
+        .patch(`${path()}/tasks/${task.id}/subtasks/${child.id}`)
+        .set('Cookie', cookie(user))
+        .send({ assigneeId: owner.id, version: currentChild.version })
+        .expect(admin ? 200 : 403);
+      await client()
+        .delete(`${path()}/tasks/${task.id}/subtasks/${child.id}`)
+        .set('Cookie', cookie(user))
+        .expect(admin ? 204 : 403);
       await client()
         .delete(`${path()}/tasks/${task.id}`)
         .set('Cookie', cookie(user))
@@ -370,6 +390,34 @@ describe('PostgreSQL Projects, Tasks and Kanban', () => {
     expect(second.items).toHaveLength(2);
     expect(second.nextOffset).toBeNull();
     expect(new Set([...first.items, ...second.items].map((task) => task.id)).size).toBe(52);
+  });
+  it('rechecks a demoted membership on the next task and project request', async () => {
+    const user = await member('Manager');
+    const root = await createTask();
+    await workspaces.changeMember(w, owner.id, user.id, 'Viewer');
+    await client()
+      .patch(path())
+      .set('Cookie', cookie(user))
+      .send({ name: 'Stale role' })
+      .expect(403);
+    await client()
+      .patch(`${path()}/tasks/${root.id}`)
+      .set('Cookie', cookie(user))
+      .send({ title: 'Stale role', version: 1 })
+      .expect(403);
+    await client().get(path()).set('Cookie', cookie(user)).expect(200);
+  });
+  it('workspace deletion cascades assigned projects, tasks and subtasks without crossing tenants', async () => {
+    const root = await createTask();
+    const child = await createTask('Child', root.id);
+    await service.updateTask(w, owner.id, p, child.id, root.id, {
+      version: 1,
+      assigneeId: owner.id,
+    });
+    await workspaces.delete(w, owner.id);
+    expect(await db.project.count({ where: { workspaceId: w } })).toBe(0);
+    expect(await db.task.count({ where: { workspaceId: w } })).toBe(0);
+    expect((await service.detail(other, outsider.id, q)).project.id).toBe(q);
   });
   it('validates HTTP payloads, stale versions, CSRF and safe server failures', async () => {
     const task = await createTask();
