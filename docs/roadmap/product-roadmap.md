@@ -4,9 +4,9 @@ This document preserves approved product scope while keeping implementation incr
 
 ## Scope Classification
 
-- **Completed Phases:** foundation and authentication, plus the approved minimal Workspace/Tenancy/RBAC and Projects/Tasks/Subtasks/Kanban vertical slices.
-- **Current Phase:** Projects/Tasks/Subtasks/Kanban milestone complete. The approved minimal slice of Phases 6–9 is implemented and verified through the existing workspace boundary; evidence is recorded in [project verification](../verification/projects-tasks-kanban.md). No later milestone starts without separate authorization.
-- **Core Future Phase:** Remaining capabilities in Phases 6–9 and subsequent Phases 10–21, plus the explicitly preserved follow-ups below. None starts automatically after this milestone.
+- **Completed Phases:** foundation and authentication, plus the approved minimal Workspace/Tenancy/RBAC, Projects/Tasks/Subtasks/Kanban and Collaboration/Notifications/Realtime vertical slices.
+- **Current Phase:** The minimal Collaboration/Notifications/Realtime slice of Phases 10–12 is implemented through the existing workspace boundary. See the [collaboration contract](../architecture/collaboration-realtime.md) and [verification report](../verification/collaboration-notifications-realtime.md) for scope and evidence. No later milestone starts without separate authorization.
+- **Core Future Phase:** Remaining capabilities in Phases 6–12 and subsequent Phases 13–21, plus the explicitly preserved follow-ups below. None starts automatically after this milestone.
 - **Production Hardening:** Phases 22–27, continuously considered earlier and formally hardened here.
 - **Advanced Future Phase:** deeper real-time, analytics, search, AI, enterprise, and infrastructure capabilities after core workflows prove their value.
 - **Nice-to-Have / Bonus:** Phase 29 and the Future / Bonus Backlog. These are preserved but unscheduled.
@@ -87,7 +87,7 @@ Workspace permissions follow the approved [minimal RBAC contract](../architectur
 
 ### 6. Projects — Minimal Slice Implemented
 
-Current slice: workspace-scoped CRUD, name/description, creator, archive/restore, deliberate task/subtask cascade deletion, 50-row pages and Owner/Admin/Manager administration. Project dates, richer lifecycle/status, overview, project-specific members and milestones remain deferred. Activity and audit actions remain with their later platforms.
+Current slice: workspace-scoped CRUD, name/description, creator, archive/restore, deliberate task/subtask cascade deletion, 50-row pages and Owner/Admin/Manager administration. Project dates, richer lifecycle/status, overview, project-specific members and milestones remain deferred. Minimal project/task activity is included in the collaboration slice; full audit actions remain with their later platform.
 
 - **Objective:** deliver workspace-scoped project management.
 - **Major deliverables:** create/read/update/archive projects, status, dates, overview, members, and milestones when validated by product needs.
@@ -125,7 +125,9 @@ Current slice: linkable root-task modal, content/status/assignment editing, one-
 - **Main risks:** giant components, lost edits, unsafe rich content, and mobile usability.
 - **Definition of Done:** fields are permission-aware, accessible, responsive, resilient to failures, and covered by component/E2E tests.
 
-### 10. Collaboration — Core Future Phase
+### 10. Collaboration — Minimal Slice Implemented / Remaining Core Future Phase
+
+Implemented: plain-text task/subtask comment APIs, root task discussion UI, idempotent creation, author-only versioned edits/deletion, and transactional project/task/comment history. Mentions, rich text, attachments, dedicated subtask discussion UI and broader membership/invitation history (including automatic assignment-cleanup history) remain deferred. The history here does not replace Phase 20's audit platform.
 
 - **Objective:** make project work discussable and traceable.
 - **Major deliverables:** comments, mentions, safe user references, activity feed, collaboration history, and sanitized rich text only if introduced.
@@ -133,7 +135,9 @@ Current slice: linkable root-task modal, content/status/assignment editing, one-
 - **Main risks:** XSS, mention abuse, event duplication, and conflating Activity with AuditLog.
 - **Definition of Done:** content is safely rendered, mentions resolve only inside the tenant, and activity is transactionally consistent with supported actions.
 
-### 11. Notifications — Core Future Phase
+### 11. Notifications — Minimal Slice Implemented / Remaining Core Future Phase
+
+Implemented: own-user in-app inbox, unread count, read/read-all, current-member assignment and relevant-comment recipients, no self-notifications, deduplicated fan-out and stale-link authorization. Mention/deadline notifications, preferences, digests and email remain deferred; the complete phase definition below is broader than this slice.
 
 - **Objective:** provide actionable, non-duplicated updates.
 - **Major deliverables:** inbox, read/unread, assignments, mentions, comments, deadlines, preferences, idempotency, and later email delivery where valuable.
@@ -141,7 +145,9 @@ Current slice: linkable root-task modal, content/status/assignment editing, one-
 - **Main risks:** noise, duplicates, unauthorized resource references, and failed fan-out.
 - **Definition of Done:** event mappings are explicit, tenant-safe, idempotent, preference-aware, and tested.
 
-### 12. Real-Time — Core/Advanced Future Phase
+### 12. Real-Time — Minimal SSE Slice Implemented / Remaining Core/Advanced Future Phase
+
+Implemented: native SSE with cookie-session authentication, server-filtered workspace hints, batched authorization, removal/expiry handling, reconnect/refetch, manual fallback and focus/draft preservation. SSE is sufficient for this server-to-client traffic; Socket.IO/WebSockets remain an option only if future bidirectional needs justify them. Shared pub/sub for replicas, durable outbox/replay, retention/cursor hardening, load testing, presence, chat and live collaborative editing are explicitly deferred. AI, advanced search, analytics, reporting and the full audit/event platform remain later work.
 
 - **Objective:** synchronize useful collaborative changes without making sockets a second business layer.
 - **Major deliverables:** live task/comment/notification updates, authorized rooms, reconnect/resync, duplicate-event handling, optional presence, and Redis adapter only for horizontal scale.

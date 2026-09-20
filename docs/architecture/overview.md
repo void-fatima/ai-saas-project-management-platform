@@ -7,7 +7,7 @@ The platform is an end-to-end TypeScript modular monolith. The browser runs a Re
 ```text
 Browser -> React/Vite -> NestJS REST API -> application/domain modules -> PostgreSQL
                              |
-                             +-> WebSockets (when real-time is justified)
+                             +-> Authenticated SSE refresh hints (single process)
                              +-> Redis/BullMQ worker (when background jobs exist)
                              +-> AI provider abstraction (when AI features begin)
 ```
@@ -37,6 +37,8 @@ Workspace creation, membership, invitations and minimal RBAC are implemented thr
 ## Boundary Rules
 
 Projects, Tasks, one-level subtasks and Kanban now use the same workspace lock and authorization boundary. Their [resource contract](projects-tasks.md) defines the role extension, composite tenant constraints, current-member assignments, archive/delete behavior, bounded lists and versioned ordering. No new dependency, service or realtime infrastructure was introduced.
+
+The [collaboration contract](collaboration-realtime.md) adds comments, activity and notifications in the same PostgreSQL transactions. A post-commit in-process signal feeds authenticated SSE streams; workspace locks serialize membership removal with protected delivery. Batched session/membership validation avoids per-client queries. REST and persisted state repair missed hints on reconnect. Multiple API replicas require shared pub/sub before deployment; no Redis, worker or WebSocket dependency was added to this single-process slice.
 
 - Controllers translate transport concerns and delegate; they do not own business rules.
 - Domain/application logic must not depend directly on HTTP, a specific AI SDK, or browser state.

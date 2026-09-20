@@ -2,7 +2,14 @@ name: Quality
 
 on:
   push:
-    branches: [main, feature/authentication, feature/workspaces-rbac, feature/projects-tasks-kanban]
+    branches:
+      [
+        main,
+        feature/authentication,
+        feature/workspaces-rbac,
+        feature/projects-tasks-kanban,
+        feature/collaboration-notifications-realtime,
+      ]
   pull_request:
 
 permissions:
@@ -91,5 +98,5 @@ jobs:
         run: pnpm build
       - name: Install Chromium
         run: pnpm --filter @platform/web exec playwright install --with-deps chromium
-      - name: Real browser authentication, workspaces and Kanban
+      - name: Real browser authentication, workspaces, Kanban and collaboration
         run: pnpm --filter @platform/web test:e2e

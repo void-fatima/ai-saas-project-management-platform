@@ -1,10 +1,10 @@
 # AI-Powered Multi-Tenant SaaS Project Management Platform
 
-A full-stack project management SaaS with workspace tenant isolation, role-based authorization, persisted tasks and Kanban. Real-time collaboration, analytics, and human-reviewed AI workflows remain planned.
+A full-stack project management SaaS with workspace tenant isolation, role-based authorization, persisted tasks, Kanban, comments, activity and in-app notifications with SSE updates. Analytics and human-reviewed AI workflows remain planned.
 
 ## Status
 
-**Foundation, authentication, Workspace/Tenancy/RBAC and Projects/Tasks/Kanban are implemented.** Projects, one-level subtasks, workspace-member assignment and persisted Kanban extend the existing tenant boundary. Email delivery uses an explicitly development-only mailbox; production requires a delivery adapter and deployment hardening. Collaboration, realtime and AI remain planned. See the [product roadmap](docs/roadmap/product-roadmap.md), [workspace contract](docs/architecture/workspace-tenancy.md), [resource contract](docs/architecture/projects-tasks.md), and [project verification](docs/verification/projects-tasks-kanban.md).
+**Foundation, authentication, Workspace/Tenancy/RBAC, Projects/Tasks/Kanban and the minimal Collaboration/Notifications/Realtime slice are implemented.** Comments, durable activity and own-user notifications extend the existing tenant boundary. SSE sends authorized refresh hints; PostgreSQL remains authoritative. Email delivery uses an explicitly development-only mailbox; production requires a delivery adapter and deployment hardening. See the [product roadmap](docs/roadmap/product-roadmap.md), [workspace contract](docs/architecture/workspace-tenancy.md), [resource contract](docs/architecture/projects-tasks.md), [collaboration contract](docs/architecture/collaboration-realtime.md), and [collaboration verification](docs/verification/collaboration-notifications-realtime.md).
 
 ### Implemented
 
@@ -28,10 +28,13 @@ A full-stack project management SaaS with workspace tenant isolation, role-based
 - GitHub Actions quality workflow
 - workspace creation/switching, memberships, invitations and server-enforced five-role governance
 - workspace-scoped projects, tasks, one-level subtasks, current-member assignment and persisted Kanban
+- plain-text comments with author-only versioned editing/deletion and idempotent creation
+- transactional activity and assignment/comment notifications, unread count and read lifecycle
+- session-authorized SSE hints, current-membership filtering, reconnect/refetch and manual fallback
 
 ### Planned
 
-Production email delivery, richer project/task fields, drag-and-drop, collaboration, notifications, realtime, analytics, search, audit logs, AI planning and reporting, production infrastructure, and further hardening remain deferred. Ownership transfer, explicit invitation decline and custom roles remain documented follow-ups.
+Production email delivery, richer project/task fields, drag-and-drop, mentions/rich text, subtask discussion UI, notification preferences/digests, chat, presence, coediting, distributed realtime, analytics, search, audit logs, AI planning and reporting, production infrastructure, and further hardening remain deferred. Ownership transfer, explicit invitation decline and custom roles remain documented follow-ups.
 
 ## Technology
 
