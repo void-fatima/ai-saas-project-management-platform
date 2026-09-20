@@ -36,6 +36,8 @@ Workspace creation, membership, invitations and minimal RBAC are implemented thr
 
 ## Boundary Rules
 
+Projects, Tasks, one-level subtasks and Kanban now use the same workspace lock and authorization boundary. Their [resource contract](projects-tasks.md) defines the role extension, composite tenant constraints, current-member assignments, archive/delete behavior, bounded lists and versioned ordering. No new dependency, service or realtime infrastructure was introduced.
+
 - Controllers translate transport concerns and delegate; they do not own business rules.
 - Domain/application logic must not depend directly on HTTP, a specific AI SDK, or browser state.
 - PostgreSQL remains authoritative. Redis is optional infrastructure, never durable truth.

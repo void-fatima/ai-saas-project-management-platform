@@ -1,10 +1,10 @@
 # AI-Powered Multi-Tenant SaaS Project Management Platform
 
-A production-minded full-stack foundation for a collaborative project management SaaS with planned tenant isolation, role-based authorization, real-time collaboration, analytics, and human-reviewed AI workflows.
+A full-stack project management SaaS with workspace tenant isolation, role-based authorization, persisted tasks and Kanban. Real-time collaboration, analytics, and human-reviewed AI workflows remain planned.
 
 ## Status
 
-**Foundation, authentication and the minimal Workspace/Tenancy/RBAC slice are implemented.** Accounts, invitations, membership and workspace permissions have real PostgreSQL and browser coverage. Email delivery uses an explicitly development-only mailbox; production requires a delivery adapter and deployment hardening. Projects, Tasks, Kanban, collaboration, realtime and AI remain planned. See the [product roadmap](docs/roadmap/product-roadmap.md), [workspace contract](docs/architecture/workspace-tenancy.md), and [workspace verification](docs/verification/workspaces-rbac.md).
+**Foundation, authentication, Workspace/Tenancy/RBAC and Projects/Tasks/Kanban are implemented.** Projects, one-level subtasks, workspace-member assignment and persisted Kanban extend the existing tenant boundary. Email delivery uses an explicitly development-only mailbox; production requires a delivery adapter and deployment hardening. Collaboration, realtime and AI remain planned. See the [product roadmap](docs/roadmap/product-roadmap.md), [workspace contract](docs/architecture/workspace-tenancy.md), [resource contract](docs/architecture/projects-tasks.md), and [project verification](docs/verification/projects-tasks-kanban.md).
 
 ### Implemented
 
@@ -26,10 +26,12 @@ A production-minded full-stack foundation for a collaborative project management
 - root scripts for validating and operating the local PostgreSQL service
 - ESLint, Prettier, type checking, Vitest smoke tests, and production builds
 - GitHub Actions quality workflow
+- workspace creation/switching, memberships, invitations and server-enforced five-role governance
+- workspace-scoped projects, tasks, one-level subtasks, current-member assignment and persisted Kanban
 
 ### Planned
 
-Production email delivery, project/task permissions and workflows, Kanban, collaboration, notifications, realtime, analytics, search, audit logs, AI planning and reporting, production infrastructure, and further hardening remain deferred. Ownership transfer, explicit invitation decline and custom roles remain documented follow-ups.
+Production email delivery, richer project/task fields, drag-and-drop, collaboration, notifications, realtime, analytics, search, audit logs, AI planning and reporting, production infrastructure, and further hardening remain deferred. Ownership transfer, explicit invitation decline and custom roles remain documented follow-ups.
 
 ## Technology
 
@@ -60,7 +62,7 @@ docker-compose.yml     local PostgreSQL service
 
 - Node.js 22 or newer
 - pnpm 10 (`corepack enable` can make the pinned version available)
-- Docker with Docker Compose for local PostgreSQL
+- PostgreSQL 17 (native local installation or Docker Compose)
 
 ## Setup
 
@@ -179,7 +181,17 @@ Creation/rename accepts `{ name }`; role change accepts `{ role }`. Anonymous re
 
 Invitations expire in seven days, use hashed 256-bit random tokens and consume atomically with membership creation. Resending replaces the old link after a one-minute cooldown. Revoke/replay/expiry/mismatched email fail safely; acceptance also checks that the inviter still has authority. Set `MAIL_MODE=development-file` to deliver private local links to ignored `.tools/mail/*.json`. Open the link, sign in or register with the invited email, then explicitly accept. Reopen the original link if the page is reloaded before acceptance. Production delivery remains unavailable until an actual mail adapter is configured; no external email is sent by tests.
 
-`WorkspaceAccess.run` reloads membership and evaluates capabilities inside a transaction locking the workspace row; repository operations bind the workspace ID. Role changes/removal/acceptance/deletion use the same lock. Future Projects/Tasks must reuse this boundary and preserve the [workspace-level guarantees](docs/architecture/workspace-tenancy.md).
+`WorkspaceAccess.run` reloads membership and evaluates capabilities inside a transaction locking the workspace row; repository operations bind the workspace ID. Role changes/removal/acceptance/deletion and Projects/Tasks use the same lock and preserve the [workspace-level guarantees](docs/architecture/workspace-tenancy.md).
+
+## Projects, tasks and Kanban
+
+Open **Projects**, select a workspace, create a project and open its board. Owner/Admin/Manager can administer projects and delete or assign tasks. Member can create/edit/move tasks and subtasks and self-assign an unassigned item; Viewer is read-only. Manager still cannot administer workspace membership or settings.
+
+Task status is **To do → In progress → Done**, with transitions in either direction. Use the status select, **Up** and **To end** controls with mouse or keyboard. Open a task to edit its description, select an assignee, and create/edit/complete one-level subtasks. State and ordering survive reload. Stale edits return a conflict and reload current state for review. Assignment is restricted to current workspace members; leaving/removal clears existing assignments atomically.
+
+Project settings support rename/description, archive/restore and confirmed permanent deletion. Archived projects remain readable; restoring enables task edits. Deleting a project intentionally deletes its tasks/subtasks. All resource lists page at 50 rows. The [resource contract](docs/architecture/projects-tasks.md) records schema constraints, routes, RBAC, status, assignment and ordering details.
+
+Apply the additive `20260919000000_projects_tasks` migration with `pnpm --filter @platform/api prisma:migrate:deploy`. It adds Project, Task and TaskStatus, composite tenant/parent/assignee constraints, and one-level/assignment-cleanup triggers. Earlier migrations are unchanged.
 
 ### PostgreSQL without Docker (Windows)
 
@@ -200,7 +212,7 @@ pnpm --filter @platform/web test:e2e
 & 'C:\Program Files\PostgreSQL\17\bin\pg_ctl.exe' -D .tools/pg-workspace-tests -m fast -w stop
 ```
 
-Integration fixtures delete only their own records. Browser fixtures remain in the explicitly disposable database; no real database is reset. Keep local test mail/database files private. All five migrations were also verified from a fresh database.
+Integration fixtures delete only their own records. Browser fixtures remain in the explicitly disposable database; no real database is reset. Keep local test mail/database files private. All six migrations were also verified from a fresh database.
 
 ## Quality Commands
 
@@ -233,7 +245,7 @@ The suite starts its own API and web servers on ports 3000 and 5173, refuses to 
 
 When Chromium download is unavailable but Microsoft Edge is installed, set `E2E_BROWSER_CHANNEL=msedge`. Local verification on Windows used an isolated PostgreSQL 17 cluster under ignored `.tools`, listening only on `127.0.0.1:55432`, because Docker Desktop's engine failed. It did not use or reset the installed database service. CI uses its own disposable PostgreSQL service and Chromium.
 
-CI retains frozen installation, format, lint, typecheck, unit tests, builds, and Compose validation. The PostgreSQL 17 job applies migrations to a clean disposable database, runs integration regressions, builds the applications, installs Chromium, and runs real browser authentication and workspace journeys. Both jobs run on pull requests and pushes to main, feature/authentication, or feature/workspaces-rbac. Deployment remains outside this phase.
+CI retains frozen installation, format, lint, typecheck, unit tests, builds, and Compose validation. The PostgreSQL 17 job applies migrations to a clean disposable database, runs integration regressions, builds the applications, installs Chromium, and runs real browser authentication, workspace and project/Kanban journeys. Both jobs run on pull requests and pushes to main, feature/authentication, feature/workspaces-rbac, or feature/projects-tasks-kanban. Deployment remains outside this phase.
 
 ## Documentation
 

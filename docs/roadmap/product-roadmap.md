@@ -5,8 +5,8 @@ This document preserves approved product scope while keeping implementation incr
 ## Scope Classification
 
 - **Completed Phases:** foundation and authentication, plus the approved minimal Workspace/Tenancy/RBAC vertical slice.
-- **Current Phase:** Workspace/Tenancy/RBAC milestone verification. The approved five-role workspace contract, invitations and server-side isolation are implemented; verification evidence is recorded separately.
-- **Core Future Phase:** Projects/Tasks and subsequent Phases 6–21, plus the explicitly preserved follow-ups below. None starts automatically after this milestone.
+- **Current Phase:** Projects/Tasks/Subtasks/Kanban milestone verification. The approved minimal slice of Phases 6–9 is implemented through the existing workspace boundary; evidence is recorded in [project verification](../verification/projects-tasks-kanban.md).
+- **Core Future Phase:** Remaining capabilities in Phases 6–9 and subsequent Phases 10–21, plus the explicitly preserved follow-ups below. None starts automatically after this milestone.
 - **Production Hardening:** Phases 22–27, continuously considered earlier and formally hardened here.
 - **Advanced Future Phase:** deeper real-time, analytics, search, AI, enterprise, and infrastructure capabilities after core workflows prove their value.
 - **Nice-to-Have / Bonus:** Phase 29 and the Future / Bonus Backlog. These are preserved but unscheduled.
@@ -85,7 +85,9 @@ The approved current contract uses one immutable Owner (the creator), workspace 
 
 Workspace permissions follow the approved [minimal RBAC contract](../architecture/workspace-tenancy.md). Manager, Member and Viewer intentionally have equal workspace-level read/leave permissions until Projects/Tasks introduces resource-specific capabilities. Admin cannot grant/manage Admin or Owner; only Owner deletes. The Owner cannot leave, be removed or be demoted. Audited role changes and the broader audit/event platform remain preserved for Phase 20; custom roles and ownership transfer are not implemented. Future resource permissions must preserve these workspace guarantees.
 
-### 6. Projects — Core Future Phase
+### 6. Projects — Minimal Slice Implemented
+
+Current slice: workspace-scoped CRUD, name/description, creator, archive/restore, deliberate task/subtask cascade deletion, 50-row pages and Owner/Admin/Manager administration. Project dates, richer lifecycle/status, overview, project-specific members and milestones remain deferred. Activity and audit actions remain with their later platforms.
 
 - **Objective:** deliver workspace-scoped project management.
 - **Major deliverables:** create/read/update/archive projects, status, dates, overview, members, and milestones when validated by product needs.
@@ -93,7 +95,9 @@ Workspace permissions follow the approved [minimal RBAC contract](../architectur
 - **Main risks:** inconsistent membership and unbounded listings.
 - **Definition of Done:** CRUD, archive, pagination, authorization, tenant isolation, validation, activity, and audit-sensitive actions are tested.
 
-### 7. Tasks — Core Future Phase
+### 7. Tasks — Minimal Slice Implemented
+
+Current slice: task CRUD, title/description, TODO/IN_PROGRESS/DONE, creator, one optional current workspace-member assignee, deterministic ordering and one-level subtasks. Membership removal clears assignments. Priority, labels, due dates, multiple assignees, attachment metadata and history remain deferred.
 
 - **Objective:** model actionable work with reliable constraints.
 - **Major deliverables:** task CRUD, status, priority, creator/reporter, one or multiple assignees when justified, labels, due dates, ordering, subtasks, attachments metadata, and history.
@@ -101,7 +105,9 @@ Workspace permissions follow the approved [minimal RBAC contract](../architectur
 - **Main risks:** schema churn, invalid cross-workspace references, ordering races, and attachment security.
 - **Definition of Done:** task invariants and scoped relationships are database-enforced; list endpoints paginate/filter; critical policies have integration tests.
 
-### 8. Kanban — Core Future Phase
+### 8. Kanban — Accessible Control Slice Implemented
+
+Current slice: persisted three-column board, keyboard/native status controls, move-up/append ordering, workspace transaction serialization and optimistic task versions. Drag-and-drop (including dnd-kit evaluation), richer cross-page positioning and optimistic presentation with rollback remain preserved follow-ups; this slice waits for server confirmation and visibly reloads after conflicts. No drag-only interaction or new dependency was added.
 
 - **Objective:** provide a fast, accessible visual workflow.
 - **Major deliverables:** responsive columns, dnd-kit drag-and-drop, persisted ordering, optimistic updates, rollback, keyboard operation, focus states, and concurrency handling.
@@ -109,7 +115,9 @@ Workspace permissions follow the approved [minimal RBAC contract](../architectur
 - **Main risks:** reorder races, inaccessible dragging, and client/server divergence.
 - **Definition of Done:** pointer and keyboard journeys work, failed mutations visibly roll back, and ordering remains stable under concurrent requests.
 
-### 9. Task Details — Core Future Phase
+### 9. Task Details — Minimal Slice Implemented
+
+Current slice: linkable root-task modal, content/status/assignment editing, one-level subtasks, read-only Viewer rendering, Member controls, loading/error/retry states and confirmed deletion. Labels, due dates, attachments and history remain deferred as above. See the [resource contract](../architecture/projects-tasks.md); workspace-level role guarantees remain unchanged.
 
 - **Objective:** expose a focused deep-edit workflow.
 - **Major deliverables:** linkable drawer/page, descriptions, status, assignees, labels, due dates, subtasks, attachments, history, validation, loading/error/retry states, and destructive confirmations.
