@@ -20,6 +20,8 @@ model User {
   ownedWorkspaces Workspace[]           @relation("WorkspaceOwner")
   memberships     WorkspaceMembership[]
   invitations     WorkspaceInvitation[] @relation("WorkspaceInviter")
+  createdProjects Project[]
+  createdTasks    Task[]
 
   @@map("users")
 }
@@ -41,6 +43,7 @@ model Workspace {
   owner       User                  @relation("WorkspaceOwner", fields: [ownerId], references: [id], onDelete: Restrict)
   memberships WorkspaceMembership[]
   invitations WorkspaceInvitation[]
+  projects    Project[]
 
   @@map("workspaces")
 }
@@ -53,6 +56,7 @@ model WorkspaceMembership {
   updatedAt   DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
   workspace   Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assignments Task[]
 
   @@id([workspaceId, userId])
   @@index([userId])
@@ -76,6 +80,56 @@ model WorkspaceInvitation {
   @@unique([workspaceId, email])
   @@index([expiresAt])
   @@map("workspace_invitations")
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  DONE
+}
+
+model Project {
+  id          String    @id @default(uuid()) @db.Uuid
+  workspaceId String    @map("workspace_id") @db.Uuid
+  name        String    @db.VarChar(100)
+  description String    @default("") @db.VarChar(5000)
+  archived    Boolean   @default(false)
+  creatorId   String?   @map("creator_id") @db.Uuid
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  creator     User?     @relation(fields: [creatorId], references: [id], onDelete: SetNull)
+  tasks       Task[]
+
+  @@unique([workspaceId, id])
+  @@index([workspaceId, createdAt, id])
+  @@map("projects")
+}
+
+model Task {
+  id          String               @id @default(uuid()) @db.Uuid
+  workspaceId String               @map("workspace_id") @db.Uuid
+  projectId   String               @map("project_id") @db.Uuid
+  parentId    String?              @map("parent_id") @db.Uuid
+  title       String               @db.VarChar(200)
+  description String               @default("") @db.VarChar(10000)
+  status      TaskStatus           @default(TODO)
+  position    Int                  @default(0)
+  version     Int                  @default(1)
+  assigneeId  String?              @map("assignee_id") @db.Uuid
+  creatorId   String?              @map("creator_id") @db.Uuid
+  createdAt   DateTime             @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime             @updatedAt @map("updated_at") @db.Timestamptz(3)
+  project     Project              @relation(fields: [workspaceId, projectId], references: [workspaceId, id], onDelete: Cascade)
+  parent      Task?                @relation("Subtasks", fields: [workspaceId, projectId, parentId], references: [workspaceId, projectId, id], onDelete: Cascade)
+  subtasks    Task[]               @relation("Subtasks")
+  assignee    WorkspaceMembership? @relation(fields: [workspaceId, assigneeId], references: [workspaceId, userId], onDelete: NoAction)
+  creator     User?                @relation(fields: [creatorId], references: [id], onDelete: SetNull)
+
+  @@unique([workspaceId, projectId, id])
+  @@index([workspaceId, projectId, parentId, status, position, id])
+  @@index([workspaceId, assigneeId])
+  @@map("tasks")
 }
 
 enum AccountTokenKind {

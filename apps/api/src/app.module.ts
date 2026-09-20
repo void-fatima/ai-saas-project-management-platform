@@ -6,6 +6,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 
 import { AuthModule } from './auth/auth.module.js';
 import { WorkspaceModule } from './workspaces/workspace.module.js';
+import { ProjectModule } from './projects/project.module.js';
 import { validateEnvironment } from './config/environment.validation.js';
 import { DatabaseModule } from './database/database.module.js';
 import { HealthController } from './health/health.controller.js';
@@ -22,6 +23,7 @@ import { HealthController } from './health/health.controller.js';
     DatabaseModule,
     AuthModule,
     WorkspaceModule,
+    ProjectModule,
   ],
   controllers: [HealthController],
   providers: [

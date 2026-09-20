@@ -18,6 +18,10 @@ export class WorkspaceScope {
     private readonly tx: Prisma.TransactionClient,
     readonly id: string,
   ) {}
+  // Resource repositories inherit this transaction and tenant; membership is checked by WorkspaceAccess.
+  bind<T>(factory: (tx: Prisma.TransactionClient, workspaceId: string) => T): T {
+    return factory(this.tx, this.id);
+  }
   workspace() {
     return this.tx.workspace.findUniqueOrThrow({ where: { id: this.id } });
   }
