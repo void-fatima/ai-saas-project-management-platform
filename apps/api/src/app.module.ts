@@ -10,6 +10,8 @@ import { ProjectModule } from './projects/project.module.js';
 import { validateEnvironment } from './config/environment.validation.js';
 import { DatabaseModule } from './database/database.module.js';
 import { HealthController } from './health/health.controller.js';
+import { WorkspaceSignalsModule } from './collaboration/workspace-signals.js';
+import { CollaborationModule } from './collaboration/collaboration.module.js';
 
 @Module({
   imports: [
@@ -21,9 +23,11 @@ import { HealthController } from './health/health.controller.js';
     }),
     ThrottlerModule.forRoot([{ name: 'default', limit: 100, ttl: 60_000 }]),
     DatabaseModule,
+    WorkspaceSignalsModule,
     AuthModule,
     WorkspaceModule,
     ProjectModule,
+    CollaborationModule,
   ],
   controllers: [HealthController],
   providers: [

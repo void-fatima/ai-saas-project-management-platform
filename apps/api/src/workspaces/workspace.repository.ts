@@ -1,6 +1,7 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service.js';
 import type { Prisma, WorkspaceRole } from '../generated/prisma/client.js';
+import { WorkspaceSignals } from '../collaboration/workspace-signals.js';
 
 const invitationPublic = {
   id: true,
@@ -14,6 +15,10 @@ const invitationPublic = {
 
 // A scope is created only inside the locked transaction. Every tenant query binds its workspace ID.
 export class WorkspaceScope {
+  changed = false;
+  markChanged() {
+    this.changed = true;
+  }
   constructor(
     private readonly tx: Prisma.TransactionClient,
     readonly id: string,
@@ -38,17 +43,21 @@ export class WorkspaceScope {
     });
   }
   rename(name: string) {
+    this.markChanged();
     return this.tx.workspace.update({ where: { id: this.id }, data: { name } });
   }
   delete() {
+    this.markChanged();
     return this.tx.workspace.delete({ where: { id: this.id } });
   }
   remove(userId: string) {
+    this.markChanged();
     return this.tx.workspaceMembership.delete({
       where: { workspaceId_userId: { workspaceId: this.id, userId } },
     });
   }
   changeRole(userId: string, role: WorkspaceRole) {
+    this.markChanged();
     return this.tx.workspaceMembership.update({
       where: { workspaceId_userId: { workspaceId: this.id, userId } },
       data: { role },
@@ -117,6 +126,7 @@ export class WorkspaceScope {
     });
   }
   addMember(userId: string, role: WorkspaceRole) {
+    this.markChanged();
     return this.tx.workspaceMembership.create({ data: { workspaceId: this.id, userId, role } });
   }
   userEmail(userId: string) {
@@ -126,7 +136,10 @@ export class WorkspaceScope {
 
 @Injectable()
 export class WorkspaceRepository {
-  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(WorkspaceSignals) private readonly signals: WorkspaceSignals,
+  ) {}
   create(userId: string, name: string) {
     return this.prisma.workspace.create({
       data: { name, ownerId: userId, memberships: { create: { userId, role: 'Owner' } } },
@@ -153,13 +166,19 @@ export class WorkspaceRepository {
       }),
     );
   }
-  locked<T>(workspaceId: string, action: (scope: WorkspaceScope) => Promise<T>): Promise<T> {
-    return this.prisma.$transaction(async (tx) => {
+  async locked<T>(workspaceId: string, action: (scope: WorkspaceScope) => Promise<T>): Promise<T> {
+    let changed = false;
+    const result = await this.prisma.$transaction(async (tx) => {
       const rows = await tx.$queryRaw<
         { id: string }[]
       >`SELECT id FROM workspaces WHERE id = ${workspaceId}::uuid FOR UPDATE`;
       if (!rows.length) throw new NotFoundException('Workspace is unavailable.');
-      return action(new WorkspaceScope(tx, workspaceId));
+      const scope = new WorkspaceScope(tx, workspaceId);
+      const value = await action(scope);
+      changed = scope.changed;
+      return value;
     });
+    if (changed) this.signals.publish({ workspaceId });
+    return result;
   }
 }

@@ -4,6 +4,7 @@ import { WorkspaceAccess } from '../workspaces/workspace-access.service.js';
 import { requirePermission } from '../workspaces/workspace.policy.js';
 import { resourcePermissions } from './project.policy.js';
 import { page, ProjectScope } from './project.repository.js';
+import { ActivityWriter } from '../collaboration/activity.writer.js';
 import type {
   MoveInput,
   ProjectInput,
@@ -18,12 +19,13 @@ export class ProjectService {
   private run<T>(
     workspaceId: string,
     userId: string,
-    action: (scope: ProjectScope, role: WorkspaceRole) => Promise<T>,
+    action: (scope: ProjectScope, role: WorkspaceRole, activity: ActivityWriter) => Promise<T>,
   ) {
     return this.access.run(workspaceId, userId, 'view', (scope, role) =>
       action(
         scope.bind((tx, id) => new ProjectScope(tx, id)),
         role,
+        scope.bind((tx, id) => new ActivityWriter(tx, id, userId, () => scope.markChanged())),
       ),
     );
   }
@@ -37,9 +39,15 @@ export class ProjectService {
     return this.run(w, u, async (scope) => page(await scope.members(offset), offset));
   }
   create(w: string, u: string, input: ProjectInput) {
-    return this.run(w, u, (scope, role) => {
+    return this.run(w, u, async (scope, role, activity) => {
       requirePermission(resourcePermissions(role).administer);
-      return scope.createProject(u, input);
+      const project = await scope.createProject(u, input);
+      await activity.record({
+        type: 'PROJECT_CREATED',
+        projectId: project.id,
+        subject: project.name,
+      });
+      return project;
     });
   }
   detail(w: string, u: string, p: string) {
@@ -49,17 +57,27 @@ export class ProjectService {
     }));
   }
   update(w: string, u: string, p: string, input: ProjectUpdate) {
-    return this.run(w, u, async (scope, role) => {
-      await scope.project(p);
+    return this.run(w, u, async (scope, role, activity) => {
+      const before = await scope.project(p);
       requirePermission(resourcePermissions(role).administer);
-      return scope.updateProject(p, input);
+      const after = await scope.updateProject(p, input);
+      if (before.name !== after.name || before.description !== after.description)
+        await activity.record({ type: 'PROJECT_UPDATED', projectId: p, subject: after.name });
+      if (before.archived !== after.archived)
+        await activity.record({
+          type: after.archived ? 'PROJECT_ARCHIVED' : 'PROJECT_RESTORED',
+          projectId: p,
+          subject: after.name,
+        });
+      return after;
     });
   }
   delete(w: string, u: string, p: string) {
-    return this.run(w, u, async (scope, role) => {
-      await scope.project(p);
+    return this.run(w, u, async (scope, role, activity) => {
+      const project = await scope.project(p);
       requirePermission(resourcePermissions(role).administer);
       await scope.deleteProject(p);
+      await activity.record({ type: 'PROJECT_DELETED', projectId: p, subject: project.name });
     });
   }
   private async context(scope: ProjectScope, p: string, parent: string | null, mutate: boolean) {
@@ -97,11 +115,14 @@ export class ProjectService {
       throw new BadRequestException('Assignee must be a current workspace member.');
   }
   createTask(w: string, u: string, p: string, parent: string | null, input: TaskInput) {
-    return this.run(w, u, async (scope, role) => {
+    return this.run(w, u, async (scope, role, activity) => {
       await this.context(scope, p, parent, true);
       requirePermission(resourcePermissions(role).edit);
       await this.assignment(scope, role, u, input.assigneeId, null);
-      return scope.createTask(p, parent, u, input);
+      const task = await scope.createTask(p, parent, u, input);
+      await activity.task(task, 'TASK_CREATED');
+      if (task.assigneeId) await activity.task(task, 'TASK_ASSIGNED');
+      return task;
     });
   }
   updateTask(
@@ -112,7 +133,7 @@ export class ProjectService {
     parent: string | null,
     input: TaskUpdate,
   ) {
-    return this.run(w, u, async (scope, role) => {
+    return this.run(w, u, async (scope, role, activity) => {
       await this.context(scope, p, parent, true);
       const task = await scope.task(p, id, parent);
       requirePermission(resourcePermissions(role).edit);
@@ -130,11 +151,13 @@ export class ProjectService {
           ? await scope.end(p, parent, input.status)
           : task.position;
       // Gaps left in the old column are intentional; order is numeric and deterministic.
-      return scope.updateTask(p, id, { ...data, position });
+      const updated = await scope.updateTask(p, id, { ...data, position });
+      await activity.taskChanges(task, updated);
+      return updated;
     });
   }
   move(w: string, u: string, p: string, id: string, parent: string | null, input: MoveInput) {
-    return this.run(w, u, async (scope, role) => {
+    return this.run(w, u, async (scope, role, activity) => {
       await this.context(scope, p, parent, true);
       const task = await scope.task(p, id, parent);
       requirePermission(resourcePermissions(role).edit);
@@ -147,15 +170,18 @@ export class ProjectService {
         throw new BadRequestException('Destination is in a different column.');
       const position = before?.position ?? (await scope.end(p, parent, input.status));
       if (before) await scope.shift(p, parent, input.status, position, 1);
-      return scope.updateTask(p, id, { status: input.status, position });
+      const updated = await scope.updateTask(p, id, { status: input.status, position });
+      await activity.taskChanges(task, updated);
+      return updated;
     });
   }
   deleteTask(w: string, u: string, p: string, id: string, parent: string | null) {
-    return this.run(w, u, async (scope, role) => {
+    return this.run(w, u, async (scope, role, activity) => {
       await this.context(scope, p, parent, true);
-      await scope.task(p, id, parent);
+      const task = await scope.task(p, id, parent);
       requirePermission(resourcePermissions(role).deleteTasks);
       await scope.deleteTask(p, id);
+      await activity.task(task, 'TASK_DELETED');
     });
   }
 }

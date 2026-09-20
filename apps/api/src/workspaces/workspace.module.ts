@@ -10,6 +10,6 @@ import { WorkspaceInvitationService } from './workspace-invitation.service.js';
   imports: [AuthModule],
   controllers: [WorkspaceController],
   providers: [WorkspaceService, WorkspaceRepository, WorkspaceAccess, WorkspaceInvitationService],
-  exports: [WorkspaceAccess],
+  exports: [WorkspaceAccess, WorkspaceRepository],
 })
 export class WorkspaceModule {}

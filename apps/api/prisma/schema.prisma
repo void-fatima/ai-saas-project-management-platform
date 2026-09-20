@@ -22,6 +22,8 @@ model User {
   invitations     WorkspaceInvitation[] @relation("WorkspaceInviter")
   createdProjects Project[]
   createdTasks    Task[]
+  comments        TaskComment[]
+  activities      Activity[]
 
   @@map("users")
 }
@@ -44,19 +46,21 @@ model Workspace {
   memberships WorkspaceMembership[]
   invitations WorkspaceInvitation[]
   projects    Project[]
+  activities  Activity[]
 
   @@map("workspaces")
 }
 
 model WorkspaceMembership {
-  workspaceId String        @map("workspace_id") @db.Uuid
-  userId      String        @map("user_id") @db.Uuid
-  role        WorkspaceRole
-  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt   DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
-  workspace   Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  assignments Task[]
+  workspaceId   String         @map("workspace_id") @db.Uuid
+  userId        String         @map("user_id") @db.Uuid
+  role          WorkspaceRole
+  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
+  workspace     Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assignments   Task[]
+  notifications Notification[]
 
   @@id([workspaceId, userId])
   @@index([userId])
@@ -125,11 +129,94 @@ model Task {
   subtasks    Task[]               @relation("Subtasks")
   assignee    WorkspaceMembership? @relation(fields: [workspaceId, assigneeId], references: [workspaceId, userId], onDelete: NoAction)
   creator     User?                @relation(fields: [creatorId], references: [id], onDelete: SetNull)
+  comments    TaskComment[]
 
   @@unique([workspaceId, projectId, id])
   @@index([workspaceId, projectId, parentId, status, position, id])
   @@index([workspaceId, assigneeId])
   @@map("tasks")
+}
+
+model TaskComment {
+  id           String    @id @default(uuid()) @db.Uuid
+  workspaceId  String    @map("workspace_id") @db.Uuid
+  projectId    String    @map("project_id") @db.Uuid
+  taskId       String    @map("task_id") @db.Uuid
+  authorUserId String?   @map("author_user_id") @db.Uuid
+  requestId    String    @map("request_id") @db.Uuid
+  body         String    @db.VarChar(4000)
+  version      Int       @default(1)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  deletedAt    DateTime? @map("deleted_at") @db.Timestamptz(3)
+  task         Task      @relation(fields: [workspaceId, projectId, taskId], references: [workspaceId, projectId, id], onDelete: Cascade)
+  author       User?     @relation(fields: [authorUserId], references: [id], onDelete: SetNull)
+
+  @@unique([workspaceId, authorUserId, requestId])
+  @@index([workspaceId, projectId, taskId, createdAt, id])
+  @@map("task_comments")
+}
+
+enum ActivityType {
+  PROJECT_CREATED
+  PROJECT_UPDATED
+  PROJECT_ARCHIVED
+  PROJECT_RESTORED
+  PROJECT_DELETED
+  TASK_CREATED
+  TASK_UPDATED
+  TASK_STATUS_CHANGED
+  TASK_ASSIGNED
+  TASK_DELETED
+  COMMENT_CREATED
+  COMMENT_UPDATED
+  COMMENT_DELETED
+}
+
+// Resource IDs are historical references, not live foreign keys or authorization grants.
+model Activity {
+  id            String         @id @default(uuid()) @db.Uuid
+  workspaceId   String         @map("workspace_id") @db.Uuid
+  actorUserId   String?        @map("actor_user_id") @db.Uuid
+  type          ActivityType
+  projectId     String         @map("project_id") @db.Uuid
+  taskId        String?        @map("task_id") @db.Uuid
+  rootTaskId    String?        @map("root_task_id") @db.Uuid
+  subject       String         @db.VarChar(200)
+  fromStatus    TaskStatus?    @map("from_status")
+  toStatus      TaskStatus?    @map("to_status")
+  dedupKey      String         @map("dedup_key") @db.VarChar(150)
+  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  workspace     Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  actor         User?          @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+  notifications Notification[]
+
+  @@unique([workspaceId, id])
+  @@unique([workspaceId, dedupKey])
+  @@index([workspaceId, createdAt, id])
+  @@index([workspaceId, projectId, taskId, createdAt, id])
+  @@map("activities")
+}
+
+enum NotificationType {
+  ASSIGNED
+  COMMENT
+}
+
+model Notification {
+  id              String              @id @default(uuid()) @db.Uuid
+  workspaceId     String              @map("workspace_id") @db.Uuid
+  recipientUserId String              @map("recipient_user_id") @db.Uuid
+  activityId      String              @map("activity_id") @db.Uuid
+  type            NotificationType
+  createdAt       DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
+  readAt          DateTime?           @map("read_at") @db.Timestamptz(3)
+  recipient       WorkspaceMembership @relation(fields: [workspaceId, recipientUserId], references: [workspaceId, userId], onDelete: Cascade)
+  activity        Activity            @relation(fields: [workspaceId, activityId], references: [workspaceId, id], onDelete: Cascade)
+
+  @@unique([activityId, recipientUserId])
+  @@index([recipientUserId, readAt, createdAt, id])
+  @@map("notifications")
 }
 
 enum AccountTokenKind {
