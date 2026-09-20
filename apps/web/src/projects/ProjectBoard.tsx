@@ -14,6 +14,8 @@ import {
   type Task,
 } from './project-api';
 import { useProjectData } from './use-project-data';
+import { ActivityHistory } from '../collaboration/ActivityHistory';
+import { useCollaborationUpdates } from '../collaboration/use-realtime';
 
 export function ProjectBoard({
   workspaceId,
@@ -54,6 +56,8 @@ export function ProjectBoard({
     [base, offsets],
   );
   const state = useProjectData(read);
+  const [changed, setChanged] = useState(false);
+  useCollaborationUpdates(workspaceId, () => setChanged(true));
   const [pending, setPending] = useState(false);
   const [error, setError] = useState('');
   const [settings, setSettings] = useState(false);
@@ -103,12 +107,22 @@ export function ProjectBoard({
         </Button>
         <Button
           variant="ghost"
-          onClick={() => void state.reload()}
+          onClick={() => {
+            setChanged(false);
+            void state.reload();
+          }}
           disabled={pending || state.loading}
         >
           Refresh board
         </Button>
       </div>
+      {changed ? (
+        <p role="status">Workspace updated. Refresh board to review the latest tasks.</p>
+      ) : null}
+      <details>
+        <summary>Project activity</summary>
+        <ActivityHistory workspaceId={workspaceId} projectId={projectId} />
+      </details>
       {error || state.error ? <p role="alert">{error || state.error}</p> : null}
       {state.loading ? <p role="status">Loading board…</p> : null}
       {data ? (

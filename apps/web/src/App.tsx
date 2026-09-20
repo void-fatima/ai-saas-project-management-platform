@@ -7,6 +7,7 @@ import { AccountRecoveryView, type AccountAction } from './auth/AccountRecoveryV
 import { useSession } from './auth/use-session';
 import { WorkspacePanel } from './workspaces/WorkspacePanel';
 import { ProjectsPanel } from './projects/ProjectsPanel';
+import { Notifications } from './collaboration/Notifications';
 import { InvitationView } from './workspaces/InvitationView';
 import type { SessionUser } from './auth/session-api';
 import aiCoreOrb from './assets/ai-core-orb.png';
@@ -16,7 +17,6 @@ import { CommandPalette } from './components/CommandPalette';
 import { DeveloperPanel } from './components/DeveloperPanel';
 import {
   ArrowClockwiseIcon,
-  BellIcon,
   CheckCircleIcon,
   ClockIcon,
   LockIcon,
@@ -287,9 +287,7 @@ function Observatory({
                 |
               </span>
             </div>
-            <button aria-label="Notifications" className="icon-button" disabled type="button">
-              <BellIcon size={19} />
-            </button>
+            <Notifications onSessionEnded={onRefreshSession} />
             <span className="profile-mark" aria-label="Development profile">
               P
             </span>

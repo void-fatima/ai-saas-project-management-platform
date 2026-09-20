@@ -4,6 +4,7 @@ import { readFile, readdir, unlink } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
 import { projectJourney, viewerJourney } from './projects.journey';
+import { collaborationJourney, foreignCollaborationJourney } from './collaboration.journey';
 
 async function register(page: Page, name: string, email: string) {
   await page.goto('http://localhost:5173');
@@ -52,7 +53,7 @@ test('workspace creation, switching, invitations, role changes and cross-tenant 
   page,
   browser,
 }) => {
-  test.setTimeout(120_000);
+  test.setTimeout(180_000);
   const recipient = `invite-${randomUUID()}@example.com`;
   const second = await browser.newContext();
   try {
@@ -67,6 +68,7 @@ test('workspace creation, switching, invitations, role changes and cross-tenant 
     await register(other, 'Invited Member', recipient);
     const otherId = await create(other, 'Private workspace');
     const project = await projectJourney(page, other, teamId);
+    await foreignCollaborationJourney(page, other, project);
     // Browser-context requests share real session cookies; no request interception.
     expect((await other.request.get(`http://localhost:3000/workspaces/${teamId}`)).status()).toBe(
       404,
@@ -98,6 +100,7 @@ test('workspace creation, switching, invitations, role changes and cross-tenant 
       ).status(),
     ).toBe(403);
     await page.getByRole('button', { name: 'Refresh workspaces' }).click();
+    await collaborationJourney(page, other, teamId, project);
     const memberRow = page.getByRole('listitem').filter({ hasText: recipient });
     await expect(memberRow).toContainText('Member');
     await page.getByLabel(`Role for ${recipient}`).selectOption('Viewer');

@@ -1,4 +1,5 @@
 import { expect, type Page } from '@playwright/test';
+import { viewerComments } from './collaboration.journey';
 
 export async function projectJourney(owner: Page, outsider: Page, workspaceId: string) {
   await owner.getByRole('button', { name: 'Projects', exact: true }).click();
@@ -36,9 +37,10 @@ export async function projectJourney(owner: Page, outsider: Page, workspaceId: s
   await child.getByRole('button', { name: 'Save task', exact: true }).click();
   await expect(child.getByLabel('Status', { exact: true })).toHaveValue('DONE');
   await expect(dialog.getByRole('button', { name: 'Close task' })).toBeEnabled();
+  await expect(dialog.getByRole('button', { name: 'Refresh activity', exact: true })).toBeEnabled();
   await dialog.getByRole('button', { name: 'Close task' }).focus();
   await owner.keyboard.press('Shift+Tab');
-  await expect(dialog.getByRole('button', { name: 'Delete task', exact: true })).toBeFocused();
+  await expect(dialog.getByRole('button', { name: 'Refresh activity', exact: true })).toBeFocused();
   await owner.keyboard.press('Escape');
   await expect(dialog).toHaveCount(0);
   await expect(
@@ -110,6 +112,7 @@ export async function viewerJourney(
   await expect(dialog.getByText('Acceptance criteria agreed')).toBeVisible();
   await expect(dialog.getByRole('button', { name: 'Save task', exact: true })).toHaveCount(0);
   await expect(dialog.getByRole('button', { name: 'Add subtask' })).toHaveCount(0);
+  await viewerComments(viewer, project);
   expect(
     (
       await viewer.request.post(`${project.endpoint}/tasks`, { data: { title: 'Forbidden' } })

@@ -33,13 +33,15 @@ function setup(role: 'Owner' | 'Admin' | 'Manager' | 'Member' | 'Viewer') {
     );
     if (init?.method && init.method !== 'GET')
       return Promise.resolve(new Response('{}', { status: 403 }));
-    const value = url.pathname.endsWith('/tasks')
-      ? { items: url.searchParams.get('status') === 'TODO' ? [task] : [], nextOffset: null }
-      : url.pathname.endsWith('/projects/project-a')
-        ? { project, permissions }
-        : url.pathname.endsWith('/projects')
-          ? { items: [project], nextOffset: null, permissions }
-          : { workspaces: [{ workspace: { id: 'workspace-a', name: 'Design team' }, role }] };
+    const value = url.pathname.endsWith('/activity')
+      ? { items: [], nextOffset: null }
+      : url.pathname.endsWith('/tasks')
+        ? { items: url.searchParams.get('status') === 'TODO' ? [task] : [], nextOffset: null }
+        : url.pathname.endsWith('/projects/project-a')
+          ? { project, permissions }
+          : url.pathname.endsWith('/projects')
+            ? { items: [project], nextOffset: null, permissions }
+            : { workspaces: [{ workspace: { id: 'workspace-a', name: 'Design team' }, role }] };
     return Promise.resolve(new Response(JSON.stringify(value)));
   });
   vi.stubGlobal('fetch', fetchMock);

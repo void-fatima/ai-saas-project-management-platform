@@ -13,6 +13,9 @@ import {
   type Task,
 } from './project-api';
 import { useProjectData } from './use-project-data';
+import { TaskComments } from '../collaboration/TaskComments';
+import { ActivityHistory } from '../collaboration/ActivityHistory';
+import { useCollaborationUpdates } from '../collaboration/use-realtime';
 
 export function TaskDetails({
   base,
@@ -61,6 +64,8 @@ export function TaskDetails({
     [base, taskId, offset],
   );
   const state = useProjectData(read);
+  const [changed, setChanged] = useState(false);
+  useCollaborationUpdates(base.split('/')[1], () => setChanged(true));
   const [moreMembers, setMoreMembers] = useState<ReturnType<typeof parseAssignee>[]>([]);
   const [memberOffset, setMemberOffset] = useState<number | null | undefined>(undefined);
   const [pending, setPending] = useState(false);
@@ -124,10 +129,22 @@ export function TaskDetails({
       {state.loading ? (
         <p role="status">Loading task…</p>
       ) : (
-        <Button variant="ghost" disabled={pending} onClick={() => void state.reload()}>
+        <Button
+          variant="ghost"
+          disabled={pending}
+          onClick={() => {
+            setChanged(false);
+            void state.reload();
+          }}
+        >
           Reload task
         </Button>
       )}
+      {changed ? (
+        <p role="status">
+          Workspace updated. Reload task to review changes; your current draft is preserved.
+        </p>
+      ) : null}
       {data ? (
         <>
           {edit ? (
@@ -223,6 +240,12 @@ export function TaskDetails({
           ) : null}
         </>
       ) : null}
+      <TaskComments base={`${base}/tasks/${taskId}`} userId={userId} />
+      <ActivityHistory
+        workspaceId={base.split('/')[1] ?? ''}
+        projectId={base.split('/')[3] ?? ''}
+        taskId={taskId}
+      />
       {deleting ? (
         <ConfirmDelete
           label={deleting.title}
