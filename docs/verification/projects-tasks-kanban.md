@@ -80,4 +80,13 @@ No realtime, comments/chat, notifications, AI, search platform, analytics/report
 
 ## Hosted CI and final status
 
-Local verification passed. The final pushed commit's hosted CI run remains pending; this record does not yet claim milestone readiness.
+[Quality run 35495071204](https://github.com/void-fatima/ai-saas-project-management-platform/actions/runs/35495071204) passed both jobs at `d7bb970918830c16e5a6baa0fbe78edaa00eb7b0` on September 20, 2026. `quality` passed frozen installation, formatting, lint, typecheck, all unit/component tests, both builds and Compose validation. `postgres-authentication` retains its historical name and passed all six clean migrations, all 59 PostgreSQL tests and all three Chromium browser journeys, including Projects/Kanban. This evidence covers the complete implementation; the following documentation-only commit records that result and runs the same checks again.
+
+Capability commits:
+
+- `5e3d6c1` — project/task persistence, authorization, ordering and initial integration coverage.
+- `8f223d8` — expanded subtask role, demotion and assignment cascade regressions.
+- `2ab09a1` — project/task interface, keyboard navigation and real browser journeys.
+- `d7bb970` — existing CI extension and milestone documentation.
+
+Projects/Tasks/Subtasks/Kanban is ready for the approved minimal scope. No milestone blocker remains. The local disposable PostgreSQL cluster was stopped after verification; its test databases were preserved. The working branch was pushed normally, and the workspace milestone branch and both stashes remain unchanged. No later milestone was started. This is not a production deployment claim.

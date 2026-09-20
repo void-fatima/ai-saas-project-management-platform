@@ -4,8 +4,8 @@ This document preserves approved product scope while keeping implementation incr
 
 ## Scope Classification
 
-- **Completed Phases:** foundation and authentication, plus the approved minimal Workspace/Tenancy/RBAC vertical slice.
-- **Current Phase:** Projects/Tasks/Subtasks/Kanban milestone verification. The approved minimal slice of Phases 6–9 is implemented through the existing workspace boundary; evidence is recorded in [project verification](../verification/projects-tasks-kanban.md).
+- **Completed Phases:** foundation and authentication, plus the approved minimal Workspace/Tenancy/RBAC and Projects/Tasks/Subtasks/Kanban vertical slices.
+- **Current Phase:** Projects/Tasks/Subtasks/Kanban milestone complete. The approved minimal slice of Phases 6–9 is implemented and verified through the existing workspace boundary; evidence is recorded in [project verification](../verification/projects-tasks-kanban.md). No later milestone starts without separate authorization.
 - **Core Future Phase:** Remaining capabilities in Phases 6–9 and subsequent Phases 10–21, plus the explicitly preserved follow-ups below. None starts automatically after this milestone.
 - **Production Hardening:** Phases 22–27, continuously considered earlier and formally hardened here.
 - **Advanced Future Phase:** deeper real-time, analytics, search, AI, enterprise, and infrastructure capabilities after core workflows prove their value.
