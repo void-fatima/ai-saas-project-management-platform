@@ -523,6 +523,105 @@ dd {
   gap: 0.85rem;
 }
 
+.workspace-dashboard {
+  grid-column: 1 / -1;
+  min-width: 0;
+  padding: clamp(1rem, 2vw, 2rem);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+.workspace-dashboard > *,
+.dashboard-card > * {
+  margin-bottom: 1rem;
+}
+.workspace-picker {
+  max-width: 30rem;
+}
+.dashboard-metrics,
+.dashboard-lists {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+  gap: 1rem;
+}
+.dashboard-metrics > div,
+.dashboard-card {
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  min-width: 0;
+}
+.dashboard-metrics dd {
+  margin: 0;
+  font-size: 2.2rem;
+  color: var(--text);
+}
+.dashboard-metrics small,
+.dashboard-card small,
+.dashboard-card time {
+  display: block;
+  color: var(--text-soft);
+}
+.dashboard-card ul {
+  padding: 0;
+  list-style: none;
+}
+.dashboard-card li {
+  margin-bottom: 1rem;
+  overflow-wrap: anywhere;
+}
+.dashboard-card a {
+  color: #c8baff;
+}
+.dashboard-card time,
+.dashboard-list-note {
+  font-size: 0.8rem;
+}
+.dashboard-card table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+.dashboard-card td,
+.dashboard-card th {
+  padding: 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+.search-archive {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0.75rem 0;
+}
+.command-list button span small {
+  display: block;
+  margin-top: 0.35rem;
+  color: #aeb8c8;
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
+  overflow-wrap: anywhere;
+}
+.command-palette__footer {
+  align-items: center;
+  justify-content: space-between;
+}
+.command-palette__footer button {
+  color: var(--text);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 0.4rem;
+  padding: 0.4rem;
+  cursor: pointer;
+}
+@media (min-width: 1400px) {
+  .observatory__grid > .api-connection {
+    grid-column: 3;
+    grid-row: 1;
+    align-self: stretch;
+  }
+}
+
 .core-panel,
 .activity,
 .ecosystem,

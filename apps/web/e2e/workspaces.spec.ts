@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
 import { projectJourney, viewerJourney } from './projects.journey';
 import { collaborationJourney, foreignCollaborationJourney } from './collaboration.journey';
+import { discoveryJourney } from './discovery.journey';
 
 async function register(page: Page, name: string, email: string) {
   await page.goto('http://localhost:5173');
@@ -68,6 +69,7 @@ test('workspace creation, switching, invitations, role changes and cross-tenant 
     await register(other, 'Invited Member', recipient);
     const otherId = await create(other, 'Private workspace');
     const project = await projectJourney(page, other, teamId);
+    await discoveryJourney(page, other, teamId, secondId, otherId, project);
     await foreignCollaborationJourney(page, other, project);
     // Browser-context requests share real session cookies; no request interception.
     expect((await other.request.get(`http://localhost:3000/workspaces/${teamId}`)).status()).toBe(

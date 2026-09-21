@@ -1,72 +1,100 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useState } from 'react';
 import { useModalDialog } from './use-modal-dialog';
-
+import { MagnifyingGlassIcon, XIcon } from './icons';
+import { Button } from './ui/Button';
 import {
-  ArrowClockwiseIcon,
-  BrainIcon,
-  FileTextIcon,
-  FolderIcon,
-  LightningIcon,
-  MagnifyingGlassIcon,
-  RobotIcon,
-  XIcon,
-} from './icons';
+  discoveryRequest,
+  parseSearch,
+  resourceLink,
+  type SearchResult,
+} from '../discovery/discovery-api';
+import { useDiscoveryData } from '../discovery/use-discovery-data';
+import { WorkspacePicker } from '../discovery/WorkspaceDashboard';
+import { useCollaborationUpdates } from '../collaboration/use-realtime';
 
 interface CommandPaletteProps {
   onClose: () => void;
   onFocusApi: () => void;
   onRefresh: () => void;
   open: boolean;
+  workspaceId: string;
+  onWorkspaceChange: (id: string) => void;
+  navigate?: (href: string) => void;
 }
+const navigateTo = (href: string) => window.location.assign(href);
+const kindLabels = { PROJECT: 'Project', TASK: 'Task', SUBTASK: 'Subtask' };
 
-interface Command {
-  action?: () => void;
-  icon: ReactNode;
-  label: string;
-  planned?: boolean;
+export function CommandPalette(props: CommandPaletteProps) {
+  return props.open ? <SearchDialog {...props} /> : null;
 }
-
-export function CommandPalette({ onClose, onFocusApi, onRefresh, open }: CommandPaletteProps) {
+function SearchDialog({
+  onClose,
+  onFocusApi,
+  onRefresh,
+  workspaceId,
+  onWorkspaceChange,
+  navigate = navigateTo,
+}: CommandPaletteProps) {
+  const dialog = useModalDialog(true);
   const [query, setQuery] = useState('');
-  const [activeIndex, setActiveIndex] = useState(0);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const dialogRef = useModalDialog(open);
-
-  const commands = useMemo<Command[]>(
-    () => [
-      { action: onRefresh, icon: <ArrowClockwiseIcon size={19} />, label: 'Refresh system status' },
-      { action: onFocusApi, icon: <MagnifyingGlassIcon size={19} />, label: 'View API connection' },
-      { icon: <RobotIcon size={19} />, label: 'Create Agent', planned: true },
-      { icon: <FileTextIcon size={19} />, label: 'Generate Report', planned: true },
-      { icon: <FolderIcon size={19} />, label: 'Open Projects', planned: true },
-      { icon: <BrainIcon size={19} />, label: 'View Memory', planned: true },
-      { icon: <LightningIcon size={19} />, label: 'Run Automation', planned: true },
-    ],
-    [onFocusApi, onRefresh],
+  const [offset, setOffset] = useState(0);
+  const [archived, setArchived] = useState(false);
+  const [selection, setSelection] = useState({ key: '', index: 0 });
+  const normalized = query.trim().replace(/\s+/gu, ' ');
+  const valid = normalized.length >= 2 && normalized.length <= 100;
+  const key = JSON.stringify([workspaceId, normalized, archived, offset]);
+  const read = useCallback(
+    async (signal: AbortSignal) => {
+      const params = new URLSearchParams({
+        q: normalized,
+        includeArchived: String(archived),
+        offset: String(offset),
+      });
+      return parseSearch(
+        await discoveryRequest('/' + workspaceId + '/search?' + params.toString(), signal),
+      );
+    },
+    [workspaceId, normalized, archived, offset],
   );
-
-  const filteredCommands = commands.filter((command) =>
-    command.label.toLowerCase().includes(query.trim().toLowerCase()),
-  );
-  const actionableCommands = filteredCommands.filter((command) => !command.planned);
-
-  useEffect(() => {
-    if (!open) return;
-    setQuery('');
-    setActiveIndex(0);
-  }, [open]);
-
-  if (!open) return null;
-
-  function runCommand(command: Command): void {
-    if (!command.action || command.planned) return;
-    command.action();
+  const state = useDiscoveryData(key, read, 250, !!workspaceId && valid);
+  useCollaborationUpdates(workspaceId, () => state.reload(true));
+  const commands = !normalized
+    ? [
+        { label: 'Refresh system status', action: onRefresh },
+        { label: 'View API connection', action: onFocusApi },
+        {
+          label: 'Open Projects',
+          action: () =>
+            navigate(
+              '/?' +
+                new URLSearchParams({
+                  view: 'projects',
+                  ...(workspaceId ? { workspace: workspaceId } : {}),
+                }).toString(),
+            ),
+        },
+      ]
+    : [];
+  const results = valid && workspaceId ? (state.data?.items ?? []) : [];
+  const options: { label: string; action: () => void; item?: SearchResult }[] = [
+    ...commands,
+    ...results.map((item) => ({
+      label: kindLabels[item.kind] + ': ' + item.title,
+      action: () => navigate(resourceLink(workspaceId, item)),
+      item,
+    })),
+  ];
+  const active =
+    selection.key === key ? Math.min(selection.index, Math.max(0, options.length - 1)) : 0;
+  function run(index: number) {
+    const option = options[index];
+    if (!option) return;
     onClose();
+    option.action();
   }
-
   return (
     <dialog
-      ref={dialogRef}
+      ref={dialog}
       aria-label="Command palette"
       aria-modal="true"
       className="command-palette"
@@ -78,80 +106,138 @@ export function CommandPalette({ onClose, onFocusApi, onRefresh, open }: Command
       <div className="command-palette__search">
         <MagnifyingGlassIcon aria-hidden="true" size={21} />
         <input
-          aria-label="Search AI workspace"
+          aria-label="Search workspace"
           role="combobox"
           aria-expanded="true"
           aria-controls="command-options"
           aria-autocomplete="list"
-          aria-activedescendant={
-            actionableCommands[activeIndex]
-              ? `command-option-${commands.indexOf(actionableCommands[activeIndex])}`
-              : undefined
-          }
+          aria-activedescendant={options[active] ? 'command-option-' + active : undefined}
+          maxLength={200}
+          value={query}
+          placeholder="Search projects, tasks and subtasks…"
           onChange={(event) => {
             setQuery(event.target.value);
-            setActiveIndex(0);
+            setOffset(0);
+            setSelection({ key: '', index: 0 });
           }}
           onKeyDown={(event) => {
-            if (event.key === 'ArrowDown') {
+            if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
               event.preventDefault();
-              setActiveIndex((index) =>
-                Math.min(index + 1, Math.max(0, actionableCommands.length - 1)),
-              );
+              setSelection({
+                key,
+                index: Math.max(
+                  0,
+                  Math.min(options.length - 1, active + (event.key === 'ArrowDown' ? 1 : -1)),
+                ),
+              });
             }
-            if (event.key === 'ArrowUp') {
+            if (event.key === 'Enter') {
               event.preventDefault();
-              setActiveIndex((index) => Math.max(index - 1, 0));
-            }
-            if (event.key === 'Enter' && actionableCommands[activeIndex]) {
-              runCommand(actionableCommands[activeIndex]);
+              run(active);
             }
           }}
-          placeholder="Search AI workspace..."
-          ref={inputRef}
-          value={query}
         />
-        <button aria-label="Close command palette" onClick={onClose} type="button">
-          <XIcon size={18} />
-        </button>
       </div>
-
       <div className="command-palette__body">
-        <p className="command-palette__label">Actions</p>
-        {filteredCommands.length ? (
-          <ul className="command-list" role="listbox" id="command-options" aria-label="Commands">
-            {filteredCommands.map((command) => {
-              const actionableIndex = actionableCommands.indexOf(command);
-              const active = !command.planned && actionableIndex === activeIndex;
-              return (
-                <li key={command.label} role="presentation">
-                  <button
-                    role="option"
-                    id={`command-option-${commands.indexOf(command)}`}
-                    aria-selected={active}
-                    tabIndex={-1}
-                    aria-disabled={command.planned || undefined}
-                    aria-label={command.label}
-                    className={active ? 'is-active' : ''}
-                    onClick={() => runCommand(command)}
-                    type="button"
-                  >
-                    {command.icon}
-                    <span>{command.label}</span>
-                    {command.planned ? <small>Planned</small> : <kbd>Enter</kbd>}
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        ) : (
-          <p className="command-palette__empty">No matching commands.</p>
-        )}
+        <WorkspacePicker
+          workspaceId={workspaceId}
+          label="Search workspace scope"
+          onSelect={(id) => {
+            setOffset(0);
+            onWorkspaceChange(id);
+          }}
+        />
+        <label className="search-archive">
+          <input
+            type="checkbox"
+            checked={archived}
+            onChange={(event) => {
+              setArchived(event.target.checked);
+              setOffset(0);
+            }}
+          />
+          Include archived projects
+        </label>
+        <p className="command-palette__label">{normalized ? 'Workspace results' : 'Actions'}</p>
+        {normalized && !workspaceId ? <p>Select a workspace to search.</p> : null}
+        {normalized && !valid ? <p>Use between 2 and 100 characters.</p> : null}
+        <p aria-live="polite" aria-atomic="true">
+          {normalized && workspaceId && valid
+            ? state.loading
+              ? 'Searching…'
+              : state.error
+                ? ''
+                : results.length
+                  ? results.length + ' results on this page.'
+                  : 'No results in this workspace.'
+            : ''}
+        </p>
+        {state.error && valid && workspaceId ? (
+          <>
+            <p role="alert">{state.error}</p>
+            <Button onClick={() => state.reload()}>Retry search</Button>
+          </>
+        ) : null}
+        <ul
+          className="command-list"
+          role="listbox"
+          id="command-options"
+          aria-label={normalized ? 'Search results' : 'Commands'}
+        >
+          {options.map((option, index) => (
+            <li role="presentation" key={option.item ? option.item.id : option.label}>
+              <button
+                role="option"
+                id={'command-option-' + index}
+                aria-selected={active === index}
+                aria-label={option.label}
+                tabIndex={-1}
+                className={active === index ? 'is-active' : ''}
+                type="button"
+                onClick={() => run(index)}
+              >
+                <span>
+                  {option.label}
+                  {option.item ? (
+                    <>
+                      <small>{option.item.snippet}</small>
+                      <small>
+                        {option.item.archived ? 'Archived · ' : ''}
+                        {new Date(option.item.updatedAt).toLocaleDateString()}
+                      </small>
+                    </>
+                  ) : null}
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+        {valid && workspaceId ? (
+          <div className="project-toolbar">
+            {offset > 0 ? (
+              <Button
+                disabled={state.loading && !state.data}
+                onClick={() => setOffset(Math.max(0, offset - 20))}
+              >
+                Previous results
+              </Button>
+            ) : null}
+            {state.data?.nextOffset != null ? (
+              <Button
+                disabled={state.loading && !state.data}
+                onClick={() => setOffset(state.data?.nextOffset ?? 0)}
+              >
+                Next results
+              </Button>
+            ) : null}
+          </div>
+        ) : null}
       </div>
       <footer className="command-palette__footer">
-        <span>Arrow keys to navigate</span>
-        <span>Enter to select</span>
-        <span>Esc to close</span>
+        <span>↑↓ to navigate · Enter to select · Esc to close</span>
+        <button aria-label="Close command palette" type="button" onClick={onClose}>
+          <XIcon size={18} />
+        </button>
       </footer>
     </dialog>
   );

@@ -33,6 +33,7 @@ export function ProjectsPanel({ userId }: { userId: string }) {
     const url = new URL(window.location.href);
     url.searchParams.set('workspace', w);
     url.searchParams.delete('task');
+    url.searchParams.delete('subtask');
     if (p) url.searchParams.set('project', p);
     else url.searchParams.delete('project');
     window.history.replaceState(null, '', url.pathname + url.search);

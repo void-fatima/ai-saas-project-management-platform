@@ -35,12 +35,12 @@ export function DeveloperPanel({ coreStatus, onClose, open }: DeveloperPanelProp
       </header>
       <dl>
         <div>
-          <dt>AI Core</dt>
+          <dt>API readiness</dt>
           <dd>{coreStatus}</dd>
         </div>
         <div>
           <dt>Mode</dt>
-          <dd>Foundation</dd>
+          <dd>Workspace product</dd>
         </div>
         <div>
           <dt>Memory</dt>

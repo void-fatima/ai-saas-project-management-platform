@@ -21,7 +21,9 @@ function setupAuthenticated() {
     .fn<typeof fetch>()
     .mockImplementation((url) =>
       Promise.resolve(
-        requestUrl(url).endsWith('/auth/me') ? json({ user }) : json({ status: 'ok' }),
+        requestUrl(url).endsWith('/auth/me')
+          ? json({ user })
+          : json({ status: 'ok', workspaces: [] }),
       ),
     );
   vi.stubGlobal('fetch', fetchMock);
@@ -29,7 +31,7 @@ function setupAuthenticated() {
 }
 
 async function shell() {
-  await screen.findByRole('heading', { name: 'AI System Observatory' });
+  await screen.findByRole('heading', { name: 'Workspace overview' });
   await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('available'));
 }
 
@@ -51,7 +53,7 @@ describe('Authenticated application', () => {
             finish = resolve;
           }),
       )
-      .mockResolvedValue(json({ status: 'ok' }));
+      .mockResolvedValue(json({ status: 'ok', workspaces: [] }));
     vi.stubGlobal('fetch', fetchMock);
     render(<App />);
     expect(screen.getByRole('status')).toHaveTextContent('Checking your session');
@@ -78,7 +80,9 @@ describe('Authenticated application', () => {
         .mockResolvedValueOnce(json({ user }, form === 'Register' ? 201 : 200))
         .mockImplementation((url) =>
           Promise.resolve(
-            requestUrl(url).endsWith('/auth/me') ? json({ user }) : json({ status: 'ok' }),
+            requestUrl(url).endsWith('/auth/me')
+              ? json({ user })
+              : json({ status: 'ok', workspaces: [] }),
           ),
         );
       vi.stubGlobal('fetch', fetchMock);
@@ -232,7 +236,7 @@ describe('Authenticated application', () => {
     expect(screen.getByRole('dialog', { name: 'Command palette' })).toBeInTheDocument();
     fireEvent(screen.getByRole('dialog'), new Event('cancel', { cancelable: true }));
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
-    const core = screen.getByRole('button', { name: 'Interactive AI Core' });
+    const core = screen.getByRole('button', { name: 'Interactive workspace overview' });
     for (let click = 0; click < 5; click += 1) fireEvent.click(core);
     expect(screen.getByRole('dialog', { name: 'Developer system panel' })).toBeInTheDocument();
   });
@@ -241,7 +245,7 @@ describe('Authenticated application', () => {
     setupAuthenticated();
     render(<App />);
     await shell();
-    const trigger = screen.getByRole('button', { name: 'Open AI workspace search' });
+    const trigger = screen.getByRole('button', { name: 'Open workspace search' });
     trigger.focus();
     fireEvent.click(trigger);
     const search = screen.getByRole('combobox');

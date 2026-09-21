@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { ProjectsPanel } from './ProjectsPanel';
 import { TaskEditor } from './TaskEditor';
+import { TaskDetails } from './TaskDetails';
 import { parsePage, parseTask, type Task } from './project-api';
 
 const project = {
@@ -123,4 +124,45 @@ it('rejects malformed or unbounded API pages rather than trusting server-shaped 
   expect(() =>
     parsePage({ items: Array.from({ length: 51 }, () => task), nextOffset: null }, parseTask),
   ).toThrow();
+});
+
+it('loads a linked subtask through the authorized nested endpoint even beyond the current page', async () => {
+  window.history.replaceState(null, '', '/?task=task-a&subtask=child-51');
+  const fetchMock = vi.fn<typeof fetch>().mockImplementation((input) => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+    const data = url.endsWith('/projects/project-a')
+      ? {
+          project,
+          permissions: { administer: false, edit: false, deleteTasks: false, assignOthers: false },
+        }
+      : url.endsWith('/subtasks/child-51')
+        ? { ...task, id: 'child-51', title: 'Linked child', description: 'Exact child content' }
+        : url.endsWith('/tasks/task-a')
+          ? task
+          : url.includes('/subtasks?')
+            ? { items: [{ ...task, id: 'child-1', title: 'First child' }], nextOffset: 50 }
+            : url.endsWith('/comments')
+              ? { items: [], nextOffset: null, canComment: false }
+              : { items: [], nextOffset: null };
+    return Promise.resolve(new Response(JSON.stringify(data)));
+  });
+  vi.stubGlobal('fetch', fetchMock);
+  render(
+    <TaskDetails
+      base="/workspace-a/projects/project-a"
+      taskId="task-a"
+      userId="self"
+      onClose={vi.fn()}
+      onChanged={vi.fn()}
+    />,
+  );
+  expect(await screen.findByRole('heading', { name: 'Linked child' })).toBeVisible();
+  expect(screen.getByText('Selected subtask')).toBeVisible();
+  expect(screen.getByText('Exact child content')).toBeVisible();
+  expect(screen.getByRole('heading', { name: 'First child' })).toBeVisible();
+  expect(
+    fetchMock.mock.calls.some(
+      ([url]) => typeof url === 'string' && url.endsWith('/tasks/task-a/subtasks/child-51'),
+    ),
+  ).toBe(true);
 });

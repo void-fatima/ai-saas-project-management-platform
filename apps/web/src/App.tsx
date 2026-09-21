@@ -12,21 +12,13 @@ import { InvitationView } from './workspaces/InvitationView';
 import type { SessionUser } from './auth/session-api';
 import aiCoreOrb from './assets/ai-core-orb.png';
 import aiCoreOrbits from './assets/ai-core-orbits.png';
-import { ActivityFeed } from './components/ActivityFeed';
+import { WorkspaceDashboard } from './discovery/WorkspaceDashboard';
 import { CommandPalette } from './components/CommandPalette';
 import { DeveloperPanel } from './components/DeveloperPanel';
-import {
-  ArrowClockwiseIcon,
-  CheckCircleIcon,
-  ClockIcon,
-  LockIcon,
-  PulseIcon,
-  ShieldCheckIcon,
-  WarningCircleIcon,
-} from './components/icons';
+import { ArrowClockwiseIcon, CheckCircleIcon, WarningCircleIcon } from './components/icons';
 import { Sidebar } from './components/Sidebar';
 import { SystemClock } from './components/SystemClock';
-import { WorkspaceEcosystem } from './components/WorkspaceEcosystem';
+
 import { Button } from './components/ui/Button';
 import { Form } from './components/ui/Form';
 import { FormField } from './components/ui/FormField';
@@ -183,6 +175,19 @@ function Observatory({
 }) {
   const { status: apiStatus, check: checkApi } = useHealth();
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const [workspaceId, setWorkspaceId] = useState(
+    () => new URLSearchParams(window.location.search).get('workspace') ?? '',
+  );
+  const [panelVersion, setPanelVersion] = useState(0);
+  function selectWorkspace(id: string) {
+    setWorkspaceId(id);
+    setPanelVersion((version) => version + 1);
+    const url = new URL(window.location.href);
+    if (id) url.searchParams.set('workspace', id);
+    else url.searchParams.delete('workspace');
+    for (const param of ['project', 'task', 'subtask']) url.searchParams.delete(param);
+    window.history.replaceState(null, '', url.pathname + url.search);
+  }
   const [coreClicks, setCoreClicks] = useState(0);
   const [developerPanelOpen, setDeveloperPanelOpen] = useState(false);
   const [workspacesOpen, setWorkspacesOpen] = useState(
@@ -197,7 +202,10 @@ function Observatory({
     function handleCommandShortcut(event: KeyboardEvent): void {
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
         event.preventDefault();
-        if (!developerPanelOpen) setCommandPaletteOpen(true);
+        if (!developerPanelOpen) {
+          setWorkspaceId(new URLSearchParams(window.location.search).get('workspace') ?? '');
+          setCommandPaletteOpen(true);
+        }
       }
     }
 
@@ -220,8 +228,16 @@ function Observatory({
   }
 
   function focusApiConnection(): void {
-    apiSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    requestAnimationFrame(() => apiSectionRef.current?.querySelector('input')?.focus());
+    setProjectsOpen(false);
+    setWorkspacesOpen(false);
+    setWorkspaceId(new URLSearchParams(window.location.search).get('workspace') ?? '');
+    const url = new URL(window.location.href);
+    url.searchParams.delete('view');
+    window.history.replaceState(null, '', url.pathname + url.search);
+    requestAnimationFrame(() => {
+      apiSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      apiSectionRef.current?.querySelector('input')?.focus();
+    });
   }
 
   return (
@@ -237,6 +253,7 @@ function Observatory({
           window.history.replaceState(null, '', url.pathname + url.search);
         }}
         onNavigate={(open) => {
+          setWorkspaceId(new URLSearchParams(window.location.search).get('workspace') ?? '');
           setProjectsOpen(false);
           setWorkspacesOpen(open);
           const url = new URL(window.location.href);
@@ -252,8 +269,8 @@ function Observatory({
       <main className="observatory" id="overview" tabIndex={-1}>
         <header className="topbar">
           <div>
-            <p className="eyebrow">Foundation / Overview</p>
-            <h1>AI System Observatory</h1>
+            <p className="eyebrow">Workspace / Overview</p>
+            <h1>Workspace overview</h1>
           </div>
           <div className="topbar__actions">
             <span aria-label="Signed-in account">{user.name}</span>
@@ -273,15 +290,20 @@ function Observatory({
             <SystemClock />
             <div className="input-container">
               <span aria-hidden="true" className="input-container__surface">
-                <span className="input-container__placeholder">Search AI workspace...</span>
+                <span className="input-container__placeholder">Search workspace...</span>
               </span>
               <button
-                aria-label="Open AI workspace search"
+                aria-label="Open workspace search"
                 className="command-search-input"
-                onClick={() => setCommandPaletteOpen(true)}
+                onClick={() => {
+                  setWorkspaceId(
+                    new URLSearchParams(window.location.search).get('workspace') ?? '',
+                  );
+                  setCommandPaletteOpen(true);
+                }}
                 type="button"
               >
-                Search AI workspace...
+                Search workspace...
               </button>
               <span aria-hidden="true" className="input-container__cursor">
                 |
@@ -295,9 +317,9 @@ function Observatory({
         </header>
 
         {projectsOpen ? (
-          <ProjectsPanel userId={user.id} />
+          <ProjectsPanel key={panelVersion} userId={user.id} />
         ) : workspacesOpen ? (
-          <WorkspacePanel userId={user.id} />
+          <WorkspacePanel key={panelVersion} userId={user.id} />
         ) : (
           <div className="observatory__grid">
             {error ? (
@@ -310,39 +332,13 @@ function Observatory({
             ) : null}
             <section className="core-panel" aria-labelledby="core-title">
               <div className="core-panel__copy">
-                <p className="eyebrow">AI Core</p>
-                <h2 id="core-title">Foundation mode</h2>
+                <p className="eyebrow">Project Platform</p>
+                <h2 id="core-title">Work in focus</h2>
                 <p>{coreCopy.description}</p>
-
-                <dl className="core-signals">
-                  <div>
-                    <dt>
-                      <PulseIcon aria-hidden="true" size={19} />
-                      Core status
-                    </dt>
-                    <dd className={`status-inline status-inline--${coreStatus}`}>
-                      {coreCopy.label}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>
-                      <ShieldCheckIcon aria-hidden="true" size={19} />
-                      Quality gates
-                    </dt>
-                    <dd>See verification record</dd>
-                  </div>
-                  <div>
-                    <dt>
-                      <CheckCircleIcon aria-hidden="true" size={19} />
-                      Foundation
-                    </dt>
-                    <dd>Authentication verified</dd>
-                  </div>
-                </dl>
               </div>
 
               <button
-                aria-label="Interactive AI Core"
+                aria-label="Interactive workspace overview"
                 className={`core-visual core-visual--${coreStatus}`}
                 onClick={handleCoreClick}
                 type="button"
@@ -355,7 +351,7 @@ function Observatory({
                     src={aiCoreOrbits}
                   />
                   <img
-                    alt="Purple neural AI core with orbital processing paths"
+                    alt="Decorative purple orb with orbital paths"
                     className="core-visual__orb core-visual__orb--base"
                     src={aiCoreOrb}
                   />
@@ -366,12 +362,11 @@ function Observatory({
                     src={aiCoreOrb}
                   />
                 </span>
-                <span className="core-visual__hint">Interactive core</span>
+                <span className="core-visual__hint">System details</span>
               </button>
             </section>
 
-            <ActivityFeed />
-            <WorkspaceEcosystem />
+            <WorkspaceDashboard workspaceId={workspaceId} onSelect={selectWorkspace} />
 
             <section
               className="api-connection"
@@ -416,35 +411,13 @@ function Observatory({
                 </Button>
               </Form>
             </section>
-
-            <section className="milestone" aria-labelledby="milestone-title">
-              <header className="section-heading">
-                <p className="eyebrow">Current milestone</p>
-                <h2 id="milestone-title">Projects and tasks</h2>
-              </header>
-              <div className="milestone__content">
-                <span className="milestone__icon" aria-hidden="true">
-                  <LockIcon size={23} weight="duotone" />
-                </span>
-                <span>
-                  <strong>Projects, tasks and Kanban</strong>
-                  <small>Open Projects from the navigation</small>
-                </span>
-              </div>
-            </section>
-
-            <section className="last-updated" aria-label="Last updated">
-              <ClockIcon aria-hidden="true" size={18} />
-              <span>
-                <small>Current phase</small>
-                <strong>Projects, tasks and Kanban</strong>
-              </span>
-            </section>
           </div>
         )}
       </main>
 
       <CommandPalette
+        workspaceId={workspaceId}
+        onWorkspaceChange={selectWorkspace}
         onClose={() => setCommandPaletteOpen(false)}
         onFocusApi={focusApiConnection}
         onRefresh={() => void checkApi()}

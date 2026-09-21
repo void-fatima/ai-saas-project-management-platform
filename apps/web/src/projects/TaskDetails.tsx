@@ -32,12 +32,15 @@ export function TaskDetails({
 }) {
   const dialog = useModalDialog(true);
   const [offset, setOffset] = useState(0);
+  const [selectedChildId] = useState(() =>
+    new URLSearchParams(window.location.search).get('subtask'),
+  );
   const read = useCallback(
     async (signal: AbortSignal) => {
       const projectDetail = parseProjectDetail(
         await projectRequest(base, 'GET', undefined, signal),
       );
-      const [root, children, members] = await Promise.all([
+      const [root, children, members, selectedChild] = await Promise.all([
         projectRequest(`${base}/tasks/${taskId}`, 'GET', undefined, signal),
         projectRequest(
           `${base}/tasks/${taskId}/subtasks?offset=${offset}`,
@@ -53,15 +56,24 @@ export function TaskDetails({
               signal,
             )
           : Promise.resolve({ items: [], nextOffset: null }),
+        selectedChildId
+          ? projectRequest(
+              `${base}/tasks/${taskId}/subtasks/${encodeURIComponent(selectedChildId)}`,
+              'GET',
+              undefined,
+              signal,
+            )
+          : Promise.resolve(null),
       ]);
       return {
         task: parseTask(root),
         children: parsePage(children, parseTask),
         members: parsePage(members, parseAssignee),
+        selectedChild: selectedChild === null ? null : parseTask(selectedChild),
         ...projectDetail,
       };
     },
-    [base, taskId, offset],
+    [base, taskId, offset, selectedChildId],
   );
   const state = useProjectData(read);
   const [changed, setChanged] = useState(false);
@@ -181,10 +193,14 @@ export function TaskDetails({
               onCreate={(title) => mutate(`${base}/tasks/${taskId}/subtasks`, 'POST', { title })}
             />
           ) : null}
-          {data.children.items.length === 0 ? <p>No subtasks yet.</p> : null}
+          {data.children.items.length === 0 && !data.selectedChild ? <p>No subtasks yet.</p> : null}
           <ul className="subtask-list">
-            {data.children.items.map((child) => (
+            {[
+              ...(data.selectedChild ? [data.selectedChild] : []),
+              ...data.children.items.filter((child) => child.id !== data.selectedChild?.id),
+            ].map((child) => (
               <li key={child.id}>
+                {child.id === selectedChildId ? <p className="eyebrow">Selected subtask</p> : null}
                 <h4>{child.title}</h4>
                 <p>
                   {statusLabels[child.status]} · {child.assigneeName ?? 'Unassigned'}

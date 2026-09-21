@@ -79,7 +79,7 @@ test('real cookies restore identity, dialogs contain focus, and logout removes p
   await page.reload();
   await restored;
   await expect(page.getByLabel('Signed-in account')).toHaveText('Browser Tester');
-  const trigger = page.getByRole('button', { name: 'Open AI workspace search' });
+  const trigger = page.getByRole('button', { name: 'Open workspace search' });
   await trigger.click();
   const dialog = page.getByRole('dialog', { name: 'Command palette' });
   await expect(dialog.getByRole('combobox')).toBeFocused();
@@ -90,7 +90,7 @@ test('real cookies restore identity, dialogs contain focus, and logout removes p
   await page.keyboard.press('Escape');
   await expect(trigger).toBeFocused();
   await expect(dialog).not.toBeVisible();
-  const core = page.getByRole('button', { name: 'Interactive AI Core' });
+  const core = page.getByRole('button', { name: 'Interactive workspace overview' });
   for (let i = 0; i < 5; i += 1) await core.click();
   const developer = page.getByRole('dialog', { name: 'Developer system panel' });
   await expect(developer.getByRole('button')).toBeFocused();

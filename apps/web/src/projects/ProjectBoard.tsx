@@ -69,6 +69,7 @@ export function ProjectBoard({
     const previous = taskId;
     setTaskId(id);
     const url = new URL(window.location.href);
+    url.searchParams.delete('subtask');
     if (id) url.searchParams.set('task', id);
     else url.searchParams.delete('task');
     window.history.replaceState(null, '', url.pathname + url.search);
