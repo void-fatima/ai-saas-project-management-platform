@@ -12,6 +12,7 @@ import { DatabaseModule } from './database/database.module.js';
 import { HealthController } from './health/health.controller.js';
 import { WorkspaceSignalsModule } from './collaboration/workspace-signals.js';
 import { CollaborationModule } from './collaboration/collaboration.module.js';
+import { DiscoveryModule } from './discovery/discovery.module.js';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { CollaborationModule } from './collaboration/collaboration.module.js';
     WorkspaceModule,
     ProjectModule,
     CollaborationModule,
+    DiscoveryModule,
   ],
   controllers: [HealthController],
   providers: [

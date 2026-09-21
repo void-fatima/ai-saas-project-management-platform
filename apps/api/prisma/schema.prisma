@@ -134,6 +134,7 @@ model Task {
   @@unique([workspaceId, projectId, id])
   @@index([workspaceId, projectId, parentId, status, position, id])
   @@index([workspaceId, assigneeId])
+  @@index([workspaceId, updatedAt(sort: Desc), id(sort: Desc)])
   @@map("tasks")
 }
 
