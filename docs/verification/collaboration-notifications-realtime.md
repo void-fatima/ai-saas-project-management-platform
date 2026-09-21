@@ -67,7 +67,22 @@ The added dialog controls required updating the existing last-focusable-button a
 
 ## CI and completion
 
-The existing workflow includes this branch and preserves quality, fresh migrations, all PostgreSQL suites, both builds and all browser journeys. The pushed run and completion evidence will be recorded after it finishes. Local verification is complete; READY additionally requires the final pushed CI result and a clean synchronized working tree.
+The [implementation CI run](https://github.com/void-fatima/ai-saas-project-management-platform/actions/runs/35515574527) passed on published commit `bc0c11e57b95af1d7c4adfbecf76f0b225b95b5c`:
+
+- `quality` (job `106090831133`): formatting, lint, typecheck, API/web tests, builds and Docker Compose validation passed.
+- `postgres-authentication` (job `106090831024`): all migrations on fresh PostgreSQL, all regression suites, builds and Chromium browser journeys passed.
+
+Capability commits:
+
+- `b4db22f`: transactional persistence, activity/notification lifecycle, authorized SSE and PostgreSQL/HTTP/transport tests.
+- `4725142`: collaboration UI, realtime refresh behavior, component and browser coverage.
+- `bc0c11e`: contract, roadmap, verification and CI branch coverage.
+
+The evidence-only follow-up changes this report. The handoff records its full final HEAD and verifies its own pushed CI run; the implementation tested above is unchanged. All implementation acceptance gates passed. No implementation blocker remains, and no next milestone was started.
+
+## Files changed
+
+39 files changed across this milestone: 18 API/schema/migration/test files, 15 frontend/component/browser files, and 6 CI/README/architecture/roadmap/verification files. The main new boundaries are `apps/api/src/collaboration/` and `apps/web/src/collaboration/`. Existing edits are limited to wiring the modules, post-commit workspace signals, project activity writes, HTTP protections, task/board/shell UI, relevant fixtures/journeys, styles, CI and documentation. No `.env`, dependency lockfile, older migration, authentication implementation or workspace role-policy file changed.
 
 ## Deferred work
 
