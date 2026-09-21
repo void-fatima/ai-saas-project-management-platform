@@ -47,6 +47,8 @@ The [collaboration contract](collaboration-realtime.md) adds comments, activity 
 - Every future tenant query, cache key, WebSocket room, job payload, and AI context must carry and enforce the workspace boundary.
 - Activity feed and security audit log remain distinct concepts.
 
+The [dashboard/search contract](dashboard-search.md) defines persisted workspace summaries and bounded PostgreSQL text search across projects, tasks and subtasks. A discovery module reuses `WorkspaceAccess` and scoped transactions, fixed aggregates and parameterized ranked search. The web overview and existing command palette read these endpoints with cancellation, scope isolation and SSE refresh hints. No AI, cache, external search service or analytics platform is introduced.
+
 ## Deferred Decisions
 
 Tailwind, the component system, Redis, BullMQ, Socket.IO, object storage, observability vendors, and deployment targets will be selected when their implementing phase begins. Prisma ORM is the selected PostgreSQL persistence layer; domain models remain deferred to their implementing phases. Deferring the remaining selections avoids unused dependencies without removing them from the roadmap.

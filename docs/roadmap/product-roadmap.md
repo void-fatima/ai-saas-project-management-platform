@@ -4,9 +4,9 @@ This document preserves approved product scope while keeping implementation incr
 
 ## Scope Classification
 
-- **Completed Phases:** foundation and authentication, plus the approved minimal Workspace/Tenancy/RBAC, Projects/Tasks/Subtasks/Kanban and Collaboration/Notifications/Realtime vertical slices.
-- **Current Phase:** The minimal Collaboration/Notifications/Realtime slice of Phases 10–12 is implemented through the existing workspace boundary. See the [collaboration contract](../architecture/collaboration-realtime.md) and [verification report](../verification/collaboration-notifications-realtime.md) for scope and evidence. No later milestone starts without separate authorization.
-- **Core Future Phase:** Remaining capabilities in Phases 6–12 and subsequent Phases 13–21, plus the explicitly preserved follow-ups below. None starts automatically after this milestone.
+- **Completed Phases:** foundation and authentication, plus the approved minimal Workspace/Tenancy/RBAC, Projects/Tasks/Subtasks/Kanban, Collaboration/Notifications/Realtime and Dashboard/Search vertical slices.
+- **Current Phase:** The minimal persisted Dashboard/Search slice of Phases 13 and 19 is implemented through the existing workspace boundary. See the [dashboard/search contract](../architecture/dashboard-search.md) and [verification report](../verification/dashboard-search.md). No later milestone starts without separate authorization.
+- **Core Future Phase:** Remaining capabilities in Phases 6–13 and 19, and subsequent Phases 14–18 and 20–21, plus the explicitly preserved follow-ups below. None starts automatically after this milestone.
 - **Production Hardening:** Phases 22–27, continuously considered earlier and formally hardened here.
 - **Advanced Future Phase:** deeper real-time, analytics, search, AI, enterprise, and infrastructure capabilities after core workflows prove their value.
 - **Nice-to-Have / Bonus:** Phase 29 and the Future / Bonus Backlog. These are preserved but unscheduled.
@@ -155,7 +155,9 @@ Implemented: native SSE with cookie-session authentication, server-filtered work
 - **Main risks:** socket authorization bypass, missed/duplicate events, ordering problems, and premature complexity.
 - **Definition of Done:** REST remains authoritative; socket joins revalidate membership; reconnect and duplicate scenarios pass integration tests.
 
-### 13. Dashboard — Core Future Phase
+### 13. Dashboard — Minimal Slice Implemented / Remaining Core Future Phase
+
+Current slice: persisted project active/archive totals, separate root/subtask status and completion counts, open tasks assigned to the current user, bounded recent tasks and workspace activity, all tenant-scoped with SSE refresh and stale-response protection. Overdue work waits for due dates; richer project/team workload summaries and attention areas remain deferred. No invented trends, AI health or productivity scores.
 
 - **Objective:** summarize meaningful work and attention areas.
 - **Major deliverables:** active projects, open/overdue tasks, completion/progress, personal/team workload, and activity summary with clear definitions.
@@ -203,7 +205,9 @@ Implemented: native SSE with cookie-session authentication, server-filtered work
 - **Main risks:** vanity metrics, gaming, expensive queries, and unfair productivity claims.
 - **Definition of Done:** every metric has a definition, caveats, fixture tests, tenant scope, indexes, and performance target.
 
-### 19. Search & Filters — Core/Advanced Future Phase
+### 19. Search & Filters — Minimal Text Search Implemented / Remaining Core/Advanced Future Phase
+
+Current slice: workspace-scoped project/task/subtask title and description matching in PostgreSQL, literal case-insensitive normalization, deterministic ranking, bounded pagination, archive inclusion and keyboard command-palette navigation. Comments are evaluated and deferred until focused discussion navigation and deletion semantics warrant them. Appropriate-user search, combined assignee/priority/status/deadline filters, saved views, full-text/trigram evaluation and realistic scale budgets remain preserved. AI, embeddings, semantic/vector search, RAG and external search engines are explicitly deferred.
 
 - **Objective:** find projects, tasks, and appropriate users quickly.
 - **Major deliverables:** tenant-scoped search; assignee, priority, status, and deadline filters; sorting, pagination, combined filters, debouncing, and later saved views.
@@ -301,7 +305,7 @@ Nothing in this section is implemented or scheduled merely by being listed.
 - custom workflows, statuses, fields, and roles
 - project/workspace templates
 - saved searches and saved views
-- keyboard shortcuts and command palette
+- expanded keyboard shortcuts and command actions beyond the implemented workspace search palette
 - activity filtering, data export, and project import
 - advanced notification preferences
 - attachments backed by secure object storage

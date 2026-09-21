@@ -1,10 +1,10 @@
 # AI-Powered Multi-Tenant SaaS Project Management Platform
 
-A full-stack project management SaaS with workspace tenant isolation, role-based authorization, persisted tasks, Kanban, comments, activity and in-app notifications with SSE updates. Analytics and human-reviewed AI workflows remain planned.
+A full-stack project management SaaS with workspace tenant isolation, role-based authorization, persisted tasks, Kanban, comments, activity, in-app notifications, persisted workspace dashboards and tenant-scoped text search with SSE updates. Analytics and human-reviewed AI workflows remain planned.
 
 ## Status
 
-**Foundation, authentication, Workspace/Tenancy/RBAC, Projects/Tasks/Kanban and the minimal Collaboration/Notifications/Realtime slice are implemented.** Comments, durable activity and own-user notifications extend the existing tenant boundary. SSE sends authorized refresh hints; PostgreSQL remains authoritative. Email delivery uses an explicitly development-only mailbox; production requires a delivery adapter and deployment hardening. See the [product roadmap](docs/roadmap/product-roadmap.md), [workspace contract](docs/architecture/workspace-tenancy.md), [resource contract](docs/architecture/projects-tasks.md), [collaboration contract](docs/architecture/collaboration-realtime.md), and [collaboration verification](docs/verification/collaboration-notifications-realtime.md).
+**Foundation, authentication, Workspace/Tenancy/RBAC, Projects/Tasks/Kanban and the minimal Collaboration/Notifications/Realtime and Dashboard/Search slices are implemented.** Comments, durable activity and own-user notifications extend the existing tenant boundary. SSE sends authorized refresh hints; PostgreSQL remains authoritative. Email delivery uses an explicitly development-only mailbox; production requires a delivery adapter and deployment hardening. See the [product roadmap](docs/roadmap/product-roadmap.md), [workspace contract](docs/architecture/workspace-tenancy.md), [resource contract](docs/architecture/projects-tasks.md), [collaboration contract](docs/architecture/collaboration-realtime.md), [collaboration verification](docs/verification/collaboration-notifications-realtime.md), [dashboard/search contract](docs/architecture/dashboard-search.md), and [dashboard/search verification](docs/verification/dashboard-search.md).
 
 ### Implemented
 
@@ -31,10 +31,12 @@ A full-stack project management SaaS with workspace tenant isolation, role-based
 - plain-text comments with author-only versioned editing/deletion and idempotent creation
 - transactional activity and assignment/comment notifications, unread count and read lifecycle
 - session-authorized SSE hints, current-membership filtering, reconnect/refetch and manual fallback
+- persisted workspace dashboard with active/archive projects, root/subtask counts, assignments and recent activity
+- bounded PostgreSQL project/task/subtask text search in the keyboard command palette, with safe workspace switching
 
 ### Planned
 
-Production email delivery, richer project/task fields, drag-and-drop, mentions/rich text, subtask discussion UI, notification preferences/digests, chat, presence, coediting, distributed realtime, analytics, search, audit logs, AI planning and reporting, production infrastructure, and further hardening remain deferred. Ownership transfer, explicit invitation decline and custom roles remain documented follow-ups.
+Production email delivery, richer project/task fields, drag-and-drop, mentions/rich text, subtask discussion UI, notification preferences/digests, chat, presence, coediting, distributed realtime, analytics, advanced search/filters, comment search, audit logs, AI planning and reporting, production infrastructure, and further hardening remain deferred. Ownership transfer, explicit invitation decline and custom roles remain documented follow-ups.
 
 ## Technology
 
@@ -248,7 +250,7 @@ The suite starts its own API and web servers on ports 3000 and 5173, refuses to 
 
 When Chromium download is unavailable but Microsoft Edge is installed, set `E2E_BROWSER_CHANNEL=msedge`. Local verification on Windows used an isolated PostgreSQL 17 cluster under ignored `.tools`, listening only on `127.0.0.1:55432`, because Docker Desktop's engine failed. It did not use or reset the installed database service. CI uses its own disposable PostgreSQL service and Chromium.
 
-CI retains frozen installation, format, lint, typecheck, unit tests, builds, and Compose validation. The PostgreSQL 17 job applies migrations to a clean disposable database, runs integration regressions, builds the applications, installs Chromium, and runs real browser authentication, workspace and project/Kanban journeys. Both jobs run on pull requests and pushes to main, feature/authentication, feature/workspaces-rbac, or feature/projects-tasks-kanban. Deployment remains outside this phase.
+CI retains frozen installation, format, lint, typecheck, unit tests, builds, and Compose validation. The PostgreSQL 17 job applies migrations to a clean disposable database, runs integration regressions, builds the applications, installs Chromium, and runs real browser authentication, workspace, project/Kanban, collaboration and dashboard/search journeys. Both jobs run on pull requests and pushes to main, feature/authentication, feature/workspaces-rbac, feature/projects-tasks-kanban, feature/collaboration-notifications-realtime, or feature/dashboard-search. Deployment remains outside this phase.
 
 ## Documentation
 

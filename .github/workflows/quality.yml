@@ -9,6 +9,7 @@ on:
         feature/workspaces-rbac,
         feature/projects-tasks-kanban,
         feature/collaboration-notifications-realtime,
+        feature/dashboard-search,
       ]
   pull_request:
 
@@ -98,5 +99,5 @@ jobs:
         run: pnpm build
       - name: Install Chromium
         run: pnpm --filter @platform/web exec playwright install --with-deps chromium
-      - name: Real browser authentication, workspaces, Kanban and collaboration
+      - name: Real browser authentication, workspaces, Kanban, collaboration and discovery
         run: pnpm --filter @platform/web test:e2e
