@@ -10,6 +10,7 @@ on:
         feature/projects-tasks-kanban,
         feature/collaboration-notifications-realtime,
         feature/dashboard-search,
+        feature/ai-assistant,
       ]
   pull_request:
 

@@ -14,6 +14,7 @@ const env = {
   WEB_ORIGIN: 'http://localhost:5173',
   VITE_API_URL: 'http://localhost:3000',
   MAIL_MODE: 'development-file',
+  AI_PROVIDER: 'test',
 };
 
 export default defineConfig({

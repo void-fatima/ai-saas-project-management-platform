@@ -147,7 +147,7 @@ Implemented: own-user in-app inbox, unread count, read/read-all, current-member 
 
 ### 12. Real-Time — Minimal SSE Slice Implemented / Remaining Core/Advanced Future Phase
 
-Implemented: native SSE with cookie-session authentication, server-filtered workspace hints, batched authorization, removal/expiry handling, reconnect/refetch, manual fallback and focus/draft preservation. SSE is sufficient for this server-to-client traffic; Socket.IO/WebSockets remain an option only if future bidirectional needs justify them. Shared pub/sub for replicas, durable outbox/replay, retention/cursor hardening, load testing, presence, chat and live collaborative editing are explicitly deferred. AI, advanced search, analytics, reporting and the full audit/event platform remain later work.
+Implemented: native SSE with cookie-session authentication, server-filtered workspace hints, batched authorization, removal/expiry handling, reconnect/refetch, manual fallback and focus/draft preservation. SSE is sufficient for this server-to-client traffic; Socket.IO/WebSockets remain an option only if future bidirectional needs justify them. Shared pub/sub for replicas, durable outbox/replay, retention/cursor hardening, load testing, presence, chat and live collaborative editing are explicitly deferred. AI health/reports, advanced search, analytics and the full audit/event platform remain later work.
 
 - **Objective:** synchronize useful collaborative changes without making sockets a second business layer.
 - **Major deliverables:** live task/comment/notification updates, authorized rooms, reconnect/resync, duplicate-event handling, optional presence, and Redis adapter only for horizontal scale.
@@ -165,7 +165,9 @@ Current slice: persisted project active/archive totals, separate root/subtask st
 - **Main risks:** misleading metrics and slow aggregate queries.
 - **Definition of Done:** metric definitions are documented, tenant-scoped, indexed, tested against fixtures, and presented with loading/empty/error states.
 
-### 14. AI Project Generator — Core Future Phase
+### 14. AI Project Generator — Provider Foundation Implemented / Generator Deferred
+
+Current slice: opt-in provider abstraction, structured outputs, tenant-scoped project summaries and task action plans, bounded context/output, deadlines, PostgreSQL request budgets and metadata-only usage receipts. Full project generation, briefs, goals, milestones, priorities, suggested assignees/dates, richer AI preferences, provider quality evaluation, automatic metadata retention, monetary budgets and background execution remain deferred. See the [AI contract](../architecture/ai-assistant.md).
 
 - **Objective:** turn a brief into a reviewable project-plan draft.
 - **Major deliverables:** provider abstraction, structured schema-validated output for title, goal, milestones, tasks, priorities, suggested assignees/dates, and risks; edit/approve before atomic persistence.
@@ -173,7 +175,9 @@ Current slice: persisted project active/archive totals, separate root/subtask st
 - **Main risks:** hallucination, invalid assignments, vendor coupling, latency, secrets, and unbounded cost.
 - **Definition of Done:** output is labeled draft, grounded in allowed tenant context, validated, editable, cost/usage-aware, timeout-bounded, and never persisted without confirmation.
 
-### 15. AI Task Breakdown — Core Future Phase
+### 15. AI Task Breakdown — Minimal Slice Implemented
+
+Implemented: selected-task context, validated editable previews, explicit atomic apply through the existing task service, receipt-based duplicate protection, stale/expired preview rejection, sibling-title checks, role/membership reauthorization and deterministic API/PostgreSQL/web/browser coverage. Semantic duplication analysis and richer planning remain deferred.
 
 - **Objective:** propose editable subtasks for large work items.
 - **Major deliverables:** selected-task context, structured subtask drafts, duplication checks, edit/approve, and atomic creation.
@@ -207,7 +211,7 @@ Current slice: persisted project active/archive totals, separate root/subtask st
 
 ### 19. Search & Filters — Minimal Text Search Implemented / Remaining Core/Advanced Future Phase
 
-Current slice: workspace-scoped project/task/subtask title and description matching in PostgreSQL, literal case-insensitive normalization, deterministic ranking, bounded pagination, archive inclusion and keyboard command-palette navigation. Comments are evaluated and deferred until focused discussion navigation and deletion semantics warrant them. Appropriate-user search, combined assignee/priority/status/deadline filters, saved views, full-text/trigram evaluation and realistic scale budgets remain preserved. AI, embeddings, semantic/vector search, RAG and external search engines are explicitly deferred.
+Current slice: workspace-scoped project/task/subtask title and description matching in PostgreSQL, literal case-insensitive normalization, deterministic ranking, bounded pagination, archive inclusion and keyboard command-palette navigation. Comments are evaluated and deferred until focused discussion navigation and deletion semantics warrant them. Appropriate-user search, combined assignee/priority/status/deadline filters, saved views, full-text/trigram evaluation and realistic scale budgets remain preserved. AI-assisted search, embeddings, semantic/vector search, RAG and external search engines are explicitly deferred.
 
 - **Objective:** find projects, tasks, and appropriate users quickly.
 - **Major deliverables:** tenant-scoped search; assignee, priority, status, and deadline filters; sorting, pagination, combined filters, debouncing, and later saved views.

@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { AiAssistance } from '../ai/AiAssistance';
 import { Button } from '../components/ui/Button';
 import { ConfirmDelete, CreateTaskForm, ProjectForm } from './ProjectForms';
 import { TaskDetails } from './TaskDetails';
@@ -140,6 +141,7 @@ export function ProjectBoard({
             ) : null}
           </header>
           <p className="project-description">{data.project.description}</p>
+          {edit ? <AiAssistance base={base} kind="project" /> : null}
           {data.project.archived ? (
             <p role="status">
               Archived project — read-only. Restore it in project settings to continue work.

@@ -1921,6 +1921,26 @@ dd {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+.ai-assistance fieldset {
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 0.6rem;
+}
+.ai-assistance label {
+  display: grid;
+  gap: 0.4rem;
+}
+.ai-assistance input,
+.ai-assistance textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+}
+.ai-assistance {
+  overflow-wrap: anywhere;
+}
 .project-list,
 .subtask-list,
 .kanban-tasks {

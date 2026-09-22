@@ -9,7 +9,7 @@ Browser -> React/Vite -> NestJS REST API -> application/domain modules -> Postgr
                              |
                              +-> Authenticated SSE refresh hints (single process)
                              +-> Redis/BullMQ worker (when background jobs exist)
-                             +-> AI provider abstraction (when AI features begin)
+                             +-> AI provider abstraction (opt-in structured assistance)
 ```
 
 Production routing will eventually use Nginx or an equivalent managed edge. Deployable components will use secure Docker images. Logs, errors, metrics, and traces will be introduced proportionally as operational needs become real.
@@ -23,7 +23,7 @@ Production routing will eventually use Nginx or an equivalent managed edge. Depl
 - Authentication module with Argon2id credentials and opaque secure-cookie sessions.
 - pnpm workspaces, Turborepo, strict TypeScript, ESLint, Prettier, Vitest, and CI.
 
-Workspace creation, membership, invitations and minimal RBAC are implemented through a [transactional tenant boundary](workspace-tenancy.md). Redis, workers, WebSockets, and AI integrations do not exist yet. Email verification and password recovery use hashed, expiring, atomically consumed tokens and a replaceable mail boundary, also reused for workspace invitations. Local delivery is development-only; a production adapter remains deployment work. Separate liveness and bounded database readiness endpoints support operational checks.
+Workspace creation, membership, invitations and minimal RBAC are implemented through a [transactional tenant boundary](workspace-tenancy.md). Redis, workers and WebSockets remain deferred. Email verification and password recovery use hashed, expiring, atomically consumed tokens and a replaceable mail boundary, also reused for workspace invitations. Local delivery is development-only; a production adapter remains deployment work. Separate liveness and bounded database readiness endpoints support operational checks.
 
 ### Authentication boundaries
 
@@ -48,6 +48,8 @@ The [collaboration contract](collaboration-realtime.md) adds comments, activity 
 - Activity feed and security audit log remain distinct concepts.
 
 The [dashboard/search contract](dashboard-search.md) defines persisted workspace summaries and bounded PostgreSQL text search across projects, tasks and subtasks. A discovery module reuses `WorkspaceAccess` and scoped transactions, fixed aggregates and parameterized ranked search. The web overview and existing command palette read these endpoints with cancellation, scope isolation and SSE refresh hints. No AI, cache, external search service or analytics platform is introduced.
+
+The [AI assistance contract](ai-assistant.md) adds an opt-in provider boundary, project summaries, task action plans and editable subtask proposals. PostgreSQL holds bounded request reservations and minimal usage/apply metadata. Network calls run outside workspace locks; delivery and atomic apply recheck membership and resource scope. Apply reuses the existing task domain service and activity transaction.
 
 ## Deferred Decisions
 

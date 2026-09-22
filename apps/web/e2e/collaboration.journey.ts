@@ -1,5 +1,6 @@
 import { expect, type Page } from '@playwright/test';
 import { randomUUID } from 'node:crypto';
+import { aiJourney } from './ai.journey';
 
 declare global {
   interface Window {
@@ -78,6 +79,7 @@ export async function collaborationJourney(
   await assignee.selectOption(memberId);
   await ownerTask.getByRole('button', { name: 'Save task', exact: true }).click();
   await expect(ownerTask.getByLabel('Assignee')).toHaveValue(/.+/);
+  await aiJourney(owner);
   await member.goto(route);
   const memberTask = member.getByRole('dialog', { name: 'Task details', exact: true });
   await expect(memberTask.getByText('Private team comment', { exact: true })).toBeVisible();

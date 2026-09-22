@@ -36,7 +36,7 @@ function readAccountLink(): { action: AccountAction; token: string } | null {
 
 const coreStatusCopy: Record<CoreStatus, { description: string; label: string }> = {
   online: {
-    description: 'The API and database readiness check succeeded. AI capabilities remain planned.',
+    description: 'The API and database readiness check succeeded.',
     label: 'API connected',
   },
   processing: {

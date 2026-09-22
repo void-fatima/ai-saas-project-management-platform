@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { AiAssistance } from '../ai/AiAssistance';
 import { useModalDialog } from '../components/use-modal-dialog';
 import { Button } from '../components/ui/Button';
 import { CreateTaskForm, ConfirmDelete } from './ProjectForms';
@@ -186,6 +187,16 @@ export function TaskDetails({
             </Button>
           ) : null}
           <h3>Subtasks</h3>
+          {edit ? (
+            <AiAssistance
+              base={`${base}/tasks/${taskId}`}
+              kind="task"
+              onApplied={() => {
+                onChanged();
+                void state.reload();
+              }}
+            />
+          ) : null}
           {edit ? (
             <CreateTaskForm
               subtask

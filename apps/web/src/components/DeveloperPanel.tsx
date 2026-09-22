@@ -51,7 +51,7 @@ export function DeveloperPanel({ coreStatus, onClose, open }: DeveloperPanelProp
           <dd>Planned</dd>
         </div>
       </dl>
-      <p>No production AI services are active in this phase.</p>
+      <p>Project and task AI assistance is available when a server-side provider is configured.</p>
     </dialog>
   );
 }

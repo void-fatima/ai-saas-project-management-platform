@@ -1,12 +1,14 @@
 # AI-Powered Multi-Tenant SaaS Project Management Platform
 
-A full-stack project management SaaS with workspace tenant isolation, role-based authorization, persisted tasks, Kanban, comments, activity, in-app notifications, persisted workspace dashboards and tenant-scoped text search with SSE updates. Analytics and human-reviewed AI workflows remain planned.
+A full-stack project management SaaS with workspace tenant isolation, role-based authorization, persisted tasks, Kanban, collaboration, workspace dashboards, tenant-scoped text search and opt-in AI assistance with human-reviewed subtask creation.
 
 ## Status
 
-**Foundation, authentication, Workspace/Tenancy/RBAC, Projects/Tasks/Kanban and the minimal Collaboration/Notifications/Realtime and Dashboard/Search slices are implemented.** Comments, durable activity and own-user notifications extend the existing tenant boundary. SSE sends authorized refresh hints; PostgreSQL remains authoritative. Email delivery uses an explicitly development-only mailbox; production requires a delivery adapter and deployment hardening. See the [product roadmap](docs/roadmap/product-roadmap.md), [workspace contract](docs/architecture/workspace-tenancy.md), [resource contract](docs/architecture/projects-tasks.md), [collaboration contract](docs/architecture/collaboration-realtime.md), [collaboration verification](docs/verification/collaboration-notifications-realtime.md), [dashboard/search contract](docs/architecture/dashboard-search.md), and [dashboard/search verification](docs/verification/dashboard-search.md).
+**Foundation, authentication, Workspace/Tenancy/RBAC, Projects/Tasks/Kanban and the minimal Collaboration/Notifications/Realtime, Dashboard/Search and AI Assistant slices are implemented.** Comments, durable activity and own-user notifications extend the existing tenant boundary. SSE sends authorized refresh hints; PostgreSQL remains authoritative. Email delivery uses an explicitly development-only mailbox; production requires a delivery adapter and deployment hardening. See the [product roadmap](docs/roadmap/product-roadmap.md), [workspace contract](docs/architecture/workspace-tenancy.md), [resource contract](docs/architecture/projects-tasks.md), [collaboration contract](docs/architecture/collaboration-realtime.md), [collaboration verification](docs/verification/collaboration-notifications-realtime.md), [dashboard/search contract](docs/architecture/dashboard-search.md), and [dashboard/search verification](docs/verification/dashboard-search.md).
 
 ### Implemented
+
+- [AI project summaries, task action plans and editable subtask previews](docs/architecture/ai-assistant.md), with explicit atomic apply, server-enforced permissions and cost controls; see [verification](docs/verification/ai-assistant.md)
 
 - pnpm/Turborepo monorepo
 - React, Vite, and strict TypeScript web shell
@@ -36,7 +38,7 @@ A full-stack project management SaaS with workspace tenant isolation, role-based
 
 ### Planned
 
-Production email delivery, richer project/task fields, drag-and-drop, mentions/rich text, subtask discussion UI, notification preferences/digests, chat, presence, coediting, distributed realtime, analytics, advanced search/filters, comment search, audit logs, AI planning and reporting, production infrastructure, and further hardening remain deferred. Ownership transfer, explicit invitation decline and custom roles remain documented follow-ups.
+Production email delivery, richer project/task fields, drag-and-drop, mentions/rich text, subtask discussion UI, notification preferences/digests, chat, presence, coediting, distributed realtime, analytics, advanced search/filters, comment search, audit logs, full AI project generation and reporting, production infrastructure, and further hardening remain deferred. Ownership transfer, explicit invitation decline and custom roles remain documented follow-ups.
 
 ## Technology
 
@@ -48,7 +50,7 @@ Production email delivery, richer project/task fields, drag-and-drop, mentions/r
 - Vitest, Testing Library, Supertest
 - ESLint and Prettier
 
-The long-term architecture remains a TypeScript modular monolith with PostgreSQL as the source of truth and Workspace as the tenant boundary. Redis, background workers, WebSockets, and AI adapters will be added only when the relevant feature needs them.
+The architecture remains a TypeScript modular monolith with PostgreSQL as the source of truth and Workspace as the tenant boundary. AI uses a provider abstraction; Redis, background workers and WebSockets remain deferred.
 
 ## Repository Structure
 
