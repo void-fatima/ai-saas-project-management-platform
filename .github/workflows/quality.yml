@@ -11,6 +11,7 @@ on:
         feature/collaboration-notifications-realtime,
         feature/dashboard-search,
         feature/ai-assistant,
+        feature/reports-analytics-audit,
       ]
   pull_request:
 

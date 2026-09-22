@@ -55,11 +55,15 @@ const navigationGroups: NavigationGroup[] = [
 export function Sidebar({
   workspacesOpen,
   projectsOpen,
+  reportingOpen,
+  onReporting,
   onProjects,
   onNavigate,
 }: {
   workspacesOpen: boolean;
   projectsOpen: boolean;
+  reportingOpen: boolean;
+  onReporting: () => void;
   onProjects: () => void;
   onNavigate: (workspaces: boolean) => void;
 }) {
@@ -98,6 +102,17 @@ export function Sidebar({
           <FolderIcon size={19} />
           <span>Projects</span>
         </button>
+        <button
+          className={`navigation__item navigation__item--${reportingOpen ? 'active' : 'available'}`}
+          type="button"
+          aria-current={reportingOpen ? 'page' : undefined}
+          onClick={onReporting}
+          aria-label="Analytics and reports"
+          title="Analytics and reports"
+        >
+          <FileTextIcon size={19} />
+          <span>Analytics and reports</span>
+        </button>
         {navigationGroups.map((group) => (
           <section className="navigation__group" key={group.label}>
             <h2 className="navigation__label">{group.label}</h2>
@@ -116,7 +131,7 @@ export function Sidebar({
                         : undefined
                     }
                     aria-current={
-                      item.state === 'active' && !workspacesOpen && !projectsOpen
+                      item.state === 'active' && !workspacesOpen && !projectsOpen && !reportingOpen
                         ? 'page'
                         : undefined
                     }

@@ -37,7 +37,7 @@ Archived projects are read-only for all comment mutations. An author who becomes
 | Own comment edit/delete                                           | `COMMENT_UPDATED` / `COMMENT_DELETED` | None                                                             |
 | Reorder without status change                                     | Refresh hint only                     | None                                                             |
 
-No-op content changes do not create activity or notifications. One task edit can produce separate content/status/assignment events. Task event keys include task ID, resulting version and type; comment keys include comment ID/version. Notification recipients are rechecked against current memberships inside the same workspace lock. At most two recipients receive a comment notification. Membership/invitation audit history and automatic assignment cleanup history are deferred; membership removal still clears assignments through the existing database trigger and publishes a refresh hint.
+No-op content changes do not create activity or notifications. One task edit can produce separate content/status/assignment events. Task event keys include task ID, resulting version and type; comment keys include comment ID/version. Notification recipients are rechecked against current memberships inside the same workspace lock. At most two recipients receive a comment notification. Membership/invitation history now uses the separate [audit ledger](reports-analytics-audit.md). Per-task automatic assignment cleanup history remains deferred; membership removal clears assignments through the existing database trigger and publishes a refresh hint.
 
 ## HTTP routes and bounded reads
 

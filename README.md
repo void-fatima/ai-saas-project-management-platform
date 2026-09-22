@@ -4,9 +4,11 @@ A full-stack project management SaaS with workspace tenant isolation, role-based
 
 ## Status
 
-**Foundation, authentication, Workspace/Tenancy/RBAC, Projects/Tasks/Kanban and the minimal Collaboration/Notifications/Realtime, Dashboard/Search and AI Assistant slices are implemented.** Comments, durable activity and own-user notifications extend the existing tenant boundary. SSE sends authorized refresh hints; PostgreSQL remains authoritative. Email delivery uses an explicitly development-only mailbox; production requires a delivery adapter and deployment hardening. See the [product roadmap](docs/roadmap/product-roadmap.md), [workspace contract](docs/architecture/workspace-tenancy.md), [resource contract](docs/architecture/projects-tasks.md), [collaboration contract](docs/architecture/collaboration-realtime.md), [collaboration verification](docs/verification/collaboration-notifications-realtime.md), [dashboard/search contract](docs/architecture/dashboard-search.md), and [dashboard/search verification](docs/verification/dashboard-search.md).
+**Foundation, authentication, Workspace/Tenancy/RBAC, Projects/Tasks/Kanban and the minimal Collaboration/Notifications/Realtime, Dashboard/Search, AI Assistant and Reports/Analytics/Audit slices are implemented.** Comments, durable activity and own-user notifications extend the existing tenant boundary. SSE sends authorized refresh hints; PostgreSQL remains authoritative. Email delivery uses an explicitly development-only mailbox; production requires a delivery adapter and deployment hardening. See the [product roadmap](docs/roadmap/product-roadmap.md), [workspace contract](docs/architecture/workspace-tenancy.md), [resource contract](docs/architecture/projects-tasks.md), [collaboration contract](docs/architecture/collaboration-realtime.md), [collaboration verification](docs/verification/collaboration-notifications-realtime.md), [dashboard/search contract](docs/architecture/dashboard-search.md), and [dashboard/search verification](docs/verification/dashboard-search.md).
 
 ### Implemented
+
+- [Workspace/project analytics, deterministic JSON/CSV reports and immutable tenant audit](docs/architecture/reports-analytics-audit.md), including Owner/Admin audit access, bounded filters and transactionally consistent events; see [verification](docs/verification/reports-analytics-audit.md)
 
 - [AI project summaries, task action plans and editable subtask previews](docs/architecture/ai-assistant.md), with explicit atomic apply, server-enforced permissions and cost controls; see [verification](docs/verification/ai-assistant.md)
 
@@ -38,7 +40,7 @@ A full-stack project management SaaS with workspace tenant isolation, role-based
 
 ### Planned
 
-Production email delivery, richer project/task fields, drag-and-drop, mentions/rich text, subtask discussion UI, notification preferences/digests, chat, presence, coediting, distributed realtime, analytics, advanced search/filters, comment search, audit logs, full AI project generation and reporting, production infrastructure, and further hardening remain deferred. Ownership transfer, explicit invitation decline and custom roles remain documented follow-ups.
+Production email delivery, richer project/task fields, drag-and-drop, mentions/rich text, subtask discussion UI, notification preferences/digests, chat, presence, coediting, distributed realtime, advanced analytics, advanced search/filters, comment search, broader account-security audit, full AI project generation and reporting, production infrastructure, and further hardening remain deferred. Ownership transfer, explicit invitation decline and custom roles remain documented follow-ups.
 
 ## Technology
 

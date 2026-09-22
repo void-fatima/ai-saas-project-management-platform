@@ -7,6 +7,7 @@ import { AccountRecoveryView, type AccountAction } from './auth/AccountRecoveryV
 import { useSession } from './auth/use-session';
 import { WorkspacePanel } from './workspaces/WorkspacePanel';
 import { ProjectsPanel } from './projects/ProjectsPanel';
+import { ReportingPanel } from './reporting/ReportingPanel';
 import { Notifications } from './collaboration/Notifications';
 import { InvitationView } from './workspaces/InvitationView';
 import type { SessionUser } from './auth/session-api';
@@ -196,6 +197,9 @@ function Observatory({
   const [projectsOpen, setProjectsOpen] = useState(
     () => new URLSearchParams(window.location.search).get('view') === 'projects',
   );
+  const [reportingOpen, setReportingOpen] = useState(
+    () => new URLSearchParams(window.location.search).get('view') === 'reports',
+  );
   const apiSectionRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -228,6 +232,7 @@ function Observatory({
   }
 
   function focusApiConnection(): void {
+    setReportingOpen(false);
     setProjectsOpen(false);
     setWorkspacesOpen(false);
     setWorkspaceId(new URLSearchParams(window.location.search).get('workspace') ?? '');
@@ -245,7 +250,19 @@ function Observatory({
       <Sidebar
         workspacesOpen={workspacesOpen}
         projectsOpen={projectsOpen}
+        reportingOpen={reportingOpen}
+        onReporting={() => {
+          setProjectsOpen(false);
+          setWorkspacesOpen(false);
+          setReportingOpen(true);
+          setWorkspaceId(new URLSearchParams(window.location.search).get('workspace') ?? '');
+          const url = new URL(window.location.href);
+          url.searchParams.set('view', 'reports');
+          for (const key of ['project', 'task', 'subtask']) url.searchParams.delete(key);
+          window.history.replaceState(null, '', url.pathname + url.search);
+        }}
         onProjects={() => {
+          setReportingOpen(false);
           setProjectsOpen(true);
           setWorkspacesOpen(false);
           const url = new URL(window.location.href);
@@ -253,6 +270,7 @@ function Observatory({
           window.history.replaceState(null, '', url.pathname + url.search);
         }}
         onNavigate={(open) => {
+          setReportingOpen(false);
           setWorkspaceId(new URLSearchParams(window.location.search).get('workspace') ?? '');
           setProjectsOpen(false);
           setWorkspacesOpen(open);
@@ -316,7 +334,9 @@ function Observatory({
           </div>
         </header>
 
-        {projectsOpen ? (
+        {reportingOpen ? (
+          <ReportingPanel workspaceId={workspaceId} onSelect={selectWorkspace} />
+        ) : projectsOpen ? (
           <ProjectsPanel key={panelVersion} userId={user.id} />
         ) : workspacesOpen ? (
           <WorkspacePanel key={panelVersion} userId={user.id} />

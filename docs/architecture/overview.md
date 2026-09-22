@@ -51,6 +51,8 @@ The [dashboard/search contract](dashboard-search.md) defines persisted workspace
 
 The [AI assistance contract](ai-assistant.md) adds an opt-in provider boundary, project summaries, task action plans and editable subtask proposals. PostgreSQL holds bounded request reservations and minimal usage/apply metadata. Network calls run outside workspace locks; delivery and atomic apply recheck membership and resource scope. Apply reuses the existing task domain service and activity transaction.
 
+The [reports, analytics and audit contract](reports-analytics-audit.md) adds shared persisted-data aggregation for JSON/CSV reports and an append-only audit ledger. All members can read reports; only current Owner/Admin members can read audit. Audit insertion participates in existing mutation transactions, with database immutability and tenant-scoped keyset reads. Activity remains a separate product feed.
+
 ## Deferred Decisions
 
 Tailwind, the component system, Redis, BullMQ, Socket.IO, object storage, observability vendors, and deployment targets will be selected when their implementing phase begins. Prisma ORM is the selected PostgreSQL persistence layer; domain models remain deferred to their implementing phases. Deferring the remaining selections avoids unused dependencies without removing them from the roadmap.

@@ -147,7 +147,7 @@ Implemented: own-user in-app inbox, unread count, read/read-all, current-member 
 
 ### 12. Real-Time — Minimal SSE Slice Implemented / Remaining Core/Advanced Future Phase
 
-Implemented: native SSE with cookie-session authentication, server-filtered workspace hints, batched authorization, removal/expiry handling, reconnect/refetch, manual fallback and focus/draft preservation. SSE is sufficient for this server-to-client traffic; Socket.IO/WebSockets remain an option only if future bidirectional needs justify them. Shared pub/sub for replicas, durable outbox/replay, retention/cursor hardening, load testing, presence, chat and live collaborative editing are explicitly deferred. AI health/reports, advanced search, analytics and the full audit/event platform remain later work.
+Implemented: native SSE with cookie-session authentication, server-filtered workspace hints, batched authorization, removal/expiry handling, reconnect/refetch, manual fallback and focus/draft preservation. SSE is sufficient for this server-to-client traffic; Socket.IO/WebSockets remain an option only if future bidirectional needs justify them. Shared pub/sub for replicas, durable outbox/replay, retention/cursor hardening, load testing, presence, chat and live collaborative editing are explicitly deferred. AI health/reports, advanced search/analytics and broader account-security audit remain later work.
 
 - **Objective:** synchronize useful collaborative changes without making sockets a second business layer.
 - **Major deliverables:** live task/comment/notification updates, authorized rooms, reconnect/resync, duplicate-event handling, optional presence, and Redis adapter only for horizontal scale.
@@ -201,7 +201,9 @@ Implemented: selected-task context, validated editable previews, explicit atomic
 - **Main risks:** duplicate reports, stale data, job failure, runaway costs, and disclosure in delivery channels.
 - **Definition of Done:** jobs are idempotent and correlated, failures observable, content tenant-safe, and delivery preference-aware.
 
-### 18. Analytics — Advanced Future Phase
+### 18. Analytics — Minimal Slice Implemented / Advanced Metrics Deferred
+
+Implemented: workspace/project status counts, root/subtask completion, current-member workload, 7/30/90-day UTC activity and creation/completion-event trends, plus deterministic paginated JSON/CSV reports. Current totals include archived projects; event throughput is not historical backlog. Due dates/overdue work, cycle/lead time, velocity, health scoring, realistic scale budgets, full-dataset exports, saved report snapshots and scheduled/AI reports remain deferred. See the [reporting/audit contract](../architecture/reports-analytics-audit.md).
 
 - **Objective:** provide trustworthy operational insight.
 - **Major deliverables:** completion rate, throughput, cycle time, overdue trends, workload distribution, health, velocity, and completion-over-time where meaningful.
@@ -219,7 +221,9 @@ Current slice: workspace-scoped project/task/subtask title and description match
 - **Main risks:** tenant leakage, slow wildcard queries, inconsistent pagination, and stale results.
 - **Definition of Done:** authorization applies before results, query plans meet budgets, combined filters are tested, and no cross-tenant inference is possible.
 
-### 20. Audit Logs — Core Future Phase
+### 20. Audit Logs — Minimal Slice Implemented / Broader Security Coverage Deferred
+
+Implemented: tenant-scoped immutable metadata ledger for governance/invitations, project/task/subtask/comment mutations and explicit AI apply; Owner/Admin-only filtered cursor reads; transaction rollback and SQL immutability enforcement. Resource/account/workspace deletion preserves inaccessible historical identifiers. Automatic assignment/cascade per-task fan-out, account-wide authentication/session/recovery audit, privileged retention/tombstone export, partitioning and cryptographic integrity remain deferred. Retention and privacy decisions require explicit design before production.
 
 - **Objective:** create a restricted append-oriented security trail distinct from activity.
 - **Major deliverables:** actor, workspace, action, target, timestamp, safe metadata; role/invitation/security/admin events; filtering; restricted access; optional later export.

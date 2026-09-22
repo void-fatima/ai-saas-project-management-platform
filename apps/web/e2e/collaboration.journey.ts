@@ -1,6 +1,7 @@
 import { expect, type Page } from '@playwright/test';
 import { randomUUID } from 'node:crypto';
 import { aiJourney } from './ai.journey';
+import { reportingJourney } from './reporting.journey';
 
 declare global {
   interface Window {
@@ -106,6 +107,7 @@ export async function collaborationJourney(
   await expect(memberTask.getByRole('region', { name: 'Task activity' })).toContainText(
     'commented on',
   );
+  await reportingJourney(owner);
   await owner.goto(ownerUrl);
   await member.goto(memberUrl);
 }
