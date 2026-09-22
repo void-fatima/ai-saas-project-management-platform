@@ -249,7 +249,7 @@ if (!process.argv.includes('--config-only')) {
     compose(['stop', 'postgres']);
     assert.equal((await http('/api/health')).status, 200);
     assert.equal((await http('/api/ready')).status, 503);
-    compose(['start', '--wait', 'postgres']);
+    compose(['up', '-d', '--wait', '--no-recreate', 'postgres']);
     // A real SIGTERM, including an open authenticated SSE stream, must close normally.
     const stream = await http('/api/realtime', { headers });
     assert.equal(stream.status, 200);
