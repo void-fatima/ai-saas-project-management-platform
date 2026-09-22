@@ -12,6 +12,9 @@ apps/api/src/generated/prisma/
 .env
 .env.*
 !.env.example
+!.env.production.example
+*.dump
+*.backup
 
 .DS_Store
 Thumbs.db

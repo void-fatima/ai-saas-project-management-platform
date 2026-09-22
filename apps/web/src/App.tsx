@@ -222,6 +222,7 @@ function Observatory({
   const coreCopy = coreStatusCopy[coreStatus];
 
   function handleCoreClick(): void {
+    if (import.meta.env.PROD) return;
     const nextCount = coreClicks + 1;
     if (nextCount >= developerUnlockClicks) {
       setDeveloperPanelOpen(true);
@@ -328,7 +329,7 @@ function Observatory({
               </span>
             </div>
             <Notifications onSessionEnded={onRefreshSession} />
-            <span className="profile-mark" aria-label="Development profile">
+            <span className="profile-mark" aria-label="Account profile">
               P
             </span>
           </div>
@@ -415,7 +416,7 @@ function Observatory({
 
               <Form className="connection-form" onSubmit={() => void checkApi()}>
                 <FormField
-                  hint="Configured through VITE_API_URL"
+                  hint={import.meta.env.DEV ? 'Configured through VITE_API_URL' : undefined}
                   label="API endpoint"
                   readOnly
                   value={apiUrl}
@@ -443,11 +444,13 @@ function Observatory({
         onRefresh={() => void checkApi()}
         open={commandPaletteOpen}
       />
-      <DeveloperPanel
-        coreStatus={coreCopy.label}
-        onClose={() => setDeveloperPanelOpen(false)}
-        open={developerPanelOpen}
-      />
+      {import.meta.env.DEV && (
+        <DeveloperPanel
+          coreStatus={coreCopy.label}
+          onClose={() => setDeveloperPanelOpen(false)}
+          open={developerPanelOpen}
+        />
+      )}
     </div>
   );
 }

@@ -5,7 +5,7 @@ This document preserves approved product scope while keeping implementation incr
 ## Scope Classification
 
 - **Completed Phases:** foundation and authentication, plus the approved minimal Workspace/Tenancy/RBAC, Projects/Tasks/Subtasks/Kanban, Collaboration/Notifications/Realtime and Dashboard/Search vertical slices.
-- **Current Phase:** The minimal persisted Dashboard/Search slice of Phases 13 and 19 is implemented through the existing workspace boundary. See the [dashboard/search contract](../architecture/dashboard-search.md) and [verification report](../verification/dashboard-search.md). No later milestone starts without separate authorization.
+- **Current Phase:** Production/Operations/Deployment is authorized after the completed AI Assistant and Reports/Analytics/Audit slices. It covers portable containers, production configuration, lifecycle/logging/security, SMTP delivery, migrations, backup/restore and deployment verification. See the [operations contract](../architecture/production-operations.md) and [runbook](../deployment/production.md). No unrelated later milestone starts automatically.
 - **Core Future Phase:** Remaining capabilities in Phases 6–13 and 19, and subsequent Phases 14–18 and 20–21, plus the explicitly preserved follow-ups below. None starts automatically after this milestone.
 - **Production Hardening:** Phases 22–27, continuously considered earlier and formally hardened here.
 - **Advanced Future Phase:** deeper real-time, analytics, search, AI, enterprise, and infrastructure capabilities after core workflows prove their value.
@@ -48,7 +48,7 @@ Security, tenant isolation, accessibility, testing, and observability are contin
 
 #### Deployment and later security UX follow-up
 
-- production email delivery adapter and deployment verification (development lifecycle is implemented and browser-verified; production fails honestly until configured)
+- production SMTP delivery adapter is implemented in the operations milestone; provider credentials, sender configuration and real inbox delivery verification remain deployment-operator responsibilities
 - explicit session listing and selective revocation where product UX requires it
 - extend PostgreSQL and browser regressions as future authentication capabilities are added
 - final authentication threat review and production proxy/rate-limit deployment configuration
@@ -265,6 +265,8 @@ Implemented: tenant-scoped immutable metadata ledger for governance/invitations,
 
 ### 25. Infrastructure — Production Hardening
 
+Authorized operations slice: non-root API/static-web containers, PostgreSQL Compose with private networking and restricted application role, explicit migration gate, exact proxy trust, bounded graceful shutdown, safe structured logs and `/health`/`/ready`. Redis and workers remain deferred. Container vulnerability scanning and measured resource/capacity budgets remain follow-ups; adding packaging does not claim the entire hardening roadmap is complete.
+
 - **Objective:** package and operate the actual application safely.
 - **Major deliverables:** Docker images, Compose for required services, frontend/API, worker and Redis only when needed, Nginx or managed edge, production env config, non-root containers, health/readiness, persistent database strategy.
 - **Dependencies:** stable builds and runtime requirements.
@@ -280,6 +282,8 @@ Implemented: tenant-scoped immutable metadata ledger for governance/invitations,
 - **Definition of Done:** protected branches require real checks, least-privilege credentials are used, artifacts are traceable, and rollback is rehearsed.
 
 ### 27. Production Deployment — Production Hardening
+
+Authorized operations slice: provider-neutral TLS-edge/runbook configuration, explicit upgrade/rollback steps, compressed database backup and empty-target transactional restore helpers, isolated production smoke verification and CI image builds. Public domain/TLS provisioning, actual SMTP provider acceptance, off-host backup scheduling, alerting/monitoring, RPO/RTO targets, operational ownership and production launch approval remain explicit follow-ups. Kubernetes, cloud IaC, external log vendors, full metrics/tracing stacks and multi-region infrastructure are not introduced.
 
 - **Objective:** launch with recoverability and operational visibility.
 - **Major deliverables:** domain, TLS, production PostgreSQL/Redis when needed, backups, restore procedure, monitoring, alerts, logs, error tracking, metrics/traces, smoke tests, runbooks, health/readiness, secrets, and rollback.

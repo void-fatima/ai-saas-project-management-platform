@@ -12,7 +12,7 @@ Browser -> React/Vite -> NestJS REST API -> application/domain modules -> Postgr
                              +-> AI provider abstraction (opt-in structured assistance)
 ```
 
-Production routing will eventually use Nginx or an equivalent managed edge. Deployable components will use secure Docker images. Logs, errors, metrics, and traces will be introduced proportionally as operational needs become real.
+Production routing uses a host TLS edge and a private Nginx web/API proxy. Multi-stage images, safe JSON logs, health/readiness, migration gating and database recovery helpers are defined in the [production operations contract](production-operations.md). Metrics and tracing remain deferred.
 
 ## Current Implementation
 
@@ -23,7 +23,7 @@ Production routing will eventually use Nginx or an equivalent managed edge. Depl
 - Authentication module with Argon2id credentials and opaque secure-cookie sessions.
 - pnpm workspaces, Turborepo, strict TypeScript, ESLint, Prettier, Vitest, and CI.
 
-Workspace creation, membership, invitations and minimal RBAC are implemented through a [transactional tenant boundary](workspace-tenancy.md). Redis, workers and WebSockets remain deferred. Email verification and password recovery use hashed, expiring, atomically consumed tokens and a replaceable mail boundary, also reused for workspace invitations. Local delivery is development-only; a production adapter remains deployment work. Separate liveness and bounded database readiness endpoints support operational checks.
+Workspace creation, membership, invitations and minimal RBAC are implemented through a [transactional tenant boundary](workspace-tenancy.md). Redis, workers and WebSockets remain deferred. Email verification and password recovery use hashed, expiring, atomically consumed tokens and a replaceable mail boundary, also reused for workspace invitations. Local delivery is development-only; production can opt into certificate-verified SMTP. Separate liveness and bounded database readiness endpoints support operational checks.
 
 ### Authentication boundaries
 
