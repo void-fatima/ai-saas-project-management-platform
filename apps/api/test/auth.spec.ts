@@ -74,11 +74,13 @@ describe('Authentication API', () => {
       .expect(409);
     await secondDevice
       .post('/auth/login')
+      .set('X-Request-ID', 'bd743520-ff32-4e63-8f7d-57eb632f48a9')
       .send({ email: validAccount.email, password: 'wrong-password' })
       .expect(401, {
         message: 'Invalid email or password.',
         error: 'Unauthorized',
         statusCode: 401,
+        requestId: 'bd743520-ff32-4e63-8f7d-57eb632f48a9',
       });
     await secondDevice
       .post('/auth/login')

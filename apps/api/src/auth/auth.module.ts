@@ -1,4 +1,8 @@
 import { Module } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import type { Environment } from '../config/environment.validation.js';
+import { OperationsLog } from '../operations/operations.js';
+import { SmtpAccountMail } from './smtp-account-mail.service.js';
 import { AccountRecoveryController } from './account-recovery.controller.js';
 import { AccountRecoveryService } from './account-recovery.service.js';
 import {
@@ -28,7 +32,14 @@ import { SessionTokenService } from './session-token.service.js';
   providers: [
     AccountRecoveryService,
     { provide: AccountTokenRepository, useClass: PrismaAccountTokenRepository },
-    { provide: AccountMailDelivery, useClass: DevelopmentAccountMail },
+    {
+      provide: AccountMailDelivery,
+      inject: [ConfigService, OperationsLog],
+      useFactory: (config: ConfigService<Environment, true>, log: OperationsLog) =>
+        config.get('MAIL_MODE', { infer: true }) === 'smtp'
+          ? new SmtpAccountMail(config, log)
+          : new DevelopmentAccountMail(config),
+    },
     AuthService,
     PasswordService,
     SessionAuthGuard,

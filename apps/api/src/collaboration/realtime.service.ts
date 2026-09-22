@@ -2,7 +2,6 @@ import {
   HttpException,
   Inject,
   Injectable,
-  Logger,
   NotFoundException,
   UnauthorizedException,
   type OnModuleDestroy,
@@ -17,6 +16,7 @@ import { PrismaService } from '../database/prisma.service.js';
 import type { Prisma } from '../generated/prisma/client.js';
 import { WorkspaceRepository } from '../workspaces/workspace.repository.js';
 import { WorkspaceSignals, type ChangeSignal } from './workspace-signals.js';
+import { OperationsLog } from '../operations/operations.js';
 
 interface Connection {
   userId: string;
@@ -28,7 +28,6 @@ interface Connection {
 @Injectable()
 export class RealtimeService implements OnModuleInit, OnModuleDestroy {
   private readonly connections = new Set<Connection>();
-  private readonly logger = new Logger(RealtimeService.name);
   private subscription?: Subscription;
   private timer?: ReturnType<typeof setInterval>;
   private pending = new Map<string, ChangeSignal>();
@@ -42,6 +41,7 @@ export class RealtimeService implements OnModuleInit, OnModuleDestroy {
     @Inject(WorkspaceRepository) private readonly workspaces: WorkspaceRepository,
     @Inject(WorkspaceSignals) private readonly signals: WorkspaceSignals,
     @Inject(ConfigService) config: ConfigService<Environment, true>,
+    @Inject(OperationsLog) private readonly logger: OperationsLog,
   ) {
     this.absoluteMs = config.get('SESSION_ABSOLUTE_HOURS', { infer: true }) * 3_600_000;
   }
@@ -90,7 +90,12 @@ export class RealtimeService implements OnModuleInit, OnModuleDestroy {
     const [session] = await this.sessions(this.db, [auth.sessionId]);
     if (!session || session.userId !== auth.userId)
       throw new UnauthorizedException('Authentication is required.');
-    if (response.destroyed || this.stopping) return;
+    if (response.destroyed) return;
+    if (this.stopping) {
+      response.statusCode = 503;
+      response.end();
+      return;
+    }
     // Recheck after the asynchronous query so concurrent handshakes cannot bypass the cap.
     if (
       this.connections.size >= 1000 ||
@@ -126,7 +131,7 @@ export class RealtimeService implements OnModuleInit, OnModuleDestroy {
     else c.response.end();
   }
   private failClosed() {
-    this.logger.warn('Realtime delivery unavailable; clients must reconnect and refetch.');
+    this.logger.write('warn', 'realtime_unavailable');
     this.pending.clear();
     for (const c of this.connections) this.close(c);
   }
@@ -214,11 +219,14 @@ export class RealtimeService implements OnModuleInit, OnModuleDestroy {
       this.failClosed();
     }
   }
-  async onModuleDestroy() {
+  beginShutdown() {
     this.stopping = true;
     this.subscription?.unsubscribe();
     clearInterval(this.timer);
     for (const c of this.connections) this.close(c);
+  }
+  async onModuleDestroy() {
+    this.beginShutdown();
     await this.flush();
   }
 }

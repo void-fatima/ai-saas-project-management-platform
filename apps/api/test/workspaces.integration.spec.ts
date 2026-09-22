@@ -319,12 +319,16 @@ describe('PostgreSQL workspace tenant boundary', () => {
       .set('Cookie', `platform_session=${owner.token}`)
       .send({ name: 'x', userId: outsider.id })
       .expect(400);
+    // Hold client-supplied correlation metadata constant when comparing disclosure.
+    const requestId = randomUUID();
     const hidden = await client()
       .get(`/workspaces/${id}`)
+      .set('X-Request-ID', requestId)
       .set('Cookie', `platform_session=${outsider.token}`)
       .expect(404);
     const missing = await client()
       .get(`/workspaces/${randomUUID()}`)
+      .set('X-Request-ID', requestId)
       .set('Cookie', `platform_session=${outsider.token}`)
       .expect(404);
     expect(hidden.body).toEqual(missing.body);

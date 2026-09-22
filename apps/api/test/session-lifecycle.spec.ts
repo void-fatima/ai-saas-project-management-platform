@@ -143,10 +143,12 @@ describe('Session lifecycle HTTP regressions', () => {
           .mockRejectedValueOnce(error);
         vi.spyOn(repository, 'rotateSession').mockResolvedValueOnce(false);
       }
-      const response = await me(session.cookie).expect(500);
+      const response = await me(session.cookie)
+        .set('X-Request-ID', 'bd743520-ff32-4e63-8f7d-57eb632f48a9')
+        .expect(500);
       expect(response.body).toEqual({
-        message: 'Unable to authenticate right now.',
-        error: 'Internal Server Error',
+        message: 'Service temporarily unavailable.',
+        requestId: 'bd743520-ff32-4e63-8f7d-57eb632f48a9',
         statusCode: 500,
       });
       expect(response.headers['set-cookie']).toBeUndefined();

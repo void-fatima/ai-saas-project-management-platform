@@ -1,24 +1,29 @@
 import { Controller, Get, Inject, Header, ServiceUnavailableException } from '@nestjs/common';
 import { SkipThrottle } from '@nestjs/throttler';
 import { PrismaService } from '../database/prisma.service.js';
+import { RuntimeState } from '../operations/operations.js';
 
 interface HealthResponse {
   status: 'ok';
 }
 
-@Controller('health')
+@Controller()
 @SkipThrottle()
 export class HealthController {
-  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
-  @Get()
+  constructor(
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(RuntimeState) private readonly runtime: RuntimeState,
+  ) {}
+  @Get('health')
   @Header('Cache-Control', 'no-store')
   getHealth(): HealthResponse {
     return { status: 'ok' };
   }
 
-  @Get('ready')
+  @Get(['ready', 'health/ready'])
   @Header('Cache-Control', 'no-store')
   async readiness(): Promise<HealthResponse> {
+    if (this.runtime.stopping) throw new ServiceUnavailableException('Service is not ready.');
     let timer: ReturnType<typeof setTimeout> | undefined;
     try {
       await Promise.race([

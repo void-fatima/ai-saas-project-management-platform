@@ -3,6 +3,15 @@
   "globalDependencies": [".env", ".env.*"],
   "globalEnv": [
     "MAIL_MODE",
+    "SMTP_HOST",
+    "SMTP_PORT",
+    "SMTP_SECURE",
+    "SMTP_FROM",
+    "LOG_LEVEL",
+    "TRUST_PROXY_HOPS",
+    "RATE_LIMIT_MAX",
+    "RATE_LIMIT_WINDOW_MS",
+    "SHUTDOWN_TIMEOUT_MS",
     "NODE_ENV",
     "VITE_API_URL",
     "API_PORT",
@@ -15,7 +24,7 @@
     "AI_TIMEOUT_MS",
     "AI_MAX_OUTPUT_TOKENS"
   ],
-  "globalPassThroughEnv": ["DATABASE_URL", "AI_API_KEY"],
+  "globalPassThroughEnv": ["DATABASE_URL", "AI_API_KEY", "SMTP_USER", "SMTP_PASSWORD"],
   "tasks": {
     "dev": {
       "cache": false,

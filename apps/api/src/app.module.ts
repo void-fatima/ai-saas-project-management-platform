@@ -1,5 +1,5 @@
 import { Module, type MiddlewareConsumer, type NestModule } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { HttpPolicy, SafeExceptionFilter } from './common/http-policy.js';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
@@ -7,7 +7,8 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AuthModule } from './auth/auth.module.js';
 import { WorkspaceModule } from './workspaces/workspace.module.js';
 import { ProjectModule } from './projects/project.module.js';
-import { validateEnvironment } from './config/environment.validation.js';
+import { validateEnvironment, type Environment } from './config/environment.validation.js';
+import { OperationsModule } from './operations/operations.js';
 import { DatabaseModule } from './database/database.module.js';
 import { HealthController } from './health/health.controller.js';
 import { WorkspaceSignalsModule } from './collaboration/workspace-signals.js';
@@ -24,7 +25,17 @@ import { ReportingModule } from './reporting/reporting.module.js';
       isGlobal: true,
       validate: validateEnvironment,
     }),
-    ThrottlerModule.forRoot([{ name: 'default', limit: 100, ttl: 60_000 }]),
+    OperationsModule,
+    ThrottlerModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService<Environment, true>) => [
+        {
+          name: 'default',
+          limit: config.get('RATE_LIMIT_MAX', { infer: true }),
+          ttl: config.get('RATE_LIMIT_WINDOW_MS', { infer: true }),
+        },
+      ],
+    }),
     DatabaseModule,
     WorkspaceSignalsModule,
     AuthModule,
@@ -37,6 +48,7 @@ import { ReportingModule } from './reporting/reporting.module.js';
   ],
   controllers: [HealthController],
   providers: [
+    HttpPolicy,
     { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_FILTER, useClass: SafeExceptionFilter },
   ],
