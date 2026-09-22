@@ -58,6 +58,35 @@ export class ProjectScope {
       select: { userId: true },
     });
   }
+  aiRequest(id: string, userId: string, projectId: string, taskId: string) {
+    return this.tx.aiRun.findFirst({
+      where: {
+        workspaceId: this.workspaceId,
+        id,
+        userId,
+        projectId,
+        taskId,
+        operation: 'BREAKDOWN',
+      },
+    });
+  }
+  recordAiApply(id: string, appliedHash: string, createdCount: number) {
+    return this.tx.aiRun.update({
+      where: { workspaceId_id: { workspaceId: this.workspaceId, id } },
+      data: { status: 'APPLIED', appliedHash, createdCount },
+    });
+  }
+  duplicateSubtask(projectId: string, parentId: string, titles: string[]) {
+    return this.tx.task.findFirst({
+      where: {
+        workspaceId: this.workspaceId,
+        projectId,
+        parentId,
+        OR: titles.map((title) => ({ title: { equals: title, mode: 'insensitive' } })),
+      },
+      select: { id: true },
+    });
+  }
   tasks(projectId: string, parentId: string | null, offset: number, status?: TaskStatus) {
     return this.tx.task.findMany({
       where: { workspaceId: this.workspaceId, projectId, parentId, status },

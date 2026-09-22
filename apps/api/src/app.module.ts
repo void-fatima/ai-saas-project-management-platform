@@ -13,6 +13,7 @@ import { HealthController } from './health/health.controller.js';
 import { WorkspaceSignalsModule } from './collaboration/workspace-signals.js';
 import { CollaborationModule } from './collaboration/collaboration.module.js';
 import { DiscoveryModule } from './discovery/discovery.module.js';
+import { AiModule } from './ai/ai.module.js';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { DiscoveryModule } from './discovery/discovery.module.js';
     ProjectModule,
     CollaborationModule,
     DiscoveryModule,
+    AiModule,
   ],
   controllers: [HealthController],
   providers: [

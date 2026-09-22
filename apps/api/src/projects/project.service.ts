@@ -1,4 +1,12 @@
-import { BadRequestException, ConflictException, Inject, Injectable } from '@nestjs/common';
+import { createHash } from 'node:crypto';
+import {
+  BadRequestException,
+  ConflictException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { applyInput, type AiParams, type ApplyInput } from '../ai/ai.schemas.js';
 import type { WorkspaceRole, TaskStatus } from '../generated/prisma/client.js';
 import { WorkspaceAccess } from '../workspaces/workspace-access.service.js';
 import { requirePermission } from '../workspaces/workspace.policy.js';
@@ -115,14 +123,61 @@ export class ProjectService {
       throw new BadRequestException('Assignee must be a current workspace member.');
   }
   createTask(w: string, u: string, p: string, parent: string | null, input: TaskInput) {
-    return this.run(w, u, async (scope, role, activity) => {
-      await this.context(scope, p, parent, true);
+    return this.run(w, u, (scope, role, activity) =>
+      this.createInScope(scope, role, activity, u, p, parent, input),
+    );
+  }
+  private async createInScope(
+    scope: ProjectScope,
+    role: WorkspaceRole,
+    activity: ActivityWriter,
+    u: string,
+    p: string,
+    parent: string | null,
+    input: TaskInput,
+  ) {
+    await this.context(scope, p, parent, true);
+    requirePermission(resourcePermissions(role).edit);
+    await this.assignment(scope, role, u, input.assigneeId, null);
+    const task = await scope.createTask(p, parent, u, input);
+    await activity.task(task, 'TASK_CREATED');
+    if (task.assigneeId) await activity.task(task, 'TASK_ASSIGNED');
+    return task;
+  }
+  applyBreakdown(p: AiParams, u: string, input: ApplyInput) {
+    const parsed = applyInput.safeParse(input);
+    if (!parsed.success || !p.taskId || p.parentId)
+      throw new BadRequestException('Choose a root task and valid subtask drafts.');
+    const taskId = p.taskId;
+    const drafts = parsed.data.subtasks;
+    const hash = createHash('sha256').update(JSON.stringify(drafts)).digest('hex');
+    return this.run(p.workspaceId, u, async (scope, role, activity) => {
+      await this.context(scope, p.projectId, taskId, true);
       requirePermission(resourcePermissions(role).edit);
-      await this.assignment(scope, role, u, input.assigneeId, null);
-      const task = await scope.createTask(p, parent, u, input);
-      await activity.task(task, 'TASK_CREATED');
-      if (task.assigneeId) await activity.task(task, 'TASK_ASSIGNED');
-      return task;
+      const task = await scope.task(p.projectId, taskId, null);
+      const receipt = await scope.aiRequest(parsed.data.requestId, u, p.projectId, taskId);
+      if (!receipt) throw new NotFoundException('Suggestion is unavailable.');
+      if (receipt.status === 'APPLIED') {
+        if (receipt.appliedHash !== hash)
+          throw new ConflictException('This suggestion was already applied with different edits.');
+        return { createdCount: receipt.createdCount };
+      }
+      if (receipt.status !== 'SUCCEEDED' || Date.now() - receipt.createdAt.getTime() > 15 * 60_000)
+        throw new ConflictException('Generate a fresh suggestion before applying.');
+      if (receipt.taskVersion !== task.version)
+        throw new ConflictException('Task changed. Generate a fresh suggestion before applying.');
+      if (
+        await scope.duplicateSubtask(
+          p.projectId,
+          taskId,
+          drafts.map((draft) => draft.title),
+        )
+      )
+        throw new ConflictException('A subtask with one of these titles already exists.');
+      for (const draft of drafts)
+        await this.createInScope(scope, role, activity, u, p.projectId, taskId, draft);
+      await scope.recordAiApply(receipt.id, hash, drafts.length);
+      return { createdCount: drafts.length };
     });
   }
   updateTask(

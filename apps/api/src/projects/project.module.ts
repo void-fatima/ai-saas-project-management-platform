@@ -8,5 +8,6 @@ import { ProjectService } from './project.service.js';
   imports: [AuthModule, WorkspaceModule],
   controllers: [ProjectController, TaskController],
   providers: [ProjectService],
+  exports: [ProjectService],
 })
 export class ProjectModule {}

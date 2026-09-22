@@ -24,6 +24,7 @@ model User {
   createdTasks    Task[]
   comments        TaskComment[]
   activities      Activity[]
+  aiRuns          AiRun[]
 
   @@map("users")
 }
@@ -47,6 +48,7 @@ model Workspace {
   invitations WorkspaceInvitation[]
   projects    Project[]
   activities  Activity[]
+  aiRuns      AiRun[]
 
   @@map("workspaces")
 }
@@ -90,6 +92,45 @@ enum TaskStatus {
   TODO
   IN_PROGRESS
   DONE
+}
+
+enum AiOperation {
+  SUMMARY
+  BREAKDOWN
+  PLAN
+}
+
+enum AiRunStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  APPLIED
+}
+
+// Minimal cost reservation and apply receipt. Never stores prompts or model responses.
+model AiRun {
+  id           String      @db.Uuid
+  workspaceId  String      @map("workspace_id") @db.Uuid
+  userId       String      @map("user_id") @db.Uuid
+  projectId    String      @map("project_id") @db.Uuid
+  taskId       String?     @map("task_id") @db.Uuid
+  taskVersion  Int?        @map("task_version")
+  operation    AiOperation
+  status       AiRunStatus @default(PENDING)
+  provider     String      @db.VarChar(30)
+  model        String      @db.VarChar(100)
+  inputTokens  Int?        @map("input_tokens")
+  outputTokens Int?        @map("output_tokens")
+  durationMs   Int?        @map("duration_ms")
+  createdCount Int?        @map("created_count")
+  appliedHash  String?     @map("applied_hash") @db.Char(64)
+  createdAt    DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+  workspace    Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([workspaceId, id])
+  @@index([workspaceId, createdAt])
+  @@map("ai_runs")
 }
 
 model Project {

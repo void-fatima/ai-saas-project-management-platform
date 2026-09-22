@@ -9,9 +9,13 @@
     "WEB_ORIGIN",
     "SESSION_TTL_HOURS",
     "SESSION_ROTATION_HOURS",
-    "SESSION_ABSOLUTE_HOURS"
+    "SESSION_ABSOLUTE_HOURS",
+    "AI_PROVIDER",
+    "AI_MODEL",
+    "AI_TIMEOUT_MS",
+    "AI_MAX_OUTPUT_TOKENS"
   ],
-  "globalPassThroughEnv": ["DATABASE_URL"],
+  "globalPassThroughEnv": ["DATABASE_URL", "AI_API_KEY"],
   "tasks": {
     "dev": {
       "cache": false,
