@@ -2,6 +2,7 @@ import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service.js';
 import type { Prisma, WorkspaceRole } from '../generated/prisma/client.js';
 import { WorkspaceSignals } from '../collaboration/workspace-signals.js';
+import { AuditWriter } from '../audit/audit.writer.js';
 
 const invitationPublic = {
   id: true,
@@ -26,6 +27,9 @@ export class WorkspaceScope {
   // Resource repositories inherit this transaction and tenant; membership is checked by WorkspaceAccess.
   bind<T>(factory: (tx: Prisma.TransactionClient, workspaceId: string) => T): T {
     return factory(this.tx, this.id);
+  }
+  audit(actorId: string | null) {
+    return new AuditWriter(this.tx, this.id, actorId);
   }
   workspace() {
     return this.tx.workspace.findUniqueOrThrow({ where: { id: this.id } });
@@ -141,8 +145,16 @@ export class WorkspaceRepository {
     @Inject(WorkspaceSignals) private readonly signals: WorkspaceSignals,
   ) {}
   create(userId: string, name: string) {
-    return this.prisma.workspace.create({
-      data: { name, ownerId: userId, memberships: { create: { userId, role: 'Owner' } } },
+    return this.prisma.$transaction(async (tx) => {
+      const workspace = await tx.workspace.create({
+        data: { name, ownerId: userId, memberships: { create: { userId, role: 'Owner' } } },
+      });
+      await new AuditWriter(tx, workspace.id, userId).record({
+        action: 'WORKSPACE_CREATED',
+        entityType: 'WORKSPACE',
+        entityId: workspace.id,
+      });
+      return workspace;
     });
   }
   list(userId: string) {
@@ -162,7 +174,14 @@ export class WorkspaceRepository {
   async invalidateDelivery(workspaceId: string, tokenHash: string) {
     await this.locked(workspaceId, (scope) =>
       scope.invitationByHash(tokenHash).then(async (invitation) => {
-        if (invitation) await scope.revoke(invitation.id);
+        if (invitation) {
+          await scope.revoke(invitation.id);
+          await scope.audit(null).record({
+            action: 'INVITATION_DELIVERY_FAILED',
+            entityType: 'INVITATION',
+            entityId: invitation.id,
+          });
+        }
       }),
     );
   }

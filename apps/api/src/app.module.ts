@@ -14,6 +14,7 @@ import { WorkspaceSignalsModule } from './collaboration/workspace-signals.js';
 import { CollaborationModule } from './collaboration/collaboration.module.js';
 import { DiscoveryModule } from './discovery/discovery.module.js';
 import { AiModule } from './ai/ai.module.js';
+import { ReportingModule } from './reporting/reporting.module.js';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { AiModule } from './ai/ai.module.js';
     CollaborationModule,
     DiscoveryModule,
     AiModule,
+    ReportingModule,
   ],
   controllers: [HealthController],
   providers: [

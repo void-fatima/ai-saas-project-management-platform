@@ -177,6 +177,15 @@ export class ProjectService {
       for (const draft of drafts)
         await this.createInScope(scope, role, activity, u, p.projectId, taskId, draft);
       await scope.recordAiApply(receipt.id, hash, drafts.length);
+      await scope.audit(u).record(
+        {
+          action: 'AI_BREAKDOWN_APPLIED',
+          entityType: 'TASK',
+          entityId: taskId,
+          metadata: { projectId: p.projectId, count: drafts.length },
+        },
+        `ai:${receipt.id}`,
+      );
       return { createdCount: drafts.length };
     });
   }

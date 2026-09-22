@@ -1,6 +1,7 @@
 import { NotFoundException } from '@nestjs/common';
 import type { Prisma, TaskStatus } from '../generated/prisma/client.js';
 import type { ProjectInput, ProjectUpdate, TaskInput } from './project.schemas.js';
+import { AuditWriter } from '../audit/audit.writer.js';
 
 export const pageSize = 50;
 const taskInclude = {
@@ -14,6 +15,9 @@ export class ProjectScope {
     private readonly tx: Prisma.TransactionClient,
     readonly workspaceId: string,
   ) {}
+  audit(actorId: string) {
+    return new AuditWriter(this.tx, this.workspaceId, actorId);
+  }
   projects(offset: number) {
     return this.tx.project.findMany({
       where: { workspaceId: this.workspaceId },

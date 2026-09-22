@@ -117,6 +117,11 @@ export class CollaborationService {
           rootTaskId: task.parentId ?? task.id,
           subject: task.title,
           dedupKey: `${comment.id}:created`,
+          audit: {
+            entityType: 'COMMENT',
+            entityId: comment.id,
+            metadata: { projectId: p.projectId, parentId: task.id, version: comment.version },
+          },
         },
         { type: 'COMMENT', recipients: [task.creatorId, task.assigneeId] },
       );
@@ -175,6 +180,11 @@ export class CollaborationService {
         rootTaskId: task.parentId ?? task.id,
         subject: task.title,
         dedupKey: `${comment.id}:${updated.version}`,
+        audit: {
+          entityType: 'COMMENT',
+          entityId: comment.id,
+          metadata: { projectId: p.projectId, parentId: task.id, version: updated.version },
+        },
       });
       return updated;
     });

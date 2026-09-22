@@ -46,7 +46,7 @@ export class WorkspaceInvitationService {
         if (previous && now.getTime() - previous.issuedAt.getTime() < 60_000)
           throw new ConflictException('Wait a minute before reissuing this invitation.');
         this.mail.assertAvailable();
-        return scope.issue({
+        const invitation = await scope.issue({
           email,
           role,
           tokenHash: token.hash,
@@ -54,6 +54,13 @@ export class WorkspaceInvitationService {
           issuedAt: now,
           expiresAt: new Date(now.getTime() + 7 * 86_400_000),
         });
+        await scope.audit(actorId).record({
+          action: 'INVITATION_ISSUED',
+          entityType: 'INVITATION',
+          entityId: invitation.id,
+          metadata: { toRole: role },
+        });
+        return invitation;
       },
     );
     try {
@@ -81,6 +88,12 @@ export class WorkspaceInvitationService {
       if (!invitation) throw new NotFoundException('Invitation is unavailable.');
       requirePermission(canAssign(role, invitation.role));
       await scope.revoke(invitation.id);
+      if (!invitation.revokedAt && !invitation.consumedAt)
+        await scope.audit(actorId).record({
+          action: 'INVITATION_REVOKED',
+          entityType: 'INVITATION',
+          entityId: invitation.id,
+        });
     });
   }
 
@@ -108,6 +121,12 @@ export class WorkspaceInvitationService {
           throw new ConflictException('You already belong to this workspace.');
         if ((await scope.consume(invitation.id)).count !== 1) throw invalid();
         await scope.addMember(userId, invitation.role);
+        await scope.audit(userId).record({
+          action: 'INVITATION_ACCEPTED',
+          entityType: 'INVITATION',
+          entityId: invitation.id,
+          metadata: { toRole: invitation.role },
+        });
         return { workspaceId: scope.id };
       });
     } catch (error: unknown) {

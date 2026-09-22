@@ -1,5 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { ActivityType, NotificationType, Prisma, Task } from '../generated/prisma/client.js';
+import { AuditWriter } from '../audit/audit.writer.js';
+import type { AuditInput } from '../audit/audit.schemas.js';
 
 export const activitySelect = {
   id: true,
@@ -33,15 +35,31 @@ export class ActivityWriter {
       fromStatus?: Task['status'];
       toStatus?: Task['status'];
       dedupKey?: string;
+      audit?: Omit<AuditInput, 'action'>;
     },
     notification?: { type: NotificationType; recipients: (string | null)[] },
   ) {
-    const { dedupKey = randomUUID(), ...data } = input;
+    const { dedupKey = randomUUID(), audit, ...data } = input;
     const activity = await this.tx.activity.upsert({
       where: { workspaceId_dedupKey: { workspaceId: this.workspaceId, dedupKey } },
       create: { ...data, dedupKey, workspaceId: this.workspaceId, actorUserId: this.actorUserId },
       update: {},
     });
+    await new AuditWriter(this.tx, this.workspaceId, this.actorUserId).record(
+      {
+        action: input.type,
+        entityType:
+          audit?.entityType ??
+          (input.taskId ? (input.rootTaskId === input.taskId ? 'TASK' : 'SUBTASK') : 'PROJECT'),
+        entityId: audit?.entityId ?? input.taskId ?? input.projectId,
+        metadata: audit?.metadata ?? {
+          projectId: input.projectId,
+          ...(input.fromStatus ? { fromStatus: input.fromStatus } : {}),
+          ...(input.toStatus ? { toStatus: input.toStatus } : {}),
+        },
+      },
+      `activity:${activity.id}`,
+    );
     if (notification) {
       const ids = [
         ...new Set(
@@ -78,6 +96,21 @@ export class ActivityWriter {
         rootTaskId: task.parentId ?? task.id,
         subject: task.title,
         dedupKey: `${task.id}:${task.version}:${type}`,
+        audit: {
+          entityType: task.parentId ? 'SUBTASK' : 'TASK',
+          entityId: task.id,
+          metadata: {
+            projectId: task.projectId,
+            parentId: task.parentId,
+            version: task.version,
+            ...(type === 'TASK_ASSIGNED'
+              ? { assigneeId: task.assigneeId, previousAssigneeId: previous?.assigneeId ?? null }
+              : {}),
+            ...(type === 'TASK_STATUS_CHANGED'
+              ? { fromStatus: previous?.status, toStatus: task.status }
+              : {}),
+          },
+        },
         ...(type === 'TASK_STATUS_CHANGED'
           ? { fromStatus: previous?.status, toStatus: task.status }
           : {}),
@@ -88,9 +121,16 @@ export class ActivityWriter {
 
   async taskChanges(before: Task, after: Task) {
     if (before.status !== after.status) await this.task(after, 'TASK_STATUS_CHANGED', before);
-    if (before.assigneeId !== after.assigneeId) await this.task(after, 'TASK_ASSIGNED');
+    if (before.assigneeId !== after.assigneeId) await this.task(after, 'TASK_ASSIGNED', before);
     if (before.title !== after.title || before.description !== after.description)
       await this.task(after, 'TASK_UPDATED');
+    if (before.position !== after.position && before.status === after.status)
+      await new AuditWriter(this.tx, this.workspaceId, this.actorUserId).record({
+        action: 'TASK_REORDERED',
+        entityType: after.parentId ? 'SUBTASK' : 'TASK',
+        entityId: after.id,
+        metadata: { projectId: after.projectId, version: after.version, fields: ['position'] },
+      });
     this.changed(); // Reordering is an invalidation, not activity noise.
   }
 }

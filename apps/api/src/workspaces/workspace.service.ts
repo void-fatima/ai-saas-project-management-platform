@@ -33,13 +33,34 @@ export class WorkspaceService {
     }));
   }
   rename(id: string, userId: string, name: string) {
-    return this.access.run(id, userId, 'rename', (scope) => scope.rename(name));
+    return this.access.run(id, userId, 'rename', async (scope) => {
+      const before = await scope.workspace();
+      const after = await scope.rename(name);
+      if (before.name !== name)
+        await scope.audit(userId).record({
+          action: 'WORKSPACE_UPDATED',
+          entityType: 'WORKSPACE',
+          entityId: id,
+          metadata: { fields: ['name'] },
+        });
+      return after;
+    });
   }
   async delete(id: string, userId: string) {
-    await this.access.run(id, userId, 'delete', (scope) => scope.delete());
+    await this.access.run(id, userId, 'delete', async (scope) => {
+      await scope
+        .audit(userId)
+        .record({ action: 'WORKSPACE_DELETED', entityType: 'WORKSPACE', entityId: id });
+      await scope.delete();
+    });
   }
   async leave(id: string, userId: string) {
-    await this.access.run(id, userId, 'leave', (scope) => scope.remove(userId));
+    await this.access.run(id, userId, 'leave', async (scope) => {
+      await scope.remove(userId);
+      await scope
+        .audit(userId)
+        .record({ action: 'MEMBER_LEFT', entityType: 'MEMBERSHIP', entityId: userId });
+    });
   }
   async changeMember(id: string, actorId: string, targetId: string, role?: WorkspaceRole) {
     await this.access.run(id, actorId, 'manage', async (scope, actorRole) => {
@@ -52,6 +73,13 @@ export class WorkspaceService {
       );
       if (role) await scope.changeRole(targetId, role);
       else await scope.remove(targetId);
+      if (!role || role !== target.role)
+        await scope.audit(actorId).record({
+          action: role ? 'MEMBER_ROLE_CHANGED' : 'MEMBER_REMOVED',
+          entityType: 'MEMBERSHIP',
+          entityId: targetId,
+          metadata: { fromRole: target.role, ...(role ? { toRole: role } : {}) },
+        });
     });
   }
 }

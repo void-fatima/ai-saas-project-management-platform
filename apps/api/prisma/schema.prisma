@@ -100,6 +100,23 @@ enum AiOperation {
   PLAN
 }
 
+// Historical identifiers deliberately have no cascading relations: deletion keeps the audit trail.
+model AuditEvent {
+  id          String   @id @default(uuid()) @db.Uuid
+  workspaceId String   @map("workspace_id") @db.Uuid
+  actorUserId String?  @map("actor_user_id") @db.Uuid
+  action      String   @db.VarChar(40)
+  entityType  String   @map("entity_type") @db.VarChar(20)
+  entityId    String   @map("entity_id") @db.Uuid
+  metadata    Json     @db.JsonB
+  dedupKey    String   @map("dedup_key") @db.VarChar(200)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([workspaceId, dedupKey])
+  @@index([workspaceId, createdAt, id])
+  @@map("audit_events")
+}
+
 enum AiRunStatus {
   PENDING
   SUCCEEDED
