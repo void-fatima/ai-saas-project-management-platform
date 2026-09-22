@@ -95,7 +95,7 @@ services:
     depends_on:
       api: { condition: service_healthy }
     ports: ['127.0.0.1:${WEB_PORT:-8080}:8080']
-    networks: [application]
+    networks: [application, edge]
     restart: unless-stopped
     read_only: true
     tmpfs: [/tmp]
@@ -109,4 +109,5 @@ volumes:
 networks:
   database: { internal: true }
   application: { internal: true }
+  edge:
   outbound:
