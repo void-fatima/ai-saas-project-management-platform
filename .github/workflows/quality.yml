@@ -13,6 +13,7 @@ on:
         feature/ai-assistant,
         feature/reports-analytics-audit,
         feature/production-operations,
+        feature/final-completion,
       ]
   pull_request:
 
@@ -99,6 +100,8 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Apply migrations to clean PostgreSQL
         run: pnpm --filter @platform/api prisma:migrate:deploy
+      - name: Verify migration schema matches Prisma
+        run: pnpm --filter @platform/api exec prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --exit-code
       - name: PostgreSQL regressions
         run: pnpm --filter @platform/api test:integration
       - name: Build applications

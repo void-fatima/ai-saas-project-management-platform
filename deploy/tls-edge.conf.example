@@ -3,6 +3,8 @@
 server {
     listen 80;
     server_name app.example.com;
+    access_log off;
+    error_log /var/log/nginx/platform-error.log crit;
     return 301 https://app.example.com$request_uri;
 }
 server {

@@ -41,4 +41,4 @@ Audit history starts when migration `20260922010000_reporting_audit` is applied.
 
 The authenticated sidebar opens Analytics and reports with workspace selection, range controls, status/workload/trend tables, project reports, current-page CSV download and Owner/Admin audit filters/pagination. Loading/errors/empty states, explicit refresh, export duplicate guards and scoped cancellation protect workspace/project changes. Existing workflows stay intact.
 
-AI/scheduled reports, full-dataset exports/PDF, report snapshots, due-date/overdue metrics, cycle/lead time, risk scoring, per-task cascade audit fan-out, account-wide security audit, monitoring/production operations and RAG/vector work are not implemented by this slice and remain on the roadmap.
+AI/scheduled reports, full-dataset exports/PDF, report snapshots, due-date/overdue metrics, cycle/lead time, risk scoring, per-task cascade audit fan-out, account-wide security audit, vendor monitoring and RAG/vector work remain on the roadmap. Portable production operations are implemented in the operations contract.

@@ -38,13 +38,13 @@ A full-stack project management SaaS with workspace tenant isolation, role-based
 - persisted workspace dashboard with active/archive projects, root/subtask counts, assignments and recent activity
 - bounded PostgreSQL project/task/subtask text search in the keyboard command palette, with safe workspace switching
 
-### Planned
+### Scope beyond the core
 
 Operator SMTP/TLS provisioning, richer project/task fields, drag-and-drop, mentions/rich text, subtask discussion UI, notification preferences/digests, chat, presence, coediting, distributed realtime, advanced analytics, advanced search/filters, comment search, broader account-security audit, full AI project generation and reporting, cloud infrastructure, and further hardening remain deferred. Ownership transfer, explicit invitation decline and custom roles remain documented follow-ups.
 
 ## Technology
 
-- Node.js 22+
+- Node.js 22.12+ (22.x) or 24+
 - pnpm 10 and Turborepo
 - React 19, Vite, TypeScript
 - NestJS, Zod boundary validation, Prisma ORM, Argon2id
@@ -69,7 +69,7 @@ docker-compose.yml     local PostgreSQL service
 
 ## Prerequisites
 
-- Node.js 22 or newer
+- Node.js 22.12+ (22.x) or 24+; CI and Docker use Node 22
 - pnpm 10 (`corepack enable` can make the pinned version available)
 - PostgreSQL 17 (native local installation or Docker Compose)
 
@@ -110,6 +110,7 @@ pnpm db:status
 Start both applications from the repository root:
 
 ```bash
+pnpm --filter @platform/api prisma:migrate:deploy
 pnpm dev
 ```
 
@@ -122,7 +123,7 @@ pnpm --filter @platform/api dev
 pnpm --filter @platform/web dev
 ```
 
-The current API validates `NODE_ENV`, `API_PORT`, `WEB_ORIGIN`, `DATABASE_URL`, mail mode, and session policy configuration, and verifies PostgreSQL connectivity during startup. The baseline migration enables `pgcrypto`; later migrations add users, sessions, and account tokens.
+The API validates runtime, origin, database, mail, AI and session settings and verifies PostgreSQL connectivity during startup. Apply all ten committed migrations before starting it; they include authentication and every implemented product schema.
 
 `GET /health` reports process liveness. `GET /health/ready` performs a bounded PostgreSQL query and returns `{ "status": "ok" }` or a generic 503 without connection details. The readiness response deadline is 2.5 seconds, with shorter connection/transaction/statement limits. Both endpoints bypass request throttling and disable caching. The web indicator uses readiness, validates the JSON shape, aborts after five seconds, and cancels or ignores superseded requests; retry remains available.
 
@@ -221,7 +222,7 @@ pnpm --filter @platform/web test:e2e
 & 'C:\Program Files\PostgreSQL\17\bin\pg_ctl.exe' -D .tools/pg-workspace-tests -m fast -w stop
 ```
 
-Integration fixtures delete only their own records. Browser fixtures remain in the explicitly disposable database; no real database is reset. Keep local test mail/database files private. All six migrations were also verified from a fresh database.
+Integration fixtures delete only their own records. Browser fixtures remain in the explicitly disposable database; no real database is reset. Keep local test mail/database files private. Clean-database verification covers all ten migrations.
 
 ## Quality Commands
 
@@ -236,7 +237,7 @@ pnpm build
 pnpm docker:config
 ```
 
-Integration tests require the local PostgreSQL service, an `.env` with a valid `DATABASE_URL`, and all committed migrations applied (`pnpm --filter @platform/api prisma:migrate:deploy`). They cover connectivity and session creation, expiry, concurrent conditional rotation, predecessor grace, and revocation. Session fixtures use unique accounts and delete only their own data; no database reset is performed. HTTP error/cookie and forced service-level race regressions use `MemoryAuthRepository` in the regular API suite.
+Integration tests require a disposable PostgreSQL database, an injected `DATABASE_URL`, and all committed migrations applied (`pnpm --filter @platform/api prisma:migrate:deploy`). They cover sessions, ownership, role matrices, tenant isolation, ordering/concurrency, comments/notifications/SSE, discovery, AI apply, report accuracy and audit immutability. Fixtures use unique accounts and delete only their own data; retained audit rows remain immutable. HTTP error/cookie and forced service-level race regressions use `MemoryAuthRepository` in the regular API suite.
 
 Database lifecycle helpers are also available through `pnpm db:up`, `pnpm db:status`, `pnpm db:logs`, and `pnpm db:down`. `db:down` stops the local stack but preserves the named PostgreSQL volume; use explicit Docker volume commands only when intentional data removal is required.
 
@@ -252,12 +253,21 @@ pnpm --filter @platform/web test:e2e
 
 The suite starts its own API and web servers on ports 3000 and 5173, refuses to reuse existing servers, and uses real browser cookies and database writes. It exercises registration/login, refresh restoration, logout, verification, password reset and other-device revocation, plus modal keyboard and small-viewport behavior. Unique test accounts remain in this disposable database; discard the test database when finished. Only mail files matching the unique test account are removed. No test sends real email. Traces, videos, and screenshots are disabled to avoid recording recovery credentials.
 
-When Chromium download is unavailable but Microsoft Edge is installed, set `E2E_BROWSER_CHANNEL=msedge`. Local verification on Windows used an isolated PostgreSQL 17 cluster under ignored `.tools`, listening only on `127.0.0.1:55432`, because Docker Desktop's engine failed. It did not use or reset the installed database service. CI uses its own disposable PostgreSQL service and Chromium.
+When Chromium download is unavailable but Microsoft Edge is installed, set `E2E_BROWSER_CHANNEL=msedge`. Local Windows verification uses an isolated PostgreSQL 17 cluster under ignored `.tools`, listening only on `127.0.0.1:55432`. The agent execution environment cannot access the Docker named pipe; this is not a Docker Desktop failure. CI uses disposable PostgreSQL, Chromium and a working Docker engine.
 
-CI retains frozen installation, format, lint, typecheck, unit tests, builds, and Compose validation. The PostgreSQL 17 job applies migrations to a clean disposable database, runs integration regressions, builds the applications, installs Chromium, and runs real browser authentication, workspace, project/Kanban, collaboration and dashboard/search journeys. Both jobs run on pull requests and pushes to main, feature/authentication, feature/workspaces-rbac, feature/projects-tasks-kanban, feature/collaboration-notifications-realtime, or feature/dashboard-search. Deployment remains outside this phase.
+CI has three jobs: quality checks with frozen installation and production builds; clean PostgreSQL migrations, integration tests and browser journeys (including AI and reports); and production API/web/migration image builds with isolated live Compose smoke, restricted database-role checks, backup/restore, outage readiness and graceful SSE shutdown. It runs on pull requests and the milestone branches listed in [the workflow](.github/workflows/quality.yml), including `feature/final-completion`.
+
+### AI, reports and deployment
+
+Open a project for **Summarize project**, or a task for action planning and editable subtask proposals. Review and edit the preview before explicit apply; generated subtasks use normal task permissions and transactions. AI is disabled by default. Configure server-only `AI_PROVIDER=openai`, `AI_MODEL` and `AI_API_KEY` as described in the [AI contract](docs/architecture/ai-assistant.md). Automated tests use a deterministic provider and never call an external model.
+
+Open **Analytics and reports** for persisted workspace/project metrics, 7/30/90-day activity trends and current-page CSV export. Owner/Admin can inspect the separate immutable audit ledger. [Metric definitions](docs/architecture/reports-analytics-audit.md) explain archive handling, pagination and event-throughput caveats.
+
+For production, follow the [deployment runbook](docs/deployment/production.md): copy `.env.production.example`, configure independent database credentials and the HTTPS origin, build the three images, and start the migration-gated Compose stack behind your TLS edge. Enable SMTP for invitations/recovery and configure AI if desired. Public infrastructure, provider acceptance and off-host backup scheduling remain operator responsibilities; no public deployment is claimed.
 
 ## Documentation
 
+- [Final core audit, RBAC matrix, fixes and verification](docs/verification/final-completion.md)
 - [Architecture overview](docs/architecture/overview.md)
 - [Full product roadmap](docs/roadmap/product-roadmap.md)
 - [Foundation verification](docs/verification/foundation.md)

@@ -4,14 +4,24 @@ This document preserves approved product scope while keeping implementation incr
 
 ## Scope Classification
 
-- **Completed Phases:** foundation and authentication, plus the approved minimal Workspace/Tenancy/RBAC, Projects/Tasks/Subtasks/Kanban, Collaboration/Notifications/Realtime and Dashboard/Search vertical slices.
-- **Current Phase:** Production/Operations/Deployment is authorized after the completed AI Assistant and Reports/Analytics/Audit slices. It covers portable containers, production configuration, lifecycle/logging/security, SMTP delivery, migrations, backup/restore and deployment verification. See the [operations contract](../architecture/production-operations.md) and [runbook](../deployment/production.md). No unrelated later milestone starts automatically.
-- **Core Future Phase:** Remaining capabilities in Phases 6–13 and 19, and subsequent Phases 14–18 and 20–21, plus the explicitly preserved follow-ups below. None starts automatically after this milestone.
+- **Implemented core:** foundation, authentication/recovery, Workspace/Tenancy/RBAC, Projects/Tasks/Subtasks/Kanban, Collaboration/Notifications/Realtime, Dashboard/Search, AI Assistant, Reports/Analytics/Audit and portable Production/Operations/Deployment.
+- **Current pass:** final completion audit, concrete correctness/UX/documentation fixes and release verification. See the [final audit](../verification/final-completion.md), [operations contract](../architecture/production-operations.md) and [runbook](../deployment/production.md). Core completion means the implemented vertical slices work together; it does not mean every long-term deliverable below is implemented or a public deployment has launched.
+- **Preserved future scope:** extensions to those slices and the broader phase objectives below remain approved backlog. They require explicit sequencing and do not automatically block completion of the current core.
 - **Production Hardening:** Phases 22–27, continuously considered earlier and formally hardened here.
 - **Advanced Future Phase:** deeper real-time, analytics, search, AI, enterprise, and infrastructure capabilities after core workflows prove their value.
 - **Nice-to-Have / Bonus:** Phase 29 and the Future / Bonus Backlog. These are preserved but unscheduled.
 
 Security, tenant isolation, accessibility, testing, and observability are continuous concerns; their named hardening phases are not permission to postpone basic safeguards.
+
+### Final audit classification
+
+**A — Must complete now:** repair broken linked-subtask deletion, prevent late mutation/invitation responses from changing the active context, confirm destructive comment deletion, remove unusable production navigation placeholders, correct setup and current capability documentation, and verify the complete application and production stack. No missing core feature is deferred under a different name.
+
+**B — Valid future enhancements:** ownership transfer, invitation decline, custom roles; project dates/milestones/membership and task priorities/labels/dates/attachments/multiple assignees; drag-and-drop and richer ordering; mentions/rich text, subtask discussion UI, preferences/digests, chat/presence/coediting; advanced search/combined filters/saved views, RAG/vector search; full AI project generation, AI health/reports, model evaluation, monetary budgets and usage administration; advanced metrics, scheduled/snapshot/full-dataset/PDF reports; account-wide security audit, per-task cascade history, audit export/partitioning; profile/preferences/session-management UX; asset optimization, measured capacity work, optional RLS, vulnerability/SBOM automation and external security assessment. Shared realtime/rate-limit infrastructure, Redis/workers, durable outboxes and richer automation require demonstrated multi-replica/job needs. Future AI agent and memory experiences remain subject to the same provider, tenant and explicit-approval boundaries; their disabled navigation placeholders are removed from the current UI.
+
+**C — Deployment/provider-specific:** public domain/TLS and host/cloud provisioning; SMTP sender/DNS/inbox acceptance; live AI credentials/model acceptance and provider data terms; secret rotation, off-host encrypted backup scheduling, retention/privacy decisions and restore targets; monitoring/alert vendors, operational ownership, image scanning/digest recording, branch protection and release approval. Kubernetes/cloud IaC and multi-region rollout require a justified deployment design. Portable containers, migration gating, backup/restore helpers and the runbook are already implemented; provider choices are not hard-coded into the repository.
+
+The detailed phase objectives and bonus backlog below remain preserved. “Future” refers to extensions beyond the implemented core; production operators must complete applicable C items before opening a real service to users.
 
 ## Phased Delivery
 
@@ -83,11 +93,11 @@ The approved current contract uses one immutable Owner (the creator), workspace 
 - **Main risks:** scattered role comparisons, privilege escalation, and project permissions exceeding workspace membership.
 - **Definition of Done:** policy tests cover allow/deny paths, owner invariants, and server enforcement independent of frontend state.
 
-Workspace permissions follow the approved [minimal RBAC contract](../architecture/workspace-tenancy.md). Manager, Member and Viewer intentionally have equal workspace-level read/leave permissions until Projects/Tasks introduces resource-specific capabilities. Admin cannot grant/manage Admin or Owner; only Owner deletes. The Owner cannot leave, be removed or be demoted. Audited role changes and the broader audit/event platform remain preserved for Phase 20; custom roles and ownership transfer are not implemented. Future resource permissions must preserve these workspace guarantees.
+Workspace permissions follow the approved [minimal RBAC contract](../architecture/workspace-tenancy.md). Manager, Member and Viewer intentionally have equal workspace-level read/leave permissions while Projects/Tasks applies its implemented resource-specific capabilities. Admin cannot grant/manage Admin or Owner; only Owner deletes. The Owner cannot leave, be removed or be demoted. Audited role changes are implemented in Phase 20; broader account-security events remain future work; custom roles and ownership transfer are not implemented. Future resource permissions must preserve these workspace guarantees.
 
 ### 6. Projects — Minimal Slice Implemented
 
-Current slice: workspace-scoped CRUD, name/description, creator, archive/restore, deliberate task/subtask cascade deletion, 50-row pages and Owner/Admin/Manager administration. Project dates, richer lifecycle/status, overview, project-specific members and milestones remain deferred. Minimal project/task activity is included in the collaboration slice; full audit actions remain with their later platform.
+Current slice: workspace-scoped CRUD, name/description, creator, archive/restore, deliberate task/subtask cascade deletion, 50-row pages and Owner/Admin/Manager administration. Project dates, richer lifecycle/status, overview, project-specific members and milestones remain deferred. Minimal project/task activity is included in the collaboration slice; audit actions are implemented in the separate Phase 20 ledger.
 
 - **Objective:** deliver workspace-scoped project management.
 - **Major deliverables:** create/read/update/archive projects, status, dates, overview, members, and milestones when validated by product needs.
@@ -97,7 +107,7 @@ Current slice: workspace-scoped CRUD, name/description, creator, archive/restore
 
 ### 7. Tasks — Minimal Slice Implemented
 
-Current slice: task CRUD, title/description, TODO/IN_PROGRESS/DONE, creator, one optional current workspace-member assignee, deterministic ordering and one-level subtasks. Membership removal clears assignments. Priority, labels, due dates, multiple assignees, attachment metadata and history remain deferred.
+Current slice: task CRUD, title/description, TODO/IN_PROGRESS/DONE, creator, one optional current workspace-member assignee, deterministic ordering and one-level subtasks. Membership removal clears assignments. Priority, labels, due dates, multiple assignees and attachment metadata remain deferred. Task activity and restricted audit history are implemented.
 
 - **Objective:** model actionable work with reliable constraints.
 - **Major deliverables:** task CRUD, status, priority, creator/reporter, one or multiple assignees when justified, labels, due dates, ordering, subtasks, attachments metadata, and history.
@@ -117,7 +127,7 @@ Current slice: persisted three-column board, keyboard/native status controls, mo
 
 ### 9. Task Details — Minimal Slice Implemented
 
-Current slice: linkable root-task modal, content/status/assignment editing, one-level subtasks, read-only Viewer rendering, Member controls, loading/error/retry states and confirmed deletion. Labels, due dates, attachments and history remain deferred as above. See the [resource contract](../architecture/projects-tasks.md); workspace-level role guarantees remain unchanged.
+Current slice: linkable root-task modal, content/status/assignment editing, one-level subtasks, read-only Viewer rendering, Member controls, loading/error/retry states and confirmed deletion. Labels, due dates and attachments remain deferred as above; comments, activity and audit are implemented. See the [resource contract](../architecture/projects-tasks.md); workspace-level role guarantees remain unchanged.
 
 - **Objective:** expose a focused deep-edit workflow.
 - **Major deliverables:** linkable drawer/page, descriptions, status, assignees, labels, due dates, subtasks, attachments, history, validation, loading/error/retry states, and destructive confirmations.
@@ -125,9 +135,9 @@ Current slice: linkable root-task modal, content/status/assignment editing, one-
 - **Main risks:** giant components, lost edits, unsafe rich content, and mobile usability.
 - **Definition of Done:** fields are permission-aware, accessible, responsive, resilient to failures, and covered by component/E2E tests.
 
-### 10. Collaboration — Minimal Slice Implemented / Remaining Core Future Phase
+### 10. Collaboration — Minimal Slice Implemented / Future Enhancements
 
-Implemented: plain-text task/subtask comment APIs, root task discussion UI, idempotent creation, author-only versioned edits/deletion, and transactional project/task/comment history. Mentions, rich text, attachments, dedicated subtask discussion UI and broader membership/invitation history (including automatic assignment-cleanup history) remain deferred. The history here does not replace Phase 20's audit platform.
+Implemented: plain-text task/subtask comment APIs, root task discussion UI, idempotent creation, author-only versioned edits/deletion, and transactional project/task/comment history. Mentions, rich text, attachments, dedicated subtask discussion UI and automatic assignment-cleanup history remain deferred. Membership/invitation actions are covered by the separate Phase 20 audit ledger.
 
 - **Objective:** make project work discussable and traceable.
 - **Major deliverables:** comments, mentions, safe user references, activity feed, collaboration history, and sanitized rich text only if introduced.
@@ -135,7 +145,7 @@ Implemented: plain-text task/subtask comment APIs, root task discussion UI, idem
 - **Main risks:** XSS, mention abuse, event duplication, and conflating Activity with AuditLog.
 - **Definition of Done:** content is safely rendered, mentions resolve only inside the tenant, and activity is transactionally consistent with supported actions.
 
-### 11. Notifications — Minimal Slice Implemented / Remaining Core Future Phase
+### 11. Notifications — Minimal Slice Implemented / Future Enhancements
 
 Implemented: own-user in-app inbox, unread count, read/read-all, current-member assignment and relevant-comment recipients, no self-notifications, deduplicated fan-out and stale-link authorization. Mention/deadline notifications, preferences, digests and email remain deferred; the complete phase definition below is broader than this slice.
 
@@ -145,7 +155,7 @@ Implemented: own-user in-app inbox, unread count, read/read-all, current-member 
 - **Main risks:** noise, duplicates, unauthorized resource references, and failed fan-out.
 - **Definition of Done:** event mappings are explicit, tenant-safe, idempotent, preference-aware, and tested.
 
-### 12. Real-Time — Minimal SSE Slice Implemented / Remaining Core/Advanced Future Phase
+### 12. Real-Time — Minimal SSE Slice Implemented / Future Enhancements
 
 Implemented: native SSE with cookie-session authentication, server-filtered workspace hints, batched authorization, removal/expiry handling, reconnect/refetch, manual fallback and focus/draft preservation. SSE is sufficient for this server-to-client traffic; Socket.IO/WebSockets remain an option only if future bidirectional needs justify them. Shared pub/sub for replicas, durable outbox/replay, retention/cursor hardening, load testing, presence, chat and live collaborative editing are explicitly deferred. AI health/reports, advanced search/analytics and broader account-security audit remain later work.
 
@@ -155,9 +165,9 @@ Implemented: native SSE with cookie-session authentication, server-filtered work
 - **Main risks:** socket authorization bypass, missed/duplicate events, ordering problems, and premature complexity.
 - **Definition of Done:** REST remains authoritative; socket joins revalidate membership; reconnect and duplicate scenarios pass integration tests.
 
-### 13. Dashboard — Minimal Slice Implemented / Remaining Core Future Phase
+### 13. Dashboard — Minimal Slice Implemented / Future Enhancements
 
-Current slice: persisted project active/archive totals, separate root/subtask status and completion counts, open tasks assigned to the current user, bounded recent tasks and workspace activity, all tenant-scoped with SSE refresh and stale-response protection. Overdue work waits for due dates; richer project/team workload summaries and attention areas remain deferred. No invented trends, AI health or productivity scores.
+Current slice: persisted project active/archive totals, separate root/subtask status and completion counts, open tasks assigned to the current user, bounded recent tasks and workspace activity, all tenant-scoped with SSE refresh and stale-response protection. Overdue work waits for due dates; advanced attention/health analysis remains deferred. Project and team workload reports are implemented in Phase 18. No invented trends, AI health or productivity scores.
 
 - **Objective:** summarize meaningful work and attention areas.
 - **Major deliverables:** active projects, open/overdue tasks, completion/progress, personal/team workload, and activity summary with clear definitions.
@@ -211,7 +221,7 @@ Implemented: workspace/project status counts, root/subtask completion, current-m
 - **Main risks:** vanity metrics, gaming, expensive queries, and unfair productivity claims.
 - **Definition of Done:** every metric has a definition, caveats, fixture tests, tenant scope, indexes, and performance target.
 
-### 19. Search & Filters — Minimal Text Search Implemented / Remaining Core/Advanced Future Phase
+### 19. Search & Filters — Minimal Text Search Implemented / Future Enhancements
 
 Current slice: workspace-scoped project/task/subtask title and description matching in PostgreSQL, literal case-insensitive normalization, deterministic ranking, bounded pagination, archive inclusion and keyboard command-palette navigation. Comments are evaluated and deferred until focused discussion navigation and deletion semantics warrant them. Appropriate-user search, combined assignee/priority/status/deadline filters, saved views, full-text/trigram evaluation and realistic scale budgets remain preserved. AI-assisted search, embeddings, semantic/vector search, RAG and external search engines are explicitly deferred.
 
@@ -231,7 +241,7 @@ Implemented: tenant-scoped immutable metadata ledger for governance/invitations,
 - **Main risks:** sensitive metadata, missing critical events, mutable records, and excessive volume.
 - **Definition of Done:** event coverage and retention are documented, access is policy-tested, metadata redacted, and application paths cannot silently alter history.
 
-### 21. Settings — Core Future Phase
+### 21. Settings — Governance Implemented / Personal Preferences Deferred
 
 - **Objective:** consolidate safe personal and workspace administration.
 - **Major deliverables:** profile, workspace, membership, notification, security, session, and AI preference settings with confirmations and feedback.
@@ -265,7 +275,7 @@ Implemented: tenant-scoped immutable metadata ledger for governance/invitations,
 
 ### 25. Infrastructure — Production Hardening
 
-Authorized operations slice: non-root API/static-web containers, PostgreSQL Compose with private networking and restricted application role, explicit migration gate, exact proxy trust, bounded graceful shutdown, safe structured logs and `/health`/`/ready`. Redis and workers remain deferred. Container vulnerability scanning and measured resource/capacity budgets remain follow-ups; adding packaging does not claim the entire hardening roadmap is complete.
+Implemented operations slice: non-root API/static-web containers, PostgreSQL Compose with private networking and restricted application role, explicit migration gate, exact proxy trust, bounded graceful shutdown, safe structured logs and `/health`/`/ready`. Redis and workers remain deferred. Container vulnerability scanning and measured resource/capacity budgets remain follow-ups; adding packaging does not claim the entire hardening roadmap is complete.
 
 - **Objective:** package and operate the actual application safely.
 - **Major deliverables:** Docker images, Compose for required services, frontend/API, worker and Redis only when needed, Nginx or managed edge, production env config, non-root containers, health/readiness, persistent database strategy.
@@ -283,7 +293,7 @@ Authorized operations slice: non-root API/static-web containers, PostgreSQL Comp
 
 ### 27. Production Deployment — Production Hardening
 
-Authorized operations slice: provider-neutral TLS-edge/runbook configuration, explicit upgrade/rollback steps, compressed database backup and empty-target transactional restore helpers, isolated production smoke verification and CI image builds. Public domain/TLS provisioning, actual SMTP provider acceptance, off-host backup scheduling, alerting/monitoring, RPO/RTO targets, operational ownership and production launch approval remain explicit follow-ups. Kubernetes, cloud IaC, external log vendors, full metrics/tracing stacks and multi-region infrastructure are not introduced.
+Implemented operations slice: provider-neutral TLS-edge/runbook configuration, explicit upgrade/rollback steps, compressed database backup and empty-target transactional restore helpers, isolated production smoke verification and CI image builds. Public domain/TLS provisioning, actual SMTP provider acceptance, off-host backup scheduling, alerting/monitoring, RPO/RTO targets, operational ownership and production launch approval remain explicit follow-ups. Kubernetes, cloud IaC, external log vendors, full metrics/tracing stacks and multi-region infrastructure are not introduced.
 
 - **Objective:** launch with recoverability and operational visibility.
 - **Major deliverables:** domain, TLS, production PostgreSQL/Redis when needed, backups, restore procedure, monitoring, alerts, logs, error tracking, metrics/traces, smoke tests, runbooks, health/readiness, secrets, and rollback.

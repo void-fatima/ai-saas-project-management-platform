@@ -16,10 +16,10 @@ Production routing uses a host TLS edge and a private Nginx web/API proxy. Multi
 
 ## Current Implementation
 
-- `apps/web`: React/Vite application shell and API health indicator.
+- `apps/web`: React/Vite application with authenticated workspaces, projects/Kanban, collaboration, dashboards/search, AI previews and reports/audit.
 - `apps/api`: NestJS modular API, validated environment, constrained CORS, rate limiting, and `GET /health`.
 - PostgreSQL development service with persistent storage and a healthcheck.
-- Prisma ORM with the PostgreSQL driver adapter, Nest lifecycle management, and committed migrations for the baseline, users, and sessions.
+- Prisma ORM with the PostgreSQL driver adapter, Nest lifecycle management, and ten committed migrations covering identity, tenancy, work, collaboration, AI receipts and audit.
 - Authentication module with Argon2id credentials and opaque secure-cookie sessions.
 - pnpm workspaces, Turborepo, strict TypeScript, ESLint, Prettier, Vitest, and CI.
 
@@ -55,4 +55,4 @@ The [reports, analytics and audit contract](reports-analytics-audit.md) adds sha
 
 ## Deferred Decisions
 
-Tailwind, the component system, Redis, BullMQ, Socket.IO, object storage, observability vendors, and deployment targets will be selected when their implementing phase begins. Prisma ORM is the selected PostgreSQL persistence layer; domain models remain deferred to their implementing phases. Deferring the remaining selections avoids unused dependencies without removing them from the roadmap.
+The current UI uses shared React components and CSS; replacing it with Tailwind or another component system requires a concrete need. Redis, BullMQ, Socket.IO, object storage, observability vendors and cloud targets remain unselected future/provider decisions. Prisma and the current domain models are implemented. The roadmap preserves these extensions without adding unused dependencies.
