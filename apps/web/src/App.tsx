@@ -132,6 +132,7 @@ export function App() {
   if (invitation !== null)
     return (
       <InvitationView
+        key={`${session.state.user.id}:${invitation}`}
         token={invitation}
         email={session.state.user.email}
         onBack={() => setInvitation(null)}
@@ -220,6 +221,7 @@ function Observatory({
   const coreStatus: CoreStatus =
     apiStatus === 'checking' ? 'processing' : apiStatus === 'available' ? 'online' : 'warning';
   const coreCopy = coreStatusCopy[coreStatus];
+  const CoreVisual = import.meta.env.DEV ? 'button' : 'div';
 
   function handleCoreClick(): void {
     if (import.meta.env.PROD) return;
@@ -358,11 +360,11 @@ function Observatory({
                 <p>{coreCopy.description}</p>
               </div>
 
-              <button
-                aria-label="Interactive workspace overview"
+              <CoreVisual
+                aria-label={import.meta.env.DEV ? 'Interactive workspace overview' : undefined}
                 className={`core-visual core-visual--${coreStatus}`}
-                onClick={handleCoreClick}
-                type="button"
+                onClick={import.meta.env.DEV ? handleCoreClick : undefined}
+                type={import.meta.env.DEV ? 'button' : undefined}
               >
                 <span className="core-visual__stage">
                   <img
@@ -383,8 +385,10 @@ function Observatory({
                     src={aiCoreOrb}
                   />
                 </span>
-                <span className="core-visual__hint">System details</span>
-              </button>
+                {import.meta.env.DEV ? (
+                  <span className="core-visual__hint">System details</span>
+                ) : null}
+              </CoreVisual>
             </section>
 
             <WorkspaceDashboard workspaceId={workspaceId} onSelect={selectWorkspace} />

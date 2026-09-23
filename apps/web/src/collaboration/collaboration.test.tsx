@@ -165,6 +165,33 @@ it('shows unread state, marks read, navigates safely, and restores dialog focus'
   fireEvent.click(screen.getByRole('button', { name: 'Close notifications' }));
   expect(trigger).toHaveFocus();
 });
+
+it('requires confirmation before deleting a comment and allows cancellation', async () => {
+  let deleted = false;
+  const fetchMock = vi.fn<typeof fetch>().mockImplementation((_, init) => {
+    if (init?.method === 'DELETE') {
+      deleted = true;
+      return Promise.resolve(new Response(null, { status: 204 }));
+    }
+    return json({ items: deleted ? [] : [comment], nextOffset: null, canComment: true });
+  });
+  vi.stubGlobal('fetch', fetchMock);
+  render(<TaskComments base="/workspace/projects/project/tasks/task" userId="self" />);
+  const trigger = await screen.findByRole('button', { name: 'Delete comment' });
+  trigger.focus();
+  fireEvent.click(trigger);
+  expect(deleted).toBe(false);
+  fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+  expect(deleted).toBe(false);
+  expect(trigger).toHaveFocus();
+  fireEvent.click(trigger);
+  fireEvent.click(screen.getByRole('button', { name: 'Confirm delete' }));
+  await screen.findByText('No comments yet.');
+  expect(fetchMock.mock.calls.filter(([, init]) => init?.method === 'DELETE')).toHaveLength(1);
+  expect(fetchMock.mock.calls.find(([, init]) => init?.method === 'DELETE')?.[1]?.body).toBe(
+    JSON.stringify({ version: 1 }),
+  );
+});
 it('repairs on reconnect, exposes degraded fallback, and closes invalid sessions and unmounted streams', async () => {
   const fetchMock = vi.fn(() => json({ items: [], nextOffset: null, unreadCount: 0 }));
   vi.stubGlobal('fetch', fetchMock);

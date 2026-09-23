@@ -5,7 +5,16 @@ export function useProjectData<T>(read: (signal: AbortSignal) => Promise<T>) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const active = useRef<AbortController | null>(null);
+  const mounted = useRef(true);
+  const isMounted = useCallback(() => mounted.current, []);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
   const reload = useCallback(async () => {
+    if (!mounted.current) return;
     active.current?.abort();
     const controller = new AbortController();
     active.current = controller;
@@ -32,5 +41,5 @@ export function useProjectData<T>(read: (signal: AbortSignal) => Promise<T>) {
       active.current = null;
     };
   }, [reload]);
-  return { data, error, loading, reload };
+  return { data, error, loading, reload, isMounted };
 }

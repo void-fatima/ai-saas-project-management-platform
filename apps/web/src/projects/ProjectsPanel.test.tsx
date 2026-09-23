@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { ProjectsPanel } from './ProjectsPanel';
 import { TaskEditor } from './TaskEditor';
 import { TaskDetails } from './TaskDetails';
@@ -165,4 +165,94 @@ it('loads a linked subtask through the authorized nested endpoint even beyond th
       ([url]) => typeof url === 'string' && url.endsWith('/tasks/task-a/subtasks/child-51'),
     ),
   ).toBe(true);
+});
+
+it('keeps the parent task usable after deleting its deep-linked subtask', async () => {
+  window.history.replaceState(null, '', '/?task=task-a&subtask=child-51');
+  let deleted = false;
+  vi.stubGlobal(
+    'fetch',
+    vi.fn<typeof fetch>().mockImplementation((input, init) => {
+      const url = new URL(
+        typeof input === 'string' ? input : input instanceof URL ? input.href : input.url,
+      ).pathname;
+      if (url.endsWith('/subtasks/child-51')) {
+        if (init?.method === 'DELETE') deleted = true;
+        return Promise.resolve(
+          new Response(JSON.stringify({ ...task, id: 'child-51', title: 'Linked child' }), {
+            status: deleted && init?.method !== 'DELETE' ? 404 : 200,
+          }),
+        );
+      }
+      const data = url.endsWith('/projects/project-a')
+        ? {
+            project,
+            permissions: { administer: true, edit: true, deleteTasks: true, assignOthers: true },
+          }
+        : url.endsWith('/tasks/task-a')
+          ? task
+          : url.endsWith('/comments')
+            ? { items: [], nextOffset: null, canComment: false }
+            : { items: [], nextOffset: null };
+      return Promise.resolve(new Response(JSON.stringify(data)));
+    }),
+  );
+  render(
+    <TaskDetails
+      base="/workspace-a/projects/project-a"
+      taskId="task-a"
+      userId="self"
+      onClose={vi.fn()}
+      onChanged={vi.fn()}
+    />,
+  );
+  fireEvent.click(await screen.findByRole('button', { name: 'Delete subtask' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Confirm delete' }));
+  await screen.findByText('The linked subtask is no longer available.');
+  expect(screen.getByDisplayValue('Write spec')).toBeVisible();
+  expect(screen.getByRole('button', { name: 'Add subtask' })).toBeEnabled();
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+});
+
+it('does not navigate back to the old workspace when a pending project deletion finishes', async () => {
+  window.history.replaceState(null, '', '/?workspace=workspace-a&project=project-a');
+  const fetchMock = setup('Owner');
+  const original = fetchMock.getMockImplementation();
+  let finish: (response: Response) => void = () => {
+    throw new Error('Delete not started');
+  };
+  fetchMock.mockImplementation((input, init) => {
+    if (init?.method === 'DELETE')
+      return new Promise<Response>((resolve) => {
+        finish = resolve;
+      });
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+    if (url.endsWith('/workspaces'))
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            workspaces: ['a', 'b'].map((id) => ({
+              workspace: { id: `workspace-${id}`, name: `Team ${id}` },
+              role: 'Owner',
+            })),
+          }),
+        ),
+      );
+    if (!original) throw new Error('Missing fetch implementation');
+    return original(input, init);
+  });
+  render(<ProjectsPanel userId="self" />);
+  fireEvent.click(await screen.findByRole('button', { name: 'Project settings' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Delete project' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Confirm delete' }));
+  fireEvent.change(screen.getByLabelText('Project workspace'), {
+    target: { value: 'workspace-b' },
+  });
+  await screen.findByRole('button', { name: 'Create project' });
+  await act(async () => {
+    finish(new Response('{}'));
+    await Promise.resolve();
+  });
+  expect(screen.getByLabelText('Project workspace')).toHaveValue('workspace-b');
+  expect(window.location.search).toBe('?workspace=workspace-b');
 });

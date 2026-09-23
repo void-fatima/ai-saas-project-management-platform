@@ -277,7 +277,7 @@ export function WorkspacePanel({ userId }: { userId: string }) {
               variant="ghost"
               onClick={() =>
                 setConfirm({
-                  title: `Delete ${detail.workspace.name} and all its memberships and invitations?`,
+                  title: `Permanently delete ${detail.workspace.name}, its projects, tasks, comments, memberships and invitations?`,
                   path: `/${detail.workspace.id}`,
                   method: 'DELETE',
                 })

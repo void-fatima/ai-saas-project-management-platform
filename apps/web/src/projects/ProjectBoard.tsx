@@ -82,14 +82,16 @@ export function ProjectBoard({
     setError('');
     try {
       await projectRequest(path, method, body);
+      if (!state.isMounted()) return false;
       await state.reload();
-      return true;
+      return state.isMounted();
     } catch (failure: unknown) {
+      if (!state.isMounted()) return false;
       setError(failure instanceof Error ? failure.message : 'Unable to save.');
       await state.reload();
       return false;
     } finally {
-      setPending(false);
+      if (state.isMounted()) setPending(false);
     }
   }
   function move(task: Task, status: Status, beforeId: string | null) {

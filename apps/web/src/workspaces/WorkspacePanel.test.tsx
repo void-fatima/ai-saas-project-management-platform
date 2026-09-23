@@ -65,7 +65,9 @@ describe('Workspace interface permissions', () => {
     setup('Owner');
     render(<WorkspacePanel userId="self" />);
     fireEvent.click(await screen.findByRole('button', { name: 'Delete workspace' }));
-    expect(screen.getByRole('dialog')).toHaveTextContent('Delete Design');
+    expect(screen.getByRole('dialog')).toHaveTextContent(
+      'Permanently delete Design, its projects, tasks, comments, memberships and invitations?',
+    );
     expect(screen.getByRole('button', { name: 'Cancel' })).toHaveFocus();
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();

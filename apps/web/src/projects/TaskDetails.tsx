@@ -9,6 +9,7 @@ import {
   parsePage,
   parseProjectDetail,
   parseTask,
+  ProjectError,
   projectRequest,
   statusLabels,
   type Task,
@@ -63,7 +64,10 @@ export function TaskDetails({
               'GET',
               undefined,
               signal,
-            )
+            ).catch((failure: unknown) => {
+              if (failure instanceof ProjectError && failure.status === 404) return null;
+              throw failure;
+            })
           : Promise.resolve(null),
       ]);
       return {
@@ -90,15 +94,17 @@ export function TaskDetails({
     setError('');
     try {
       await projectRequest(path, method, body);
+      if (!state.isMounted()) return false;
       onChanged();
       await state.reload();
-      return true;
+      return state.isMounted();
     } catch (failure: unknown) {
+      if (!state.isMounted()) return false;
       setError(failure instanceof Error ? failure.message : 'Unable to save.');
       await state.reload();
       return false;
     } finally {
-      setPending(false);
+      if (state.isMounted()) setPending(false);
     }
   }
   async function loadMembers() {
@@ -187,6 +193,9 @@ export function TaskDetails({
             </Button>
           ) : null}
           <h3>Subtasks</h3>
+          {selectedChildId && !data.selectedChild ? (
+            <p role="status">The linked subtask is no longer available.</p>
+          ) : null}
           {edit ? (
             <AiAssistance
               base={`${base}/tasks/${taskId}`}

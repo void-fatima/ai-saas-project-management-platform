@@ -38,7 +38,58 @@ async function shell() {
 describe('Authenticated application', () => {
   afterEach(() => {
     vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
     vi.useRealTimers();
+  });
+
+  it('renders the production visual without a nonfunctional developer action', async () => {
+    vi.stubEnv('DEV', false);
+    vi.stubEnv('PROD', true);
+    setupAuthenticated();
+    render(<App />);
+    await shell();
+    expect(
+      screen.queryByRole('button', { name: 'Interactive workspace overview' }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText('System details')).not.toBeInTheDocument();
+    expect(screen.getByAltText('Decorative purple orb with orbital paths')).toBeVisible();
+  });
+
+  it('keeps a new invitation open when an older acceptance completes late', async () => {
+    window.history.replaceState(null, '', '/#invite=first-invitation');
+    let finish: (response: Response) => void = () => {
+      throw new Error('Acceptance not started');
+    };
+    let signal: AbortSignal | null | undefined;
+    const fetchMock = setupAuthenticated();
+    fetchMock.mockImplementation((url, init) => {
+      if (requestUrl(url).endsWith('/invitations/accept')) {
+        signal = init?.signal;
+        return new Promise<Response>((resolve) => {
+          finish = resolve;
+        });
+      }
+      return Promise.resolve(
+        requestUrl(url).endsWith('/auth/me')
+          ? json({ user })
+          : json({ status: 'ok', workspaces: [] }),
+      );
+    });
+    render(<App />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Accept invitation' }));
+    act(() => {
+      window.history.replaceState(null, '', '/#invite=second-invitation');
+      window.dispatchEvent(new HashChangeEvent('hashchange'));
+    });
+    expect(signal?.aborted).toBe(true);
+    await act(async () => {
+      finish(json({}));
+      await Promise.resolve();
+    });
+    expect(screen.getByRole('heading', { name: 'Join workspace' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Accept invitation' })).toBeEnabled();
+    expect(window.location.search).toBe('');
+    window.history.replaceState(null, '', '/');
   });
 
   it('does not flash protected content before cookie-based bootstrap completes', async () => {
@@ -69,6 +120,8 @@ describe('Authenticated application', () => {
       cache: 'no-store',
     });
     expect(screen.getByLabelText('Signed-in account')).toHaveTextContent(user.name);
+    expect(screen.queryByRole('button', { name: /Planned/ })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Development environment')).not.toBeInTheDocument();
   });
 
   it.each(['Login', 'Register'])(

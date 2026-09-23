@@ -88,11 +88,13 @@ export function CreateTaskForm({
 }
 export function ConfirmDelete({
   label,
+  description = 'This permanently deletes it and all its tasks or subtasks.',
   pending,
   onConfirm,
   onClose,
 }: {
   label: string;
+  description?: string;
   pending: boolean;
   onConfirm: () => void;
   onClose: () => void;
@@ -109,7 +111,7 @@ export function ConfirmDelete({
       }}
     >
       <h2>Delete {label}?</h2>
-      <p>This permanently deletes it and all its tasks or subtasks.</p>
+      <p>{description}</p>
       <Button variant="secondary" disabled={pending} onClick={onClose}>
         Cancel
       </Button>

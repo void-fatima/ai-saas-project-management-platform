@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
 import { Button } from '../components/ui/Button';
+import { ConfirmDelete } from '../projects/ProjectForms';
 import { collaborationRequest, parseComments, type Comment } from './collaboration-api';
 import { useCollaborationData } from './use-collaboration-data';
 import { refreshCollaboration } from './use-realtime';
@@ -20,6 +21,7 @@ export function TaskComments({ base, userId }: { base: string; userId: string })
   const [pending, setPending] = useState(false);
   const [error, setError] = useState('');
   const [editing, setEditing] = useState<Comment | null>(null);
+  const [deleting, setDeleting] = useState<Comment | null>(null);
   const [editedBody, setEditedBody] = useState('');
   const request = useRef<{ body: string; id: string } | null>(null);
   async function save(method: string, suffix: string, input: unknown) {
@@ -33,9 +35,11 @@ export function TaskComments({ base, userId }: { base: string; userId: string })
         setOffset(0);
       }
       setEditing(null);
+      setDeleting(null);
       refreshCollaboration(workspaceId);
       await state.refresh();
     } catch (error: unknown) {
+      setDeleting(null);
       setError(error instanceof Error ? error.message : 'Unable to save comment.');
     } finally {
       setPending(false);
@@ -135,13 +139,7 @@ export function TaskComments({ base, userId }: { base: string; userId: string })
                   >
                     Edit comment
                   </Button>
-                  <Button
-                    variant="ghost"
-                    disabled={pending}
-                    onClick={() =>
-                      void save('DELETE', `/${comment.id}`, { version: comment.version })
-                    }
-                  >
+                  <Button variant="ghost" disabled={pending} onClick={() => setDeleting(comment)}>
                     Delete comment
                   </Button>
                 </div>
@@ -150,6 +148,15 @@ export function TaskComments({ base, userId }: { base: string; userId: string })
           </li>
         ))}
       </ol>
+      {deleting ? (
+        <ConfirmDelete
+          label="comment"
+          description="This permanently removes the comment text. Its activity history remains."
+          pending={pending}
+          onClose={() => setDeleting(null)}
+          onConfirm={() => void save('DELETE', `/${deleting.id}`, { version: deleting.version })}
+        />
+      ) : null}
       <div className="project-toolbar">
         {offset > 0 ? (
           <Button onClick={() => setOffset(Math.max(0, offset - 50))}>Newer comments</Button>

@@ -1,56 +1,4 @@
-import type { ReactNode } from 'react';
-
-import {
-  BrainIcon,
-  CaretDownIcon,
-  DatabaseIcon,
-  FileTextIcon,
-  FolderIcon,
-  GearSixIcon,
-  LightningIcon,
-  PlugsConnectedIcon,
-  RobotIcon,
-  ShieldCheckIcon,
-  SquaresFourIcon,
-} from './icons';
-
-interface NavigationItem {
-  icon: ReactNode;
-  label: string;
-  state: 'active' | 'planned';
-}
-
-interface NavigationGroup {
-  items: NavigationItem[];
-  label: string;
-}
-
-const navigationGroups: NavigationGroup[] = [
-  {
-    label: 'Core',
-    items: [
-      { icon: <SquaresFourIcon size={19} />, label: 'Overview', state: 'active' },
-      { icon: <BrainIcon size={19} />, label: 'Intelligence', state: 'planned' },
-      { icon: <RobotIcon size={19} />, label: 'Agents', state: 'planned' },
-      { icon: <DatabaseIcon size={19} />, label: 'Memory', state: 'planned' },
-    ],
-  },
-  {
-    label: 'Build',
-    items: [
-      { icon: <LightningIcon size={19} />, label: 'Automations', state: 'planned' },
-      { icon: <PlugsConnectedIcon size={19} />, label: 'Integrations', state: 'planned' },
-    ],
-  },
-  {
-    label: 'System',
-    items: [
-      { icon: <FileTextIcon size={19} />, label: 'Logs', state: 'planned' },
-      { icon: <ShieldCheckIcon size={19} />, label: 'Security', state: 'planned' },
-      { icon: <GearSixIcon size={19} />, label: 'Settings', state: 'planned' },
-    ],
-  },
-];
+import { BrainIcon, FileTextIcon, FolderIcon, SquaresFourIcon } from './icons';
 
 export function Sidebar({
   workspacesOpen,
@@ -113,53 +61,21 @@ export function Sidebar({
           <FileTextIcon size={19} />
           <span>Analytics and reports</span>
         </button>
-        {navigationGroups.map((group) => (
-          <section className="navigation__group" key={group.label}>
-            <h2 className="navigation__label">{group.label}</h2>
-            <ul className="navigation__list">
-              {group.items.map((item) => (
-                <li key={item.label}>
-                  <button
-                    aria-label={item.state === 'planned' ? `${item.label} — Planned` : item.label}
-                    title={item.state === 'planned' ? `${item.label} — Planned` : item.label}
-                    onClick={
-                      item.state === 'active'
-                        ? () => {
-                            onNavigate(false);
-                            document.getElementById('overview')?.focus();
-                          }
-                        : undefined
-                    }
-                    aria-current={
-                      item.state === 'active' && !workspacesOpen && !projectsOpen && !reportingOpen
-                        ? 'page'
-                        : undefined
-                    }
-                    className={`navigation__item navigation__item--${item.state}`}
-                    disabled={item.state === 'planned'}
-                    type="button"
-                  >
-                    {item.icon}
-                    <span>{item.label}</span>
-                    {item.state === 'planned' ? <small>Planned</small> : null}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ))}
+        <button
+          aria-label="Overview"
+          title="Overview"
+          onClick={() => {
+            onNavigate(false);
+            document.getElementById('overview')?.focus();
+          }}
+          aria-current={!workspacesOpen && !projectsOpen && !reportingOpen ? 'page' : undefined}
+          className={`navigation__item navigation__item--${!workspacesOpen && !projectsOpen && !reportingOpen ? 'active' : 'available'}`}
+          type="button"
+        >
+          <SquaresFourIcon size={19} />
+          <span>Overview</span>
+        </button>
       </nav>
-
-      <button className="environment" type="button" disabled aria-label="Development environment">
-        <span className="environment__avatar" aria-hidden="true">
-          D
-        </span>
-        <span>
-          <strong>Development</strong>
-          <small>Local environment</small>
-        </span>
-        <CaretDownIcon aria-hidden="true" size={15} />
-      </button>
     </aside>
   );
 }
