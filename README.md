@@ -1,319 +1,656 @@
-# AI-Powered Multi-Tenant SaaS Project Management Platform
+# Project Platform
 
-A full-stack project management SaaS with workspace tenant isolation, role-based authorization, persisted tasks, Kanban, collaboration, workspace dashboards, tenant-scoped text search and opt-in AI assistance with human-reviewed subtask creation.
+### AI-assisted, multi-tenant project management for real team workflows.
 
-## Status
+[![CI](https://github.com/void-fatima/ai-saas-project-management-platform/actions/workflows/quality.yml/badge.svg)](https://github.com/void-fatima/ai-saas-project-management-platform/actions)
+![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)
+![NestJS](https://img.shields.io/badge/NestJS-TypeScript-E0234E?logo=nestjs&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-4169E1?logo=postgresql&logoColor=white)
+![Prisma](https://img.shields.io/badge/Prisma-ORM-2D3748?logo=prisma&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Production%20Ready-2496ED?logo=docker&logoColor=white)
 
-**Foundation, authentication, Workspace/Tenancy/RBAC, Projects/Tasks/Kanban and the minimal Collaboration/Notifications/Realtime, Dashboard/Search, AI Assistant and Reports/Analytics/Audit slices are implemented.** Comments, durable activity and own-user notifications extend the existing tenant boundary. SSE sends authorized refresh hints; PostgreSQL remains authoritative. Production operations add Docker deployment, safe logging/lifecycle controls, migration gating and opt-in SMTP delivery. See the [deployment runbook](docs/deployment/production.md). See the [product roadmap](docs/roadmap/product-roadmap.md), [workspace contract](docs/architecture/workspace-tenancy.md), [resource contract](docs/architecture/projects-tasks.md), [collaboration contract](docs/architecture/collaboration-realtime.md), [collaboration verification](docs/verification/collaboration-notifications-realtime.md), [dashboard/search contract](docs/architecture/dashboard-search.md), and [dashboard/search verification](docs/verification/dashboard-search.md).
+Project Platform is a production-oriented SaaS application for planning and running collaborative project work across isolated workspaces.
 
-### Implemented
+It combines multi-tenant authorization, project and task management, persisted Kanban workflows, realtime collaboration, AI-assisted planning, analytics, reporting, audit history, and a containerized production deployment model in one full-stack system.
 
-- [Workspace/project analytics, deterministic JSON/CSV reports and immutable tenant audit](docs/architecture/reports-analytics-audit.md), including Owner/Admin audit access, bounded filters and transactionally consistent events; see [verification](docs/verification/reports-analytics-audit.md)
+![Workspace overview](docs/screenshots/workspace-overview.png)
 
-- [AI project summaries, task action plans and editable subtask previews](docs/architecture/ai-assistant.md), with explicit atomic apply, server-enforced permissions and cost controls; see [verification](docs/verification/ai-assistant.md)
+---
 
-- pnpm/Turborepo monorepo
-- React, Vite, and strict TypeScript web shell
-- NestJS and strict TypeScript API
-- validated backend environment configuration
-- constrained development CORS configuration
-- safe `GET /health` response
-- PostgreSQL user and session schema with deployable Prisma migration
-- account registration and login with boundary validation and Argon2id password hashing
-- login/register views with client validation, cookie-enabled API submission, and accessible loading/error/success feedback
-- opaque, hashed, expiring, rotating, revocable cookie sessions
-- authenticated profile, current-session logout, and all-session logout endpoints
-- authentication rate limits and API-level lifecycle tests
-- PostgreSQL Docker Compose service with persistent volume and healthcheck
-- Prisma ORM persistence layer with the PostgreSQL driver adapter
-- startup database connectivity verification and a baseline migration
-- root scripts for validating and operating the local PostgreSQL service
-- ESLint, Prettier, type checking, Vitest smoke tests, and production builds
-- GitHub Actions quality workflow
-- workspace creation/switching, memberships, invitations and server-enforced five-role governance
-- workspace-scoped projects, tasks, one-level subtasks, current-member assignment and persisted Kanban
-- plain-text comments with author-only versioned editing/deletion and idempotent creation
-- transactional activity and assignment/comment notifications, unread count and read lifecycle
-- session-authorized SSE hints, current-membership filtering, reconnect/refetch and manual fallback
-- persisted workspace dashboard with active/archive projects, root/subtask counts, assignments and recent activity
-- bounded PostgreSQL project/task/subtask text search in the keyboard command palette, with safe workspace switching
+## Why this project exists
 
-### Scope beyond the core
+Project management applications look deceptively simple until authentication, tenancy, authorization, collaboration, ordering, concurrent updates, reporting, AI integration, and production operations all have to work together.
 
-Operator SMTP/TLS provisioning, richer project/task fields, drag-and-drop, mentions/rich text, subtask discussion UI, notification preferences/digests, chat, presence, coediting, distributed realtime, advanced analytics, advanced search/filters, comment search, broader account-security audit, full AI project generation and reporting, cloud infrastructure, and further hardening remain deferred. Ownership transfer, explicit invitation decline and custom roles remain documented follow-ups.
+Project Platform was built around those harder boundaries.
 
-## Technology
-
-- Node.js 22.12+ (22.x) or 24+
-- pnpm 10 and Turborepo
-- React 19, Vite, TypeScript
-- NestJS, Zod boundary validation, Prisma ORM, Argon2id
-- PostgreSQL 17 for local development
-- Vitest, Testing Library, Supertest
-- ESLint and Prettier
-
-The architecture remains a TypeScript modular monolith with PostgreSQL as the source of truth and Workspace as the tenant boundary. AI uses a provider abstraction; Redis, background workers and WebSockets remain deferred.
-
-## Repository Structure
+The core hierarchy is:
 
 ```text
-apps/
-  api/                 NestJS modular API and Prisma migrations
-  web/                 React/Vite web foundation
-docs/
-  architecture/        architecture direction and decisions
-  roadmap/             complete phased product roadmap
-.github/workflows/     CI quality checks
-docker-compose.yml     local PostgreSQL service
+User
+└── Workspace
+    └── Project
+        └── Task
+            └── Subtask
 ```
 
-## Prerequisites
+A workspace is the tenant boundary. Data access, mutations, search, reporting, AI context, notifications, and audit history are all scoped server-side rather than relying on client-provided IDs alone.
 
-- Node.js 22.12+ (22.x) or 24+; CI and Docker use Node 22
-- pnpm 10 (`corepack enable` can make the pinned version available)
-- PostgreSQL 17 (native local installation or Docker Compose)
+---
 
-## Setup
+## Highlights
+
+- Multi-tenant workspace isolation with server-enforced RBAC
+- Secure authentication and hardened session lifecycle
+- Workspace invitations and membership management
+- Projects, tasks, one-level subtasks, and assignments
+- Persisted Kanban ordering with stale-update protection
+- Comments, activity history, notifications, and realtime SSE updates
+- Workspace dashboard and ranked workspace-scoped search
+- Structured AI project/task assistance with explicit preview/apply workflows
+- Workspace and project analytics
+- Reports and CSV export
+- Immutable tenant-scoped audit history
+- Production health/readiness, structured logging, graceful shutdown, and rate limits
+- Multi-stage production Docker images and production Compose deployment
+- PostgreSQL migration, backup, restore, and recovery workflows
+- Extensive unit, integration, PostgreSQL, and browser E2E coverage
+
+---
+
+## Product walkthrough
+
+### Projects
+
+Projects are workspace-scoped and support lifecycle operations including creation, updates, archiving, and restoration.
+
+![Projects](docs/screenshots/projects.png)
+
+### Tasks, subtasks, and Kanban
+
+Tasks support status transitions, assignment to current workspace members, one-level subtasks, persisted ordering, and version-aware updates.
+
+The Kanban workflow uses:
+
+```text
+TODO → IN_PROGRESS → DONE
+```
+
+Ordering is persisted in PostgreSQL rather than being a frontend-only representation.
+
+![Kanban board](docs/screenshots/kanban.png)
+
+### AI-assisted planning
+
+AI is integrated into existing project-management workflows rather than exposed as a disconnected chatbot.
+
+Supported flows include:
+
+- project summaries
+- task action plans
+- structured task breakdown
+- editable subtask previews
+- explicit confirmation before generated subtasks are persisted
+
+Provider output is schema-validated server-side, tenant context is bounded, secrets remain server-only, and AI-generated resource changes still pass through normal authorization and domain rules.
+
+![AI task breakdown](docs/screenshots/ai-assistant.png)
+
+The screenshot shows the existing deterministic test provider in an isolated local test environment; it is not live-model output.
+
+### Analytics, reports, and audit history
+
+Workspace and project reporting is generated from persisted application data.
+
+The platform includes:
+
+- task and subtask status distributions
+- completion metrics
+- member workload
+- recent activity trends
+- workspace and project reports
+- safe CSV export
+- Owner/Admin-only audit history
+
+![Analytics and reports](docs/screenshots/analytics-reports.png)
+
+---
+
+## Role-based access control
+
+Authorization is enforced on the server.
+
+| Capability               | Owner |         Admin         | Manager | Member | Viewer |
+| ------------------------ | :---: | :-------------------: | :-----: | :----: | :----: |
+| View workspace resources |   ✓   |           ✓           |    ✓    |   ✓    |   ✓    |
+| Create/manage projects   |   ✓   |           ✓           |    ✓    |   —    |   —    |
+| Create/edit/move tasks   |   ✓   |           ✓           |    ✓    |   ✓    |   —    |
+| Self-assign tasks        |   ✓   |           ✓           |    ✓    |   ✓    |   —    |
+| Manage workspace members |   ✓   | Limited by role rules |    —    |   —    |   —    |
+| Invite members           |   ✓   | Limited by role rules |    —    |   —    |   —    |
+| View analytics/reports   |   ✓   |           ✓           |    ✓    |   ✓    |   ✓    |
+| View audit history       |   ✓   |           ✓           |    —    |   —    |   —    |
+| Delete workspace         |   ✓   |           —           |    —    |   —    |   —    |
+
+Owners may manage all non-owner roles; Admins may manage and invite only Managers, Members, and Viewers. The single Owner cannot leave, be removed, or be demoted. Ownership transfer is deferred. See the [workspace RBAC contract](docs/architecture/workspace-tenancy.md) and [project/task permissions](docs/architecture/projects-tasks.md).
+
+---
+
+## Architecture
+
+```mermaid
+flowchart LR
+    B[React Web App] -->|HTTPS / Cookie Session| A[NestJS API]
+    A --> P[(PostgreSQL)]
+    A --> AI[AI Provider Adapter]
+    A --> SSE[SSE Notifications]
+    A --> M[SMTP / Development Mail]
+
+    subgraph Tenant Boundary
+      W[Workspace]
+      PR[Projects]
+      T[Tasks]
+      ST[Subtasks]
+      C[Comments]
+      R[Reports]
+      AU[Audit]
+    end
+
+    W --> PR
+    PR --> T
+    T --> ST
+    T --> C
+    W --> R
+    W --> AU
+```
+
+### Frontend
+
+- React 19
+- TypeScript
+- Vite
+- responsive authenticated application shell
+- stale-request cancellation and workspace-switch protection
+- accessible forms, loading states, errors, previews, and confirmations
+
+### API
+
+- NestJS
+- TypeScript
+- cookie-based authentication
+- server-enforced RBAC
+- tenant-scoped resource access
+- rate limiting
+- structured operational logging
+- request/correlation IDs
+- health and readiness endpoints
+- graceful shutdown
+
+### Persistence
+
+- PostgreSQL
+- Prisma ORM
+- additive migrations
+- transactional domain operations
+- persisted Kanban ordering
+- durable notifications, audit history, and AI request controls
+
+---
+
+## Authentication and sessions
+
+Authentication includes more than basic login/logout.
+
+The application supports:
+
+- registration
+- login
+- logout
+- logout from all devices
+- session rotation
+- absolute session lifetime
+- session limits
+- email verification workflow
+- password recovery workflow
+- secure cookie configuration
+- production-safe error handling
+
+Session state is stored and validated server-side.
+
+---
+
+## Multi-tenancy
+
+Project-management resources belong to a workspace boundary. Accounts and sessions are user-scoped; notifications also require the authenticated recipient and current workspace membership.
+
+Server-side checks ensure that a user cannot cross workspace boundaries by supplying another tenant's:
+
+- workspace ID
+- project ID
+- task ID
+- subtask ID
+- comment ID
+- notification ID
+- report query
+- search query
+- AI context
+- audit filter
+
+Tenant isolation is covered by real PostgreSQL integration tests in addition to unit-level authorization tests.
+
+---
+
+## Realtime collaboration
+
+Collaboration features include:
+
+- task comments
+- activity history
+- assignment notifications
+- persisted notification state
+- Server-Sent Events for realtime refresh hints
+
+Persisted database state remains the source of truth. Realtime delivery does not replace normal authorization or persistence checks.
+
+---
+
+## Search
+
+Workspace search covers persisted resources with deterministic ranking and pagination.
+
+Ranking favors:
+
+1. exact title matches
+2. title prefixes
+3. title substring matches
+4. description matches
+
+Search remains workspace-scoped and stale requests are prevented from overwriting a newly selected workspace.
+
+---
+
+## AI architecture
+
+AI business logic does not depend directly on a provider SDK.
+
+The API uses a provider abstraction responsible for:
+
+- model configuration
+- structured response generation
+- normalized provider errors
+- provider/model metadata
+- usage metadata when available
+
+Production AI access is opt-in.
+
+```env
+AI_PROVIDER=disabled
+AI_MODEL=your-model-id
+AI_API_KEY=your-server-only-key
+```
+
+Automated tests use deterministic providers and never require live external AI calls.
+
+Additional controls include:
+
+- bounded context
+- output limits
+- deadlines
+- per-user/workspace request limits
+- schema validation
+- explicit apply operations
+- no frontend API keys
+- no raw AI prompt/response logging
+
+---
+
+## Audit history
+
+The audit system is distinct from the user-facing activity feed.
+
+Audit entries are:
+
+- workspace-scoped
+- server-generated
+- append-only through normal application flows
+- attributable to an actor where applicable
+- transactionally coupled to meaningful mutations where practical
+
+Audit metadata intentionally avoids passwords, cookies, session tokens, API keys, and arbitrary request bodies.
+
+Only workspace Owners and Admins can read the audit history.
+
+---
+
+## Production readiness
+
+This repository includes a production-oriented runtime rather than only a development server.
+
+Operational capabilities include:
+
+- validated production configuration
+- `/health` liveness endpoint
+- `/ready` dependency readiness endpoint
+- structured/redacted logs
+- request correlation IDs
+- secure HTTP headers
+- exact-origin CORS
+- request size limits
+- production-safe errors
+- graceful `SIGTERM` / `SIGINT` shutdown
+- database migration gating
+- restricted database runtime access
+- backup and restore tooling
+- deployment and rollback documentation
+
+---
+
+## Docker deployment
+
+Production packaging includes dedicated images for:
+
+- API
+- web
+- database migration execution
+
+The web application is built to static production assets rather than running the Vite development server in production.
+
+The production Compose stack includes:
+
+```text
+PostgreSQL
+    ↑
+Migration job
+    ↓
+API
+    ↓
+Web
+```
+
+The stack uses health checks, persistent database storage, restart policies, internal networking, and explicit environment injection.
+
+See:
+
+```text
+docs/deployment/production.md
+```
+
+for the full deployment and recovery runbook.
+
+---
+
+## Local development
+
+### Prerequisites
+
+- Node.js 22.12+ within 22.x, or 24+
+- pnpm 10.15.0 (pinned in `package.json`)
+- PostgreSQL 17
+- Docker Desktop for container workflows
+
+### 1. Clone
 
 ```bash
 git clone https://github.com/void-fatima/ai-saas-project-management-platform.git
 cd ai-saas-project-management-platform
-corepack enable
-pnpm install
 ```
 
-Copy `.env.example` to `.env`, then replace the example PostgreSQL password with a local value. The `POSTGRES_*` values and credentials embedded in `DATABASE_URL` must agree.
-
-Windows PowerShell:
-
-```powershell
-Copy-Item .env.example .env
-```
-
-Linux/macOS:
+### 2. Install dependencies
 
 ```bash
-cp .env.example .env
+pnpm install --frozen-lockfile
 ```
 
-Never commit `.env`.
+### 3. Configure environment
 
-## Run Locally
+Copy:
 
-Start PostgreSQL and wait until it is healthy:
-
-```bash
-pnpm db:up
-pnpm db:status
+```text
+.env.example
 ```
 
-Start both applications from the repository root:
+to:
+
+```text
+.env
+```
+
+and configure at least the local PostgreSQL credentials.
+
+Example:
+
+```env
+NODE_ENV=development
+API_PORT=3000
+WEB_ORIGIN=http://localhost:5173
+VITE_API_URL=http://localhost:3000
+
+POSTGRES_DB=project_platform
+POSTGRES_USER=project_platform
+POSTGRES_PASSWORD=your-local-password
+DATABASE_URL=postgresql://project_platform:your-local-password@localhost:5432/project_platform?schema=public
+
+MAIL_MODE=development-file
+AI_PROVIDER=disabled
+```
+
+Never commit real credentials.
+
+### 4. Apply migrations
+
+Start the local PostgreSQL service with `pnpm db:up` and check it with `pnpm db:status`, or use an existing local database. Then apply the committed migrations:
 
 ```bash
-pnpm --filter @platform/api prisma:migrate:deploy
+pnpm --filter @platform/api exec prisma migrate deploy
+```
+
+Development migration workflows may require a PostgreSQL role that is allowed to create Prisma's shadow database.
+
+### 5. Start development
+
+```bash
 pnpm dev
 ```
 
-The web app runs at `http://localhost:5173`, the API at `http://localhost:3000`, and the public health endpoint at `http://localhost:3000/health`.
+Then open:
 
-To run one application only:
+```text
+http://localhost:5173
+```
+
+API:
+
+```text
+http://localhost:3000
+```
+
+---
+
+## Environment configuration
+
+Important variables include:
+
+| Variable                 | Purpose                                 |
+| ------------------------ | --------------------------------------- |
+| `DATABASE_URL`           | PostgreSQL connection                   |
+| `WEB_ORIGIN`             | Allowed frontend origin                 |
+| `VITE_API_URL`           | Browser-facing API origin               |
+| `SESSION_TTL_HOURS`      | Rotating session lifetime               |
+| `SESSION_ROTATION_HOURS` | Session rotation interval               |
+| `SESSION_ABSOLUTE_HOURS` | Absolute session lifetime               |
+| `MAIL_MODE`              | Development or SMTP mail transport      |
+| `AI_PROVIDER`            | Enables/disables configured AI provider |
+| `AI_MODEL`               | Provider model                          |
+| `AI_API_KEY`             | Server-only provider credential         |
+| `AI_TIMEOUT_MS`          | AI request timeout                      |
+| `AI_MAX_OUTPUT_TOKENS`   | AI response limit                       |
+| `RATE_LIMIT_MAX`         | Request limit                           |
+| `RATE_LIMIT_WINDOW_MS`   | Rate-limit window                       |
+| `SHUTDOWN_TIMEOUT_MS`    | Graceful shutdown timeout               |
+
+See `.env.example` and `.env.production.example` for the complete supported configuration.
+
+---
+
+## Database migrations
+
+Prisma migrations are committed to the repository and validated against clean PostgreSQL databases.
+
+Production deployment uses:
 
 ```bash
-pnpm --filter @platform/api dev
-pnpm --filter @platform/web dev
+prisma migrate deploy
 ```
 
-The API validates runtime, origin, database, mail, AI and session settings and verifies PostgreSQL connectivity during startup. Apply all ten committed migrations before starting it; they include authentication and every implemented product schema.
+Development-only destructive reset commands are not part of the production startup path.
 
-`GET /health` reports process liveness. `GET /health/ready` performs a bounded PostgreSQL query and returns `{ "status": "ok" }` or a generic 503 without connection details. The readiness response deadline is 2.5 seconds, with shorter connection/transaction/statement limits. Both endpoints bypass request throttling and disable caching. The web indicator uses readiness, validates the JSON shape, aborts after five seconds, and cancels or ignores superseded requests; retry remains available.
+---
 
-## Database Workflow
+## Backup and restore
 
-Generate the Prisma Client after changing the schema:
+The repository includes documented PostgreSQL backup and restore operations.
 
-```bash
-pnpm --filter @platform/api prisma:generate
+The production verification path checks:
+
+- compressed backup creation
+- restoration into a disposable target
+- refusal to overwrite unsafe existing data
+- migration compatibility after restore
+
+See the production deployment runbook for exact commands.
+
+---
+
+## Verification
+
+The [final completion audit](docs/verification/final-completion.md) and [successful Quality run](https://github.com/void-fatima/ai-saas-project-management-platform/actions/runs/35895348875) at commit `174955b` verified:
+
+- **89 API tests**
+- **126 web tests**
+- **115 PostgreSQL integration tests**
+- **3 browser E2E journeys**
+
+It also verified:
+
+- formatting
+- linting
+- TypeScript checks
+- production API build
+- production web build
+- all database migrations
+- schema drift checks
+- API Docker image
+- web Docker image
+- migration image
+- production Compose configuration
+- live production Compose smoke testing
+- backup/restore
+- database-outage readiness
+- graceful SSE shutdown
+
+GitHub Actions is the final release verification environment.
+
+---
+
+## Repository structure
+
+```text
+.
+├── apps/
+│   ├── api/            # NestJS API
+│   └── web/            # React + Vite frontend
+├── deploy/             # Production deployment helpers
+├── docs/
+│   ├── deployment/     # Production runbook
+│   ├── screenshots/    # Product screenshots
+│   └── verification/   # Milestone/final verification records
+├── scripts/            # Operational and smoke-test scripts
+├── compose.production.yaml
+├── docker-compose.yml
+├── .env.example
+└── .env.production.example
 ```
 
-Apply committed migrations without resetting data:
+---
 
-```bash
-pnpm --filter @platform/api prisma:migrate:deploy
+## Engineering principles
+
+A few decisions intentionally shape the codebase:
+
+**Tenant boundaries belong on the server.**  
+The frontend is never considered an authorization boundary.
+
+**Persisted state is the source of truth.**  
+Realtime messages trigger refreshes; they do not replace database state.
+
+**AI suggestions are not trusted application data.**  
+They are validated, bounded, previewed, and explicitly applied.
+
+**Production behavior is tested.**  
+Containers, migrations, readiness, backup/restore, and graceful shutdown are part of CI verification.
+
+**Complexity has to earn its place.**  
+The project deliberately avoids adding infrastructure such as Redis, Kubernetes, vector databases, or cloud-specific IaC until the product actually requires them.
+
+---
+
+## Current status
+
+**PROJECT CORE COMPLETE**
+
+The current core product includes authentication, multi-tenancy, RBAC, project management, collaboration, realtime updates, dashboard/search, AI assistance, analytics, reports, audit history, and production operations.
+
+### Future enhancements
+
+Potential future work includes:
+
+- richer task metadata
+- advanced search and analytics
+- RAG / vector-backed AI context
+- full AI project generation
+- scheduled reports
+- full-dataset exports
+- distributed realtime fan-out
+
+The complete approved deferred scope is preserved in the [product roadmap](docs/roadmap/product-roadmap.md).
+
+### Deployment-specific work
+
+The following intentionally remains environment-specific:
+
+- public domain and TLS termination
+- live SMTP acceptance testing
+- live AI-provider acceptance testing
+- off-host backup retention
+- external monitoring/alerting
+- operational ownership and incident procedures
+
+---
+
+## Final verification record
+
+The final repository audit is documented at:
+
+```text
+docs/verification/final-completion.md
 ```
 
-Create a development migration only while implementing an approved schema change:
+The project was audited for:
 
-```bash
-pnpm --filter @platform/api prisma:migrate:dev -- --name <migration-name>
-```
+- RBAC consistency
+- tenant isolation
+- security boundaries
+- database integrity
+- complete user journeys
+- accessibility
+- loading/error/empty states
+- dead/debug code
+- documentation accuracy
+- production readiness
 
-## Authentication API
+No core repository blockers remained after the final audit.
 
-All authentication responses are marked `Cache-Control: no-store`. The session credential is delivered only through an HttpOnly, SameSite=Strict cookie; the database stores only its SHA-256 hash.
+---
 
-| Method | Path               | Purpose                                 |
-| ------ | ------------------ | --------------------------------------- |
-| `POST` | `/auth/register`   | Create an account and session           |
-| `POST` | `/auth/login`      | Verify credentials and create a session |
-| `GET`  | `/auth/me`         | Return the authenticated user           |
-| `POST` | `/auth/logout`     | Revoke the current session              |
-| `POST` | `/auth/logout-all` | Revoke every session for the user       |
+Built as a full-stack engineering project focused on the parts of SaaS development that become difficult after the first CRUD screen: boundaries, consistency, failure modes, and production behavior.
 
-Registration accepts `name`, `email`, and `password`. Passwords must be 12–128 characters and contain at least one letter and one number. Browser clients must send requests with credentials enabled.
-
-The web app restores identity through `/auth/me` before showing the protected application shell. Without a valid session it opens the login view; use **Create an account** to register. The forms use `VITE_API_URL` and send credentials so the browser can accept the API's HttpOnly cookie. Keep the web and API on the same site (and use the same hostname locally) for the existing SameSite=Strict policy; `WEB_ORIGIN` must match the frontend origin. Production cookies require HTTPS.
-
-Successful registration/login enters the application. Reloading restores the HttpOnly cookie session; **Sign out** and **Sign out all devices** revoke sessions and remove protected UI. Authenticated session requests distinguish 401 from permission errors, throttling, and temporary service failures. Only 401 or successful logout clears local identity. Bootstrap failures offer a bounded retry without displaying protected content. Returning to the tab revalidates identity. These transitions have component and real browser/PostgreSQL coverage.
-
-Session rotation updates the existing row with a conditional token-hash comparison. Only the winning request sends a replacement cookie. The previous token hash remains usable for overlapping requests for at most 30 seconds, never beyond that token's original expiry; it cannot trigger another rotation. A losing rotation rechecks the persisted session before returning identity, so revocation and expiry still take effect. Only hashes are stored, including the predecessor. Apply the additive `20260905090000_harden_session_rotation` migration before running this API version.
-
-Missing, malformed, unknown, expired, or revoked session credentials return 401. Session lookup/rotation infrastructure failures return a generic 500 without exposing internal details. Neither response clears cookies: a delayed response must not erase a newer cookie from another request. Explicit logout and logout-all revoke sessions and clear the browser cookie. A request using the predecessor after its grace period receives 401; if the winning replacement response is lost entirely, signing in again is required after grace expires.
-
-## Workspaces, membership and invitations
-
-After signing in, open **Workspaces** in the sidebar. Create a workspace, switch with **Active workspace**, rename it, and manage members according to your role. Workspace selection survives reload through a non-authoritative URL preference; the server validates membership each time. Removed memberships and forbidden actions are distinct from temporary service failures.
-
-The creator is the single Owner. Owner can manage all non-owner roles and delete the workspace. Admin can rename and manage only Manager/Member/Viewer. Manager, Member and Viewer can view workspace/members and leave. Owner cannot leave, be removed or be demoted. No invitation grants Owner and no self role changes are supported. These rules are enforced server-side; hidden UI controls are only convenience.
-
-Apply `20260918000000_workspace_tenancy` with the existing migration deployment command. It adds Workspace, WorkspaceMembership, WorkspaceInvitation and the five-role enum. PostgreSQL constraints enforce membership uniqueness, exactly one matching owner, non-owner invitations, and workspace-owned cascade deletion. Names are 2–100 trimmed characters; UUIDs provide stable identity without a public slug namespace.
-
-| Method               | Path                                                 | Result                                                                                     |
-| -------------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| GET / POST           | `/workspaces`                                        | List own workspaces / atomically create workspace and Owner membership                     |
-| GET / PATCH / DELETE | `/workspaces/:workspaceId`                           | Detail with members, manageable invitations and permissions / rename / Owner-only deletion |
-| POST                 | `/workspaces/:workspaceId/leave`                     | Non-owner leaves                                                                           |
-| PATCH / DELETE       | `/workspaces/:workspaceId/members/:userId`           | Change non-owner role / remove eligible member                                             |
-| POST                 | `/workspaces/:workspaceId/invitations`               | Issue or reissue `{ email, role }`                                                         |
-| DELETE               | `/workspaces/:workspaceId/invitations/:invitationId` | Revoke an authorized invitation                                                            |
-| POST                 | `/workspaces/invitations/accept`                     | Accept `{ token }` for the authenticated matching email                                    |
-
-Creation/rename accepts `{ name }`; role change accepts `{ role }`. Anonymous requests receive 401; non-member and nonexistent workspace IDs both receive 404; insufficient member permissions receive 403. Invalid input/link is 400, conflicting membership or resend cooldown is 409, request throttling is 429, unavailable delivery is 503, and unexpected infrastructure errors return a generic 500. All workspace responses disable caching and use the existing safe headers and origin policy.
-
-Invitations expire in seven days, use hashed 256-bit random tokens and consume atomically with membership creation. Resending replaces the old link after a one-minute cooldown. Revoke/replay/expiry/mismatched email fail safely; acceptance also checks that the inviter still has authority. Set `MAIL_MODE=development-file` to deliver private local links to ignored `.tools/mail/*.json`. Open the link, sign in or register with the invited email, then explicitly accept. Reopen the original link if the page is reloaded before acceptance. Production delivery uses opt-in SMTP; configure it through the production runbook. No external email is sent by tests.
-
-`WorkspaceAccess.run` reloads membership and evaluates capabilities inside a transaction locking the workspace row; repository operations bind the workspace ID. Role changes/removal/acceptance/deletion and Projects/Tasks use the same lock and preserve the [workspace-level guarantees](docs/architecture/workspace-tenancy.md).
-
-## Projects, tasks and Kanban
-
-Open **Projects**, select a workspace, create a project and open its board. Owner/Admin/Manager can administer projects and delete or assign tasks. Member can create/edit/move tasks and subtasks and self-assign an unassigned item; Viewer is read-only. Manager still cannot administer workspace membership or settings.
-
-Task status is **To do → In progress → Done**, with transitions in either direction. Use the status select, **Up** and **To end** controls with mouse or keyboard. Open a task to edit its description, select an assignee, and create/edit/complete one-level subtasks. State and ordering survive reload. Stale edits return a conflict and reload current state for review. Assignment is restricted to current workspace members; leaving/removal clears existing assignments atomically.
-
-Project settings support rename/description, archive/restore and confirmed permanent deletion. Archived projects remain readable; restoring enables task edits. Deleting a project intentionally deletes its tasks/subtasks. All resource lists page at 50 rows. The [resource contract](docs/architecture/projects-tasks.md) records schema constraints, routes, RBAC, status, assignment and ordering details.
-
-Apply the additive `20260919000000_projects_tasks` migration with `pnpm --filter @platform/api prisma:migrate:deploy`. It adds Project, Task and TaskStatus, composite tenant/parent/assignee constraints, and one-level/assignment-cleanup triggers. Earlier migrations are unchanged.
-
-### PostgreSQL without Docker (Windows)
-
-Use a separate disposable cluster with the installed PostgreSQL binaries, for example under ignored `.tools/pg-workspace-tests` on loopback port 55432. Do not point `initdb` or test cleanup at an existing database directory. If this directory or port already exists, inspect it and select a new test location instead of resetting it. Create an ignored password file containing a disposable local password, then:
-
-```powershell
-& 'C:\Program Files\PostgreSQL\17\bin\initdb.exe' -D .tools/pg-workspace-tests -U platform_auth_test --auth=scram-sha-256 --pwfile=.tools/test-db-password.txt --encoding=UTF8 --locale=C
-& 'C:\Program Files\PostgreSQL\17\bin\pg_ctl.exe' -D .tools/pg-workspace-tests -l .tools/pg-workspace-tests.log -o '-p 55432 -h 127.0.0.1' -w start
-& 'C:\Program Files\PostgreSQL\17\bin\createdb.exe' -h 127.0.0.1 -p 55432 -U platform_auth_test -W platform_auth_test
-$env:DATABASE_URL='postgresql://platform_auth_test:YOUR_DISPOSABLE_PASSWORD@127.0.0.1:55432/platform_auth_test?schema=public'
-$env:WEB_ORIGIN='http://localhost:5173'
-$env:NODE_ENV='test'
-pnpm --filter @platform/api prisma:migrate:deploy
-pnpm --filter @platform/api test:integration
-pnpm build
-$env:E2E_BROWSER_CHANNEL='msedge' # optional installed Edge; CI uses Chromium
-pnpm --filter @platform/web test:e2e
-& 'C:\Program Files\PostgreSQL\17\bin\pg_ctl.exe' -D .tools/pg-workspace-tests -m fast -w stop
-```
-
-Integration fixtures delete only their own records. Browser fixtures remain in the explicitly disposable database; no real database is reset. Keep local test mail/database files private. Clean-database verification covers all ten migrations.
-
-## Quality Commands
-
-```bash
-pnpm format
-pnpm format:check
-pnpm lint
-pnpm typecheck
-pnpm test
-pnpm --filter @platform/api test:integration
-pnpm build
-pnpm docker:config
-```
-
-Integration tests require a disposable PostgreSQL database, an injected `DATABASE_URL`, and all committed migrations applied (`pnpm --filter @platform/api prisma:migrate:deploy`). They cover sessions, ownership, role matrices, tenant isolation, ordering/concurrency, comments/notifications/SSE, discovery, AI apply, report accuracy and audit immutability. Fixtures use unique accounts and delete only their own data; retained audit rows remain immutable. HTTP error/cookie and forced service-level race regressions use `MemoryAuthRepository` in the regular API suite.
-
-Database lifecycle helpers are also available through `pnpm db:up`, `pnpm db:status`, `pnpm db:logs`, and `pnpm db:down`. `db:down` stops the local stack but preserves the named PostgreSQL volume; use explicit Docker volume commands only when intentional data removal is required.
-
-### Browser verification
-
-Use a disposable PostgreSQL database named `platform_auth_test`, inject its `DATABASE_URL` explicitly, and apply migrations before running:
-
-```bash
-pnpm build
-pnpm --filter @platform/web exec playwright install chromium
-pnpm --filter @platform/web test:e2e
-```
-
-The suite starts its own API and web servers on ports 3000 and 5173, refuses to reuse existing servers, and uses real browser cookies and database writes. It exercises registration/login, refresh restoration, logout, verification, password reset and other-device revocation, plus modal keyboard and small-viewport behavior. Unique test accounts remain in this disposable database; discard the test database when finished. Only mail files matching the unique test account are removed. No test sends real email. Traces, videos, and screenshots are disabled to avoid recording recovery credentials.
-
-When Chromium download is unavailable but Microsoft Edge is installed, set `E2E_BROWSER_CHANNEL=msedge`. Local Windows verification uses an isolated PostgreSQL 17 cluster under ignored `.tools`, listening only on `127.0.0.1:55432`. The agent execution environment cannot access the Docker named pipe; this is not a Docker Desktop failure. CI uses disposable PostgreSQL, Chromium and a working Docker engine.
-
-CI has three jobs: quality checks with frozen installation and production builds; clean PostgreSQL migrations, integration tests and browser journeys (including AI and reports); and production API/web/migration image builds with isolated live Compose smoke, restricted database-role checks, backup/restore, outage readiness and graceful SSE shutdown. It runs on pull requests and the milestone branches listed in [the workflow](.github/workflows/quality.yml), including `feature/final-completion`.
-
-### AI, reports and deployment
-
-Open a project for **Summarize project**, or a task for action planning and editable subtask proposals. Review and edit the preview before explicit apply; generated subtasks use normal task permissions and transactions. AI is disabled by default. Configure server-only `AI_PROVIDER=openai`, `AI_MODEL` and `AI_API_KEY` as described in the [AI contract](docs/architecture/ai-assistant.md). Automated tests use a deterministic provider and never call an external model.
-
-Open **Analytics and reports** for persisted workspace/project metrics, 7/30/90-day activity trends and current-page CSV export. Owner/Admin can inspect the separate immutable audit ledger. [Metric definitions](docs/architecture/reports-analytics-audit.md) explain archive handling, pagination and event-throughput caveats.
-
-For production, follow the [deployment runbook](docs/deployment/production.md): copy `.env.production.example`, configure independent database credentials and the HTTPS origin, build the three images, and start the migration-gated Compose stack behind your TLS edge. Enable SMTP for invitations/recovery and configure AI if desired. Public infrastructure, provider acceptance and off-host backup scheduling remain operator responsibilities; no public deployment is claimed.
-
-## Documentation
-
-- [Final core audit, RBAC matrix, fixes and verification](docs/verification/final-completion.md)
-- [Architecture overview](docs/architecture/overview.md)
-- [Full product roadmap](docs/roadmap/product-roadmap.md)
-- [Foundation verification](docs/verification/foundation.md)
-- [Coding-agent guidance](AGENTS.md)
-
-### Concurrent session policy
-
-Session creation and logout-all serialize on the user's PostgreSQL row. Each creation prunes to ten active sessions ordered by `createdAt DESC, id DESC`. Concurrent requests cannot independently overfill the cap. A login serialized before logout-all is revoked; one serialized afterward creates a new valid session. Rotation cannot resurrect revoked sessions. Real PostgreSQL regressions verify concurrent creation, timestamp ties, rotation, and revocation.
-
-### Lifetime, retention, and deployment configuration
-
-`SESSION_TTL_HOURS` defaults to 168, `SESSION_ROTATION_HOURS` to 24, and `SESSION_ABSOLUTE_HOURS` to 720. Rotation must be strictly shorter than TTL; TTL cannot exceed absolute lifetime. A session never authenticates beyond `createdAt + absolute lifetime`, even after rotations. Replacement cookie lifetime is capped at this boundary. Configuration changes apply to existing sessions too.
-
-Expiry slides only when the current token rotates; ordinary reads and predecessor requests do not extend expiry. The effective inactivity window is therefore between TTL minus rotation interval and TTL. `lastSeenAt` is deliberately sampled: it records creation or successful rotation, not every request, and must not be shown as an exact last-active time.
-
-Retain expired/revoked rows for 30 days for troubleshooting. An operator may periodically run the following bounded cleanup (repeat until zero rows); no scheduler or Redis is required. The 120-day bound also covers absolute expiry under the maximum supported 90-day configuration plus retention.
-
-```sql
-DELETE FROM sessions WHERE id IN (
-  SELECT id FROM sessions
-  WHERE expires_at < now() - interval '30 days'
-     OR revoked_at < now() - interval '30 days'
-     OR created_at < now() - interval '120 days'
-  ORDER BY id LIMIT 500
-);
-```
-
-`WEB_ORIGIN` must be a canonical HTTP(S) origin without credentials, trailing slash, path, query, or fragment. Production requires HTTPS. Serve web and API on the same HTTPS site (prefer the supplied single-origin `/api` proxy); cross-site deployment is unsupported with SameSite=Strict. Production cookies keep Secure, HttpOnly, Path=/, no Domain, and the `__Host-` prefix. The API currently supports one directly exposed process or an edge that preserves a trustworthy client address without trusting arbitrary forwarding headers; multi-replica rate limiting is not supported yet.
-
-Turbo accounts for ignored root `.env` files and public output variables. Backend `DATABASE_URL` is passed only to processes, never exposed through a `VITE_*` name; tests are uncached. Vite loads the root env for public variables; Nest and Prisma read the root env and prefer injected shell values. Development PostgreSQL binds to loopback by default.
-
-### Verification and password recovery
-
-Apply the new `20260917000000_account_recovery` migration. `account_tokens` stores SHA-256 hashes, purpose, issuance/expiry, and consumption timestamps; it never stores the raw credential. Verification expires after 24 hours; password reset after 30 minutes. Consumption, identity mutation, and reset-driven session revocation are atomic. Resending replaces the previous link, with a database-enforced one-minute per-account/purpose cooldown and five HTTP attempts per minute per client/endpoint.
-
-- `POST /auth/resend-verification` and `POST /auth/forgot-password`: `{ email }`, generic 202 for eligible, unknown, verified, or cooldown cases.
-- `POST /auth/verify-email`: `{ token }`, 204 on success.
-- `POST /auth/reset-password`: `{ token, password }`, 204 on success; every session is revoked. No replacement session is issued.
-- Malformed/expired/used links return 400; throttling returns 429; unavailable delivery returns 503 honestly.
-
-The account shell exposes **Verify email**; login exposes **Forgot password?**. Email links use fragments, which are removed from browser history after reading and never sent to the server as URL parameters. Verification requires an explicit confirmation; reset requires a new valid password.
-
-For local development set `MAIL_MODE=development-file` in the ignored root `.env`. Requests deliver JSON messages into ignored `.tools/mail/*.json`; open the `url` locally to exercise the flow. This mailbox contains real development credentials: keep it private and delete messages when testing ends. It is not served over HTTP and secrets are never printed in application logs. `MAIL_MODE=disabled` is the default. Production forbids the development transport; set `MAIL_MODE=smtp` and validated SMTP settings to enable the production adapter. Verify actual inbox delivery before launch. Tests override delivery and do not send real email.
-
-Login verifies the password again under the same user-row lock by comparing the hash that was authenticated. A login racing with password reset cannot create a new session from the old password after reset completes. Session rotation continues to honor revocation.
-
-Account token rows may be removed in bounded batches once `expires_at` is more than 30 days old, using the same operator-driven retention approach as sessions.
-
-Authentication responses, including guard/validation/rate-limit failures, receive early `Cache-Control: no-store`. API responses have nosniff, frame denial, no-referrer, and restrictive CSP headers; production adds HSTS. Mutations reject mismatched Origin, and auth endpoints reject cross-site Fetch Metadata. Clients without Origin remain supported for non-browser use; browser CORS stays restricted. Forwarding headers are untrusted by default; production Compose trusts exactly its private proxy, which overwrites the client address supplied by the trusted TLS edge. Unexpected errors return safe responses with request IDs; structured logs omit request content.
+---
