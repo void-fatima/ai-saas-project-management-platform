@@ -121,7 +121,7 @@ export function WorkspacePanel({ userId }: { userId: string }) {
           </Form>
         </section>
         {choices.length || detail ? (
-          <section className="page-section workspace-active" aria-label="Active workspace details">
+          <section className="page-section workspace-active" aria-label="Workspace details">
             {choices.length ? (
               <label className="workspace-select">
                 Active workspace
