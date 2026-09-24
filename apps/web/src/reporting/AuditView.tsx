@@ -47,7 +47,7 @@ export function AuditView({ workspaceId }: { workspaceId: string }) {
   );
   const state = useProjectData(read);
   return (
-    <section aria-label="Audit trail" className="report-section">
+    <section aria-label="Audit trail" className="report-section page-section">
       <h3>Audit trail</h3>
       <p>
         Immutable workspace history. Actor and entity identifiers remain available after deletion.

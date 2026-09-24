@@ -32,7 +32,9 @@ export function WorkspacePicker({
         <label className="form-field">
           {label}
           <select value={workspaceId} onChange={(event) => onSelect(event.target.value)}>
-            <option value="">Select a workspace</option>
+            <option value="" disabled hidden>
+              Select a workspace
+            </option>
             {!state.data.some((choice) => choice.workspace.id === workspaceId) && workspaceId ? (
               <option value={workspaceId}>Workspace unavailable</option>
             ) : null}

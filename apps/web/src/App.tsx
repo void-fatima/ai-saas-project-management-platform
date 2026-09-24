@@ -294,46 +294,52 @@ function Observatory({
             <h1>Workspace overview</h1>
           </div>
           <div className="topbar__actions">
-            <span aria-label="Signed-in account">{user.name}</span>
-            {!user.emailVerified ? (
-              <Button variant="secondary" onClick={onVerify}>
-                Verify email
+            <div className="topbar__account">
+              <span aria-label="Signed-in account">{user.name}</span>
+              {!user.emailVerified ? (
+                <Button variant="secondary" onClick={onVerify}>
+                  Verify email
+                </Button>
+              ) : (
+                <span>Email verified</span>
+              )}
+              <Button disabled={pending} onClick={() => onLogout(false)} variant="secondary">
+                Sign out
               </Button>
-            ) : (
-              <span>Email verified</span>
-            )}
-            <Button disabled={pending} onClick={() => onLogout(false)} variant="secondary">
-              Sign out
-            </Button>
-            <Button disabled={pending} onClick={() => onLogout(true)} variant="ghost">
-              Sign out all devices
-            </Button>
-            <SystemClock />
-            <div className="input-container">
-              <span aria-hidden="true" className="input-container__surface">
-                <span className="input-container__placeholder">Search workspace...</span>
-              </span>
-              <button
-                aria-label="Open workspace search"
-                className="command-search-input"
-                onClick={() => {
-                  setWorkspaceId(
-                    new URLSearchParams(window.location.search).get('workspace') ?? '',
-                  );
-                  setCommandPaletteOpen(true);
-                }}
-                type="button"
-              >
-                Search workspace...
-              </button>
-              <span aria-hidden="true" className="input-container__cursor">
-                |
-              </span>
+              <Button disabled={pending} onClick={() => onLogout(true)} variant="ghost">
+                Sign out all devices
+              </Button>
             </div>
-            <Notifications onSessionEnded={onRefreshSession} />
-            <span className="profile-mark" aria-label="Account profile">
-              P
-            </span>
+            <div className="topbar__tools">
+              <div className="input-container">
+                <span aria-hidden="true" className="input-container__surface">
+                  <span className="input-container__placeholder">Search workspace...</span>
+                </span>
+                <button
+                  aria-label="Open workspace search"
+                  className="command-search-input"
+                  onClick={() => {
+                    setWorkspaceId(
+                      new URLSearchParams(window.location.search).get('workspace') ?? '',
+                    );
+                    setCommandPaletteOpen(true);
+                  }}
+                  type="button"
+                >
+                  Search workspace...
+                </button>
+                <span aria-hidden="true" className="input-container__cursor">
+                  |
+                </span>
+              </div>
+              <div className="topbar__status">
+                <SystemClock />
+                <Notifications onSessionEnded={onRefreshSession} />
+                <span className="profile-mark" aria-label="Account profile">
+                  P
+                </span>
+              </div>
+            </div>
           </div>
         </header>
 

@@ -80,41 +80,33 @@ function ScopedReportingData({ workspaceId }: { workspaceId: string }) {
   }
   return (
     <>
-      <div className="project-toolbar">
-        <Button
-          variant={view === 'analytics' ? 'primary' : 'secondary'}
-          onClick={() => setView('analytics')}
-        >
-          Analytics
-        </Button>
-        <Button
-          variant={view === 'report' ? 'primary' : 'secondary'}
-          onClick={() => setView('report')}
-        >
-          Reports
-        </Button>
-        {state.data?.canAudit ? (
+      <div className="report-controls">
+        <div className="report-tabs" role="group" aria-label="Report views">
           <Button
-            variant={view === 'audit' ? 'primary' : 'secondary'}
-            onClick={() => setView('audit')}
+            variant={view === 'analytics' ? 'primary' : 'secondary'}
+            aria-pressed={view === 'analytics'}
+            onClick={() => setView('analytics')}
           >
-            Audit log
+            Analytics
           </Button>
-        ) : null}
-        <Button variant="ghost" disabled={state.loading} onClick={() => void state.reload()}>
-          Refresh report data
-        </Button>
-      </div>
-      {state.error ? <p role="alert">{state.error}</p> : null}
-      {state.loading ? <p role="status">Loading report data…</p> : null}
-      {view === 'audit' ? (
-        state.data?.canAudit ? (
-          <AuditView key={workspaceId} workspaceId={workspaceId} />
-        ) : state.data ? (
-          <p>Audit access requires Owner or Admin.</p>
-        ) : null
-      ) : (
-        <>
+          <Button
+            variant={view === 'report' ? 'primary' : 'secondary'}
+            aria-pressed={view === 'report'}
+            onClick={() => setView('report')}
+          >
+            Reports
+          </Button>
+          {state.data?.canAudit ? (
+            <Button
+              variant={view === 'audit' ? 'primary' : 'secondary'}
+              aria-pressed={view === 'audit'}
+              onClick={() => setView('audit')}
+            >
+              Audit log
+            </Button>
+          ) : null}
+        </div>
+        {view !== 'audit' ? (
           <label className="form-field">
             Time range
             <select
@@ -131,6 +123,21 @@ function ScopedReportingData({ workspaceId }: { workspaceId: string }) {
               ))}
             </select>
           </label>
+        ) : null}
+        <Button variant="ghost" disabled={state.loading} onClick={() => void state.reload()}>
+          Refresh report data
+        </Button>
+      </div>
+      {state.error ? <p role="alert">{state.error}</p> : null}
+      {state.loading ? <p role="status">Loading report data…</p> : null}
+      {view === 'audit' ? (
+        state.data?.canAudit ? (
+          <AuditView key={workspaceId} workspaceId={workspaceId} />
+        ) : state.data ? (
+          <p>Audit access requires Owner or Admin.</p>
+        ) : null
+      ) : (
+        <>
           {projectId ? (
             <Button
               variant="secondary"
@@ -144,34 +151,36 @@ function ScopedReportingData({ workspaceId }: { workspaceId: string }) {
           ) : null}
           {state.data ? (
             <>
-              <h3>
-                {state.data.project
-                  ? `Project report: ${state.data.project.name}`
-                  : 'Workspace report'}
-              </h3>
-              {state.data.project ? (
-                <p className="project-description">
-                  {state.data.project.description} ·{' '}
-                  {state.data.project.archived ? 'Archived' : 'Active'}
-                </p>
-              ) : null}
-              <p>
-                Current totals include archived projects. The selected range applies to UTC daily
-                activity, not current totals. Completion events may include work reopened and
-                completed again.
-              </p>
-              {view === 'report' ? (
-                <>
-                  <Button disabled={downloading} onClick={() => void download()}>
-                    Download this report page as CSV
-                  </Button>
-                  {exportError ? <p role="alert">{exportError}</p> : null}
-                  <p>
-                    Generated {new Date(state.data.generatedAt).toLocaleString()}. Project and
-                    member rows are paginated; totals and daily trends cover the full scope.
+              <section className="page-section report-summary" aria-label="Report summary">
+                <h3>
+                  {state.data.project
+                    ? `Project report: ${state.data.project.name}`
+                    : 'Workspace report'}
+                </h3>
+                {state.data.project ? (
+                  <p className="project-description">
+                    {state.data.project.description} ·{' '}
+                    {state.data.project.archived ? 'Archived' : 'Active'}
                   </p>
-                </>
-              ) : null}
+                ) : null}
+                <p>
+                  Current totals include archived projects. The selected range applies to UTC daily
+                  activity, not current totals. Completion events may include work reopened and
+                  completed again.
+                </p>
+                {view === 'report' ? (
+                  <>
+                    <Button disabled={downloading} onClick={() => void download()}>
+                      Download this report page as CSV
+                    </Button>
+                    {exportError ? <p role="alert">{exportError}</p> : null}
+                    <p>
+                      Generated {new Date(state.data.generatedAt).toLocaleString()}. Project and
+                      member rows are paginated; totals and daily trends cover the full scope.
+                    </p>
+                  </>
+                ) : null}
+              </section>
               <ReportTables
                 report={state.data}
                 onProject={(id) => {
@@ -202,13 +211,13 @@ function ScopedReportingData({ workspaceId }: { workspaceId: string }) {
 function ReportTables({ report, onProject }: { report: Report; onProject: (id: string) => void }) {
   return (
     <>
-      <p>
-        {report.projects.active} active projects · {report.projects.archived} archived projects
-      </p>
-      {!report.tasks.total && !report.subtasks.total ? (
-        <p>No work items in this scope yet.</p>
-      ) : null}
-      <div className="report-table">
+      <div className="report-table page-section">
+        <p className="report-totals">
+          {report.projects.active} active projects · {report.projects.archived} archived projects
+        </p>
+        {!report.tasks.total && !report.subtasks.total ? (
+          <p>No work items in this scope yet.</p>
+        ) : null}
         <table>
           <caption>Status distribution</caption>
           <thead>
@@ -236,7 +245,7 @@ function ReportTables({ report, onProject }: { report: Report; onProject: (id: s
         </table>
       </div>
       {!report.project ? (
-        <section aria-label="Report projects">
+        <section className="page-section report-projects" aria-label="Report projects">
           <h4>Projects on this page</h4>
           {report.projects.items.map((project) => (
             <Button variant="ghost" key={project.id} onClick={() => onProject(project.id)}>
@@ -245,7 +254,7 @@ function ReportTables({ report, onProject }: { report: Report; onProject: (id: s
           ))}
         </section>
       ) : null}
-      <div className="report-table">
+      <div className="report-table page-section">
         <table>
           <caption>Member workload</caption>
           <thead>
@@ -270,7 +279,7 @@ function ReportTables({ report, onProject }: { report: Report; onProject: (id: s
           </tbody>
         </table>
       </div>
-      <details open={report.range === '7d'}>
+      <details className="page-section report-trend" open={report.range === '7d'}>
         <summary>Daily created work, completion events and activity</summary>
         <div className="report-table">
           <table>

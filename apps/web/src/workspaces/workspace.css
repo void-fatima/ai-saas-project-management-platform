@@ -1,14 +1,54 @@
 .workspace-panel {
-  max-width: 64rem;
-  margin: 1.5rem auto;
-  padding: clamp(1rem, 3vw, 2rem);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  background: var(--surface);
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
 }
 .workspace-panel h2,
 .workspace-panel h3 {
-  margin: 1.25rem 0 0.75rem;
+  margin: 0;
+}
+.workspace-panel header p {
+  margin-top: 0.5rem;
+}
+.workspace-sections {
+  display: grid;
+  align-items: start;
+  gap: 1rem;
+  min-width: 0;
+}
+.workspace-create {
+  max-width: 42rem;
+}
+.workspace-panel .workspace-create form {
+  display: grid;
+}
+.workspace-create .button {
+  justify-self: start;
+}
+.workspace-detail {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+.workspace-detail > .button {
+  justify-self: start;
+}
+.workspace-detail > h3 {
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+.workspace-identity {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  overflow-wrap: anywhere;
+}
+.workspace-role {
+  padding: 0.35rem 0.65rem;
+  border: 1px solid var(--border-bright);
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
 }
 .workspace-panel p {
   color: var(--text-soft);
@@ -18,36 +58,38 @@
   display: flex;
   align-items: end;
   flex-wrap: wrap;
-  gap: 1rem;
-  margin: 1.5rem 0;
+  gap: 0.75rem;
+  margin: 0;
+}
+.workspace-panel form > .form-field {
+  flex: 1 1 14rem;
+  min-width: 0;
+  max-width: 26rem;
+}
+.workspace-panel .button,
+.workspace-panel .input {
+  min-height: 2.75rem;
 }
 .workspace-panel label {
   display: grid;
   gap: 0.5rem;
   font-size: 0.875rem;
 }
-.workspace-panel select {
-  padding: 0.7rem;
-  color: var(--text);
-  background: var(--surface-strong);
-  border: 1px solid var(--border-bright);
-  border-radius: var(--radius-sm);
-  max-width: 100%;
-  min-width: 0;
-}
 .workspace-select {
-  margin: 1.5rem 0;
+  width: 100%;
+  max-width: 26rem;
 }
 .workspace-members {
   list-style: none;
   padding: 0;
+  margin: 0;
 }
 .workspace-members li {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 0.75rem;
-  padding: 1rem 0;
+  padding: 0.75rem 0;
   border-bottom: 1px solid var(--border);
 }
 .workspace-members li > span {
@@ -57,7 +99,7 @@
 .workspace-members small {
   display: block;
   font-size: 0.875rem;
-  margin-top: 0.5rem;
+  margin-top: 0.25rem;
   color: var(--text-soft);
 }
 .workspace-confirm {
@@ -81,6 +123,11 @@
   .workspace-panel form > *,
   .workspace-members label {
     width: 100%;
+  }
+}
+@media (min-width: 1200px) {
+  .workspace-sections {
+    grid-template-columns: minmax(16rem, 20rem) minmax(0, 1fr);
   }
 }
 .collaboration-section {

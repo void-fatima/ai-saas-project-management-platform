@@ -52,13 +52,13 @@ export function ProjectsPanel({ userId }: { userId: string }) {
       {state.data ? (
         <>
           {state.data.length ? (
-            <label className="form-field">
+            <label className="form-field projects-workspace">
               Project workspace
               <select
                 value={available ? selected : ''}
                 onChange={(event) => select(event.target.value, null)}
               >
-                <option value="" disabled>
+                <option value="" disabled hidden>
                   Select a workspace
                 </option>
                 {state.data.map((choice) => (
@@ -134,17 +134,13 @@ function ProjectList({
     <>
       {state.loading ? <p role="status">Loading projects…</p> : null}
       {error || state.error ? <p role="alert">{error || state.error}</p> : null}
-      <Button
-        variant="ghost"
-        disabled={pending || state.loading}
-        onClick={() => void state.reload()}
-      >
-        Refresh project list
-      </Button>
       {state.data ? (
-        <>
+        <div className="projects-sections">
           {state.data.permissions.administer ? (
-            <ProjectForm pending={pending} onSave={create} />
+            <section className="page-section project-create" aria-labelledby="create-project-title">
+              <h3 id="create-project-title">Create project</h3>
+              <ProjectForm pending={pending} onSave={create} />
+            </section>
           ) : (
             <p>
               {state.data.permissions.edit
@@ -152,29 +148,60 @@ function ProjectList({
                 : 'Read-only projects'}
             </p>
           )}
-          {state.data.items.length === 0 ? (
-            <p>No projects yet. An Owner, Admin or Manager can create one.</p>
-          ) : null}
-          <ul className="project-list">
-            {state.data.items.map((project) => (
-              <li key={project.id}>
-                <Button variant="secondary" onClick={() => onSelect(project.id)}>
-                  {project.name}
+          <section
+            className="page-section projects-collection"
+            aria-labelledby="project-list-title"
+          >
+            <header className="project-toolbar">
+              <h3 id="project-list-title">Project list</h3>
+              <Button
+                variant="ghost"
+                disabled={pending || state.loading}
+                onClick={() => void state.reload()}
+              >
+                Refresh project list
+              </Button>
+            </header>
+            {state.data.items.length === 0 ? (
+              <div className="projects-empty">
+                <h4>No projects yet</h4>
+                <p>An Owner, Admin or Manager can create one.</p>
+              </div>
+            ) : null}
+            <ul className="project-list">
+              {state.data.items.map((project) => (
+                <li key={project.id}>
+                  <Button variant="secondary" onClick={() => onSelect(project.id)}>
+                    {project.name}
+                  </Button>
+                  {project.archived ? <span>Archived</span> : null}
+                  <p className="project-description">{project.description}</p>
+                </li>
+              ))}
+            </ul>
+            <div className="project-toolbar">
+              {offset > 0 ? (
+                <Button onClick={() => setOffset(Math.max(0, offset - 50))}>
+                  Previous projects
                 </Button>
-                {project.archived ? <span>Archived</span> : null}
-                <p className="project-description">{project.description}</p>
-              </li>
-            ))}
-          </ul>
-          <div className="project-toolbar">
-            {offset > 0 ? (
-              <Button onClick={() => setOffset(Math.max(0, offset - 50))}>Previous projects</Button>
-            ) : null}
-            {state.data.nextOffset !== null ? (
-              <Button onClick={() => setOffset(state.data?.nextOffset ?? 0)}>Next projects</Button>
-            ) : null}
-          </div>
-        </>
+              ) : null}
+              {state.data.nextOffset !== null ? (
+                <Button onClick={() => setOffset(state.data?.nextOffset ?? 0)}>
+                  Next projects
+                </Button>
+              ) : null}
+            </div>
+          </section>
+        </div>
+      ) : null}
+      {!state.data ? (
+        <Button
+          variant="ghost"
+          disabled={pending || state.loading}
+          onClick={() => void state.reload()}
+        >
+          Refresh project list
+        </Button>
       ) : null}
     </>
   );

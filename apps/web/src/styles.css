@@ -102,6 +102,7 @@ dd {
 
 .app-shell {
   display: grid;
+  width: 100%;
   min-height: 100vh;
   grid-template-columns: 15.25rem minmax(0, 1fr);
   background: var(--bg);
@@ -350,6 +351,64 @@ dd {
   gap: 0.55rem;
 }
 
+.topbar__account,
+.topbar__tools,
+.topbar__status {
+  display: contents;
+}
+
+.topbar__tools > .input-container {
+  flex-basis: 15rem;
+}
+
+@media (min-width: 821px) {
+  .topbar {
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .topbar > :first-child {
+    flex: 1 0 15rem;
+  }
+
+  .topbar__actions {
+    display: grid;
+    min-width: 0;
+    gap: 0.75rem;
+    margin-inline-start: auto;
+  }
+
+  .topbar__account,
+  .topbar__tools,
+  .topbar__status {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.75rem;
+  }
+
+  .topbar__account {
+    flex-wrap: wrap;
+  }
+
+  .topbar__account > [aria-label='Signed-in account'] {
+    max-width: 20ch;
+    overflow-wrap: anywhere;
+  }
+
+  .topbar__tools > .input-container {
+    flex: 1;
+    width: 20rem;
+    min-width: 12rem;
+  }
+
+  .topbar__account > .button,
+  .topbar__status > .button,
+  .topbar__status > .system-clock {
+    min-height: 3rem;
+  }
+}
+
 .system-clock {
   display: flex;
   min-width: 8.7rem;
@@ -519,7 +578,7 @@ dd {
 
 .observatory__grid {
   display: grid;
-  grid-template-columns: minmax(22rem, 1.15fr) minmax(15rem, 0.72fr) minmax(16.5rem, 0.83fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.85rem;
 }
 
@@ -615,6 +674,14 @@ dd {
   cursor: pointer;
 }
 @media (min-width: 1400px) {
+  .observatory__grid {
+    grid-template-columns: minmax(22rem, 1.15fr) minmax(15rem, 0.72fr) minmax(16.5rem, 0.83fr);
+  }
+
+  .observatory__grid > .core-panel {
+    grid-column: 1 / span 2;
+  }
+
   .observatory__grid > .api-connection {
     grid-column: 3;
     grid-row: 1;
@@ -638,7 +705,7 @@ dd {
 .core-panel {
   display: grid;
   min-height: 23.5rem;
-  grid-column: 1 / span 2;
+  grid-column: 1 / -1;
   grid-template-columns: minmax(16rem, 0.78fr) minmax(18rem, 1.22fr);
   overflow: hidden;
 }
@@ -1195,6 +1262,69 @@ dd {
   box-shadow: 0 0 0 3px rgb(155 123 255 / 12%);
 }
 
+/* Keep native selection and keyboard behavior with shared control styling. */
+select {
+  appearance: none;
+  color-scheme: dark;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 2.75rem;
+  padding: 0.55rem 2.5rem 0.55rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  background-color: var(--bg-sidebar);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23b4bdcd' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1rem;
+  font-family: var(--font-ui);
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.4;
+  cursor: pointer;
+  outline-offset: 3px;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+select:hover:not(:disabled) {
+  border-color: var(--border-bright);
+  background-color: var(--surface-strong);
+}
+
+select:focus,
+select:active:not(:disabled) {
+  border-color: var(--violet);
+  box-shadow: 0 0 0 3px rgb(155 123 255 / 12%);
+}
+
+select:focus-visible {
+  outline: 3px solid var(--violet);
+}
+
+select:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+select option,
+select optgroup {
+  color: var(--text);
+  background-color: var(--surface-strong);
+}
+
+@media (forced-colors: active) {
+  select {
+    appearance: auto;
+    background-image: none;
+    padding-inline-end: 0.75rem;
+  }
+}
+
 .input--error {
   border-color: var(--danger);
 }
@@ -1650,10 +1780,6 @@ dd {
     justify-content: center;
   }
 
-  .observatory__grid {
-    grid-template-columns: minmax(20rem, 1.3fr) minmax(17rem, 0.8fr);
-  }
-
   .core-panel {
     grid-column: 1;
     grid-template-columns: 1fr;
@@ -1880,6 +2006,134 @@ dd {
 }
 
 /* Projects use the existing dark surfaces, violet accents and native controls. */
+.page-section {
+  display: grid;
+  align-content: start;
+  gap: 1rem;
+  min-width: 0;
+  padding: 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+.page-section h4 {
+  margin: 0;
+}
+.projects-workspace,
+.reporting-panel > .workspace-picker {
+  width: 100%;
+  max-width: 26rem;
+}
+.projects-sections {
+  display: grid;
+  align-items: start;
+  gap: 1rem;
+  min-width: 0;
+}
+.project-create {
+  width: 100%;
+  max-width: 42rem;
+}
+.project-create .button,
+.projects-collection .project-list .button {
+  justify-self: start;
+}
+.project-create .input,
+.project-create .button,
+.projects-collection .button,
+.reporting-panel .button,
+.reporting-panel .input {
+  min-height: 2.75rem;
+}
+.projects-empty {
+  display: grid;
+  gap: 0.5rem;
+  padding: 2rem 1rem;
+  border: 1px dashed var(--border-bright);
+  border-radius: var(--radius-md);
+  text-align: center;
+}
+.projects-empty p,
+.report-summary p,
+.report-totals {
+  color: var(--text-soft);
+  line-height: 1.6;
+}
+.projects-collection > .project-toolbar:empty {
+  display: none;
+}
+.report-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+}
+.report-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+.report-controls .form-field {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  white-space: nowrap;
+}
+.reporting-panel .report-controls select {
+  width: auto;
+}
+.report-summary > .button,
+.reporting-panel > .button {
+  justify-self: start;
+}
+.report-projects {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+.report-trend {
+  display: block;
+}
+.report-trend summary {
+  cursor: pointer;
+  line-height: 1.6;
+}
+.reporting-panel .report-table table {
+  margin: 0;
+  overflow-wrap: normal;
+}
+.reporting-panel .report-table caption {
+  padding-bottom: 0.75rem;
+}
+.report-trend .report-table {
+  margin-top: 1rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.reporting-panel .report-section {
+  display: grid;
+  gap: 1rem;
+  margin-top: 0;
+}
+.reporting-panel .report-section > .button,
+.reporting-panel .project-form > .button {
+  justify-self: start;
+}
+.reporting-panel .project-form {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+  align-items: end;
+}
+@media (min-width: 1200px) {
+  .projects-sections:has(.project-create) {
+    grid-template-columns: minmax(18rem, 24rem) minmax(0, 1fr);
+  }
+}
 .projects-panel {
   display: grid;
   gap: 1rem;
@@ -1901,8 +2155,6 @@ dd {
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: end;
 }
-.projects-panel select,
-.task-dialog select,
 .project-form textarea {
   width: 100%;
   min-height: 2.6rem;
@@ -2037,6 +2289,39 @@ dd {
 }
 .task-dialog .project-form {
   margin-block: 1rem;
+}
+.task-dialog:has(.ai-assistance) {
+  color-scheme: dark;
+  color: var(--text);
+  background: var(--surface-strong);
+  border: 1px solid var(--border-bright);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-panel);
+}
+.task-dialog:has(.ai-assistance)::backdrop {
+  background: rgb(2 6 12 / 76%);
+}
+.task-dialog .ai-assistance {
+  background: var(--surface);
+}
+.task-dialog .ai-assistance fieldset {
+  background: var(--bg-sidebar);
+  border-color: var(--border-bright);
+  border-radius: var(--radius-sm);
+}
+.task-dialog .ai-assistance textarea {
+  color: var(--text);
+  background: var(--surface-strong);
+  border-color: var(--border);
+  border-radius: var(--radius-sm);
+}
+.task-dialog .ai-assistance textarea:focus {
+  border-color: var(--violet);
+  box-shadow: 0 0 0 3px rgb(155 123 255 / 12%);
+}
+.task-dialog .ai-assistance textarea:focus-visible {
+  outline: 3px solid var(--violet);
+  outline-offset: 3px;
 }
 @media (max-width: 900px) {
   .kanban {

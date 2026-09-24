@@ -82,212 +82,237 @@ export function WorkspacePanel({ userId }: { userId: string }) {
   const busy = loading || pending;
   return (
     <section className="workspace-panel" aria-labelledby="workspaces-title">
-      <h2 id="workspaces-title" ref={heading} tabIndex={-1}>
-        Workspaces
-      </h2>
-      <p>Create a shared space, invite people, and manage workspace access.</p>
+      <header className="project-toolbar">
+        <div>
+          <h2 id="workspaces-title" ref={heading} tabIndex={-1}>
+            Workspaces
+          </h2>
+          <p>Create a shared space, invite people, and manage workspace access.</p>
+        </div>
+        <Button disabled={busy} variant="ghost" onClick={() => void load()}>
+          Refresh workspaces
+        </Button>
+      </header>
       {loading ? <p role="status">Loading workspaces…</p> : null}
       {error || failure ? <p role="alert">{failure || error}</p> : null}
       {message ? <p role="status">{message}</p> : null}
-      <Button disabled={busy} variant="secondary" onClick={() => void load()}>
-        Refresh workspaces
-      </Button>
-      {!loading && choices.length === 0 && !error ? (
-        <p>You do not belong to a workspace yet. Create one to get started.</p>
-      ) : null}
-      <Form
-        aria-label="Create workspace"
-        onSubmit={() => void mutate('', 'POST', { name: name.trim() }, true)}
-      >
-        <FormField
-          label="New workspace name"
-          value={name}
-          required
-          minLength={2}
-          maxLength={100}
-          disabled={busy}
-          onChange={(event) => setName(event.target.value)}
-        />
-        <Button disabled={busy} type="submit">
-          Create workspace
-        </Button>
-      </Form>
-      {choices.length ? (
-        <label className="workspace-select">
-          Active workspace
-          <select
-            aria-label="Active workspace"
-            disabled={busy}
-            value={detail?.workspace.id ?? ''}
-            onChange={(event) => {
-              setMessage('');
-              setFailure('');
-              void load(event.target.value);
-            }}
-          >
-            {!detail ? <option value="">Select workspace</option> : null}
-            {choices.map((choice) => (
-              <option key={choice.workspace.id} value={choice.workspace.id}>
-                {choice.workspace.name} ({choice.role})
-              </option>
-            ))}
-          </select>
-        </label>
-      ) : null}
-      {detail ? (
-        <div className="workspace-detail" key={detail.workspace.id}>
-          <h3>{detail.workspace.name}</h3>
-          <p>
-            Your role: <strong>{detail.role}</strong>
-          </p>
-          {detail.permissions.rename ? (
-            <RenameForm
-              name={detail.workspace.name}
-              busy={busy}
-              onSave={(next) => void mutate(`/${detail.workspace.id}`, 'PATCH', { name: next })}
-            />
+      <div className="workspace-sections">
+        <section className="page-section workspace-create" aria-labelledby="create-workspace-title">
+          <h3 id="create-workspace-title">Create workspace</h3>
+          {!loading && choices.length === 0 && !error ? (
+            <p>You do not belong to a workspace yet. Create one to get started.</p>
           ) : null}
-          <h3>Members</h3>
-          <ul className="workspace-members">
-            {detail.members.map((member) => (
-              <MemberRow
-                key={`${member.userId}:${member.role}`}
-                member={member}
-                roles={
-                  member.userId !== userId &&
-                  member.role !== 'Owner' &&
-                  detail.permissions.assignableRoles.includes(member.role)
-                    ? detail.permissions.assignableRoles
-                    : []
-                }
-                busy={busy}
-                onRole={(role) =>
-                  void mutate(`/${detail.workspace.id}/members/${member.userId}`, 'PATCH', { role })
-                }
-                onRemove={() =>
-                  setConfirm({
-                    title: `Remove ${member.user.name} from this workspace?`,
-                    path: `/${detail.workspace.id}/members/${member.userId}`,
-                    method: 'DELETE',
-                  })
-                }
-              />
-            ))}
-          </ul>
-          {detail.permissions.assignableRoles.length ? (
-            <>
-              <h3>Invite a member</h3>
-              <Form
-                aria-label="Invite member"
-                onSubmit={() =>
-                  void mutate(`/${detail.workspace.id}/invitations`, 'POST', {
-                    email: email.trim(),
-                    role: inviteRole,
-                  })
-                }
-              >
-                <FormField
-                  label="Invitation email"
-                  type="email"
-                  value={email}
-                  required
-                  maxLength={254}
+          <Form
+            aria-label="Create workspace"
+            onSubmit={() => void mutate('', 'POST', { name: name.trim() }, true)}
+          >
+            <FormField
+              label="New workspace name"
+              value={name}
+              required
+              minLength={2}
+              maxLength={100}
+              disabled={busy}
+              onChange={(event) => setName(event.target.value)}
+            />
+            <Button disabled={busy} type="submit">
+              Create workspace
+            </Button>
+          </Form>
+        </section>
+        {choices.length || detail ? (
+          <section className="page-section workspace-active" aria-label="Active workspace details">
+            {choices.length ? (
+              <label className="workspace-select">
+                Active workspace
+                <select
+                  aria-label="Active workspace"
                   disabled={busy}
-                  onChange={(event) => setEmail(event.target.value)}
-                />
-                <label>
-                  Invitation role
-                  <select
-                    aria-label="Invitation role"
-                    value={inviteRole}
-                    disabled={busy}
-                    onChange={(event) => setInviteRole(parseRole(event.target.value))}
-                  >
-                    {detail.permissions.assignableRoles.map((role) => (
-                      <option key={role}>{role}</option>
-                    ))}
-                  </select>
-                </label>
-                <Button type="submit" disabled={busy}>
-                  Send invitation
-                </Button>
-              </Form>
-              <h3>Pending invitations</h3>
-              {!detail.invitations.length ? (
-                <p>No pending invitations you can manage.</p>
-              ) : (
+                  value={detail?.workspace.id ?? ''}
+                  onChange={(event) => {
+                    setMessage('');
+                    setFailure('');
+                    void load(event.target.value);
+                  }}
+                >
+                  {!detail ? (
+                    <option value="" disabled hidden>
+                      Select workspace
+                    </option>
+                  ) : null}
+                  {choices.map((choice) => (
+                    <option key={choice.workspace.id} value={choice.workspace.id}>
+                      {choice.workspace.name} ({choice.role})
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
+            {detail ? (
+              <div className="workspace-detail" key={detail.workspace.id}>
+                <div className="workspace-identity">
+                  <h3>{detail.workspace.name}</h3>
+                  <p className="workspace-role">
+                    Your role: <strong>{detail.role}</strong>
+                  </p>
+                </div>
+                {detail.permissions.rename ? (
+                  <RenameForm
+                    name={detail.workspace.name}
+                    busy={busy}
+                    onSave={(next) =>
+                      void mutate(`/${detail.workspace.id}`, 'PATCH', { name: next })
+                    }
+                  />
+                ) : null}
+                <h3>Members</h3>
                 <ul className="workspace-members">
-                  {detail.invitations.map((invitation) => (
-                    <li key={invitation.id}>
-                      <span>
-                        {invitation.email} — {invitation.role}
-                        <small>Expires {new Date(invitation.expiresAt).toLocaleDateString()}</small>
-                      </span>
-                      <Button
-                        disabled={busy}
-                        variant="secondary"
-                        onClick={() =>
-                          void mutate(`/${detail.workspace.id}/invitations`, 'POST', {
-                            email: invitation.email,
-                            role: invitation.role,
-                          })
-                        }
-                      >
-                        Resend invitation
-                      </Button>
-                      <Button
-                        disabled={busy}
-                        variant="ghost"
-                        onClick={() =>
-                          setConfirm({
-                            title: `Revoke invitation for ${invitation.email}?`,
-                            path: `/${detail.workspace.id}/invitations/${invitation.id}`,
-                            method: 'DELETE',
-                          })
-                        }
-                      >
-                        Revoke invitation
-                      </Button>
-                    </li>
+                  {detail.members.map((member) => (
+                    <MemberRow
+                      key={`${member.userId}:${member.role}`}
+                      member={member}
+                      roles={
+                        member.userId !== userId &&
+                        member.role !== 'Owner' &&
+                        detail.permissions.assignableRoles.includes(member.role)
+                          ? detail.permissions.assignableRoles
+                          : []
+                      }
+                      busy={busy}
+                      onRole={(role) =>
+                        void mutate(`/${detail.workspace.id}/members/${member.userId}`, 'PATCH', {
+                          role,
+                        })
+                      }
+                      onRemove={() =>
+                        setConfirm({
+                          title: `Remove ${member.user.name} from this workspace?`,
+                          path: `/${detail.workspace.id}/members/${member.userId}`,
+                          method: 'DELETE',
+                        })
+                      }
+                    />
                   ))}
                 </ul>
-              )}
-            </>
-          ) : null}
-          {detail.permissions.leave ? (
-            <Button
-              disabled={busy}
-              variant="secondary"
-              onClick={() =>
-                setConfirm({
-                  title: 'Leave this workspace?',
-                  path: `/${detail.workspace.id}/leave`,
-                  method: 'POST',
-                })
-              }
-            >
-              Leave workspace
-            </Button>
-          ) : (
-            <p>The Owner cannot leave or transfer ownership in this phase.</p>
-          )}
-          {detail.permissions.delete ? (
-            <Button
-              disabled={busy}
-              variant="ghost"
-              onClick={() =>
-                setConfirm({
-                  title: `Permanently delete ${detail.workspace.name}, its projects, tasks, comments, memberships and invitations?`,
-                  path: `/${detail.workspace.id}`,
-                  method: 'DELETE',
-                })
-              }
-            >
-              Delete workspace
-            </Button>
-          ) : null}
-        </div>
-      ) : null}
+                {detail.permissions.assignableRoles.length ? (
+                  <>
+                    <h3>Invite a member</h3>
+                    <Form
+                      aria-label="Invite member"
+                      onSubmit={() =>
+                        void mutate(`/${detail.workspace.id}/invitations`, 'POST', {
+                          email: email.trim(),
+                          role: inviteRole,
+                        })
+                      }
+                    >
+                      <FormField
+                        label="Invitation email"
+                        type="email"
+                        value={email}
+                        required
+                        maxLength={254}
+                        disabled={busy}
+                        onChange={(event) => setEmail(event.target.value)}
+                      />
+                      <label>
+                        Invitation role
+                        <select
+                          aria-label="Invitation role"
+                          value={inviteRole}
+                          disabled={busy}
+                          onChange={(event) => setInviteRole(parseRole(event.target.value))}
+                        >
+                          {detail.permissions.assignableRoles.map((role) => (
+                            <option key={role}>{role}</option>
+                          ))}
+                        </select>
+                      </label>
+                      <Button type="submit" disabled={busy}>
+                        Send invitation
+                      </Button>
+                    </Form>
+                    <h3>Pending invitations</h3>
+                    {!detail.invitations.length ? (
+                      <p>No pending invitations you can manage.</p>
+                    ) : (
+                      <ul className="workspace-members">
+                        {detail.invitations.map((invitation) => (
+                          <li key={invitation.id}>
+                            <span>
+                              {invitation.email} — {invitation.role}
+                              <small>
+                                Expires {new Date(invitation.expiresAt).toLocaleDateString()}
+                              </small>
+                            </span>
+                            <Button
+                              disabled={busy}
+                              variant="secondary"
+                              onClick={() =>
+                                void mutate(`/${detail.workspace.id}/invitations`, 'POST', {
+                                  email: invitation.email,
+                                  role: invitation.role,
+                                })
+                              }
+                            >
+                              Resend invitation
+                            </Button>
+                            <Button
+                              disabled={busy}
+                              variant="ghost"
+                              onClick={() =>
+                                setConfirm({
+                                  title: `Revoke invitation for ${invitation.email}?`,
+                                  path: `/${detail.workspace.id}/invitations/${invitation.id}`,
+                                  method: 'DELETE',
+                                })
+                              }
+                            >
+                              Revoke invitation
+                            </Button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </>
+                ) : null}
+                {detail.permissions.leave ? (
+                  <Button
+                    disabled={busy}
+                    variant="secondary"
+                    onClick={() =>
+                      setConfirm({
+                        title: 'Leave this workspace?',
+                        path: `/${detail.workspace.id}/leave`,
+                        method: 'POST',
+                      })
+                    }
+                  >
+                    Leave workspace
+                  </Button>
+                ) : (
+                  <p>The Owner cannot leave or transfer ownership in this phase.</p>
+                )}
+                {detail.permissions.delete ? (
+                  <Button
+                    disabled={busy}
+                    variant="ghost"
+                    onClick={() =>
+                      setConfirm({
+                        title: `Permanently delete ${detail.workspace.name}, its projects, tasks, comments, memberships and invitations?`,
+                        path: `/${detail.workspace.id}`,
+                        method: 'DELETE',
+                      })
+                    }
+                  >
+                    Delete workspace
+                  </Button>
+                ) : null}
+              </div>
+            ) : null}
+          </section>
+        ) : null}
+      </div>
       {confirm ? (
         <ConfirmAction
           title={confirm.title}
